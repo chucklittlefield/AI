@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Morning Briefing — April 16, 2026</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #fafafa;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: #424245;
+    padding: 40px 24px 60px;
+  }
+
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .greeting { margin-bottom: 28px; }
+  .greeting h1 { font-size: 34px; font-weight: 700; color: #1d1d1f; line-height: 1.1; }
+  .greeting .date { font-size: 17px; color: #86868b; margin-top: 5px; }
+
+  .card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    margin-bottom: 16px;
+    transition: box-shadow 0.2s ease;
+  }
+  .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+  .card h2 {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.6px; color: #86868b; margin-bottom: 16px;
+  }
+
+  .card.priorities { background: #f5f5f7; }
+  .priority-item {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 10px 0; border-bottom: 1px solid #e5e5e7;
+  }
+  .priority-item:last-child { border-bottom: none; }
+  .priority-num { font-size: 22px; font-weight: 700; line-height: 1.2; min-width: 28px; }
+  .priority-num.red   { color: #FF3B30; }
+  .priority-num.orange{ color: #FF9500; }
+  .priority-num.blue  { color: #007AFF; }
+  .priority-text strong { display: block; font-size: 15px; font-weight: 600; color: #1d1d1f; margin-bottom: 2px; }
+  .priority-text span { font-size: 13px; color: #86868b; }
+
+  .cal-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid #e5e5e7; }
+  .cal-item:last-child { border-bottom: none; }
+  .time-pill {
+    display: inline-block; background: #f5f5f7; border-radius: 8px; padding: 4px 10px;
+    font-weight: 600; font-size: 13px; font-family: 'SF Mono', 'Monaco', monospace;
+    color: #1d1d1f; white-space: nowrap; min-width: 105px; text-align: center;
+  }
+  .time-pill.free  { background: #e8faea; color: #1a7f37; }
+  .time-pill.flag  { background: #fff3e0; color: #c05c00; }
+  .time-pill.task  { background: #eef3ff; color: #1b4dcc; }
+  .cal-body strong { display: block; font-size: 15px; font-weight: 600; color: #1d1d1f; margin-bottom: 2px; }
+  .cal-body .cal-sub { font-size: 13px; color: #86868b; }
+  .cal-tag {
+    display: inline-block; font-size: 11px; font-weight: 600; border-radius: 5px;
+    padding: 2px 7px; margin-top: 4px; margin-right: 4px;
+  }
+  .tag-teams    { background: #e8f0fe; color: #1b4dcc; }
+  .tag-inperson { background: #fff0f0; color: #c0392b; }
+  .tag-task     { background: #eef3ff; color: #1b4dcc; }
+  .tag-warn     { background: #fff3e0; color: #c05c00; }
+  .tag-personal { background: #f5f0ff; color: #6f3dd6; }
+
+  .email-group-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #86868b; margin: 16px 0 8px;
+  }
+  .email-group-label:first-of-type { margin-top: 0; }
+  .email-item { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid #e5e5e7; }
+  .email-item:last-child { border-bottom: none; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .dot.red    { background: #FF3B30; }
+  .dot.orange { background: #FF9500; }
+  .dot.blue   { background: #007AFF; }
+  .dot.green  { background: #34C759; }
+  .dot.gray   { background: #c7c7cc; }
+  .email-body { flex: 1; min-width: 0; }
+  .email-body .sender { font-size: 14px; font-weight: 600; color: #1d1d1f; }
+  .email-body .subject { font-size: 13px; color: #424245; margin-top: 1px; }
+  .email-body .summary { font-size: 12px; color: #86868b; margin-top: 2px; }
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px;
+    border-radius: 5px; vertical-align: middle; margin-left: 6px;
+  }
+  .badge.warn  { background: #fff3e0; color: #c05c00; }
+  .badge.alert { background: #ffebea; color: #c0392b; }
+  .badge.info  { background: #e8f0fe; color: #1b4dcc; }
+  .reply-toggle {
+    font-size: 12px; color: #007AFF; cursor: pointer; margin-top: 6px;
+    display: inline-block; background: none; border: none; padding: 0; font-family: inherit;
+  }
+  .reply-toggle:hover { opacity: 0.7; }
+  .reply-box {
+    display: none; background: #f5f5f7; border-radius: 8px; padding: 10px 12px;
+    margin-top: 8px; font-size: 13px; color: #424245; line-height: 1.6; white-space: pre-wrap;
+  }
+  .reply-box.open { display: block; }
+
+  .news-item { padding: 10px 0; border-bottom: 1px solid #e5e5e7; }
+  .news-item:last-child { border-bottom: none; }
+  .news-label { display: inline-block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: #AF52DE; margin-bottom: 3px; }
+  .news-item a { display: block; font-size: 14px; color: #1d1d1f; font-weight: 500; text-decoration: none; line-height: 1.4; transition: opacity 0.15s; }
+  .news-item a:hover { opacity: 0.7; }
+  .news-desc { font-size: 13px; color: #86868b; margin-top: 3px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="greeting">
+    <h1 id="greeting">Good morning, Chuck.</h1>
+    <p class="date">Thursday, April 16, 2026</p>
+  </div>
+
+  <!-- TODAY'S FOCUS -->
+  <div class="card priorities">
+    <h2>Today's Focus</h2>
+
+    <div class="priority-item">
+      <div class="priority-num red">1</div>
+      <div class="priority-text">
+        <strong>Investigate SOC-2069905 — Multi-Location Login (Ticket #94799)</strong>
+        <span>jared.priestley@plateaufp.com logged in from Washington state AND Canada simultaneously — classic impossible travel. Not yet confirmed. Needs resolution before the 10 AM Security &amp; Infrastructure meeting.</span>
+      </div>
+    </div>
+
+    <div class="priority-item">
+      <div class="priority-num orange">2</div>
+      <div class="priority-text">
+        <strong>Review SIFP Active Directory Password Expiration Report</strong>
+        <span>Netwrix report arrived yesterday with attachment (helpdesk@fctg.com). Identify expiring SIFP accounts and notify users before they get locked out.</span>
+      </div>
+    </div>
+
+    <div class="priority-item">
+      <div class="priority-num blue">3</div>
+      <div class="priority-text">
+        <strong>Resolve SD Tickets #94785 &amp; #94786 — Baldwin_Robert Email Release</strong>
+        <span>Both assigned to you. User wants quarantined email released; it was flagged as suspicious content. Review the original message before approving.</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SCHEDULE -->
+  <div class="card calendar">
+    <h2>Schedule</h2>
+
+    <div class="cal-item">
+      <div class="time-pill task">8:00 AM</div>
+      <div class="cal-body">
+        <strong>IT Task: User Rights GPO — FCTG IT Workstations</strong>
+        <div class="cal-sub">8:00 – 8:30 AM &nbsp;·&nbsp; IT Tasks Calendar</div>
+        <span class="cal-tag tag-task">IT Task</span>
+      </div>
+    </div>
+
+    <div class="cal-item">
+      <div class="time-pill free">8:30 – 10:00</div>
+      <div class="cal-body">
+        <strong style="color:#1a7f37;">90 min free block</strong>
+        <div class="cal-sub">Best window for SOC-2069905 investigation + Netwrix report review before the Security meeting</div>
+      </div>
+    </div>
+
+    <div class="cal-item">
+      <div class="time-pill">10:00 AM</div>
+      <div class="cal-body">
+        <strong>Security and Infrastructure</strong>
+        <div class="cal-sub">10:00 – 11:00 AM &nbsp;·&nbsp; Microsoft Teams</div>
+        <div class="cal-sub">Lance Means · James Wells · Joshua Rosales · Benjamin Sanchez</div>
+        <span class="cal-tag tag-teams">Teams</span>
+      </div>
+    </div>
+
+    <div class="cal-item">
+      <div class="time-pill free">11:00 – 12:00</div>
+      <div class="cal-body">
+        <strong style="color:#1a7f37;">60 min free block</strong>
+      </div>
+    </div>
+
+    <div class="cal-item">
+      <div class="time-pill">12:00 PM</div>
+      <div class="cal-body">
+        <strong>Lunch</strong>
+        <div class="cal-sub">12:00 – 1:00 PM</div>
+        <span class="cal-tag tag-personal">Personal</span>
+      </div>
+    </div>
+
+    <div class="cal-item">
+      <div class="time-pill">1:00 PM</div>
+      <div class="cal-body">
+        <strong>Project Status [In-Person]</strong>
+        <div class="cal-sub">1:00 – 2:00 PM &nbsp;·&nbsp; FCTG IT Conference Room</div>
+        <div class="cal-sub">Conrad Palmer · Kerry Cakebread · Lance Means · James Wells · Joshua Rosales · Benjamin Sanchez · Aaron Burge · Mike Nelson + others</div>
+        <span class="cal-tag tag-inperson">In-Person</span>
+      </div>
+    </div>
+
+    <div class="cal-item">
+      <div class="time-pill free">2:00 – 4:30</div>
+      <div class="cal-body">
+        <strong style="color:#1a7f37;">2.5 hr free block</strong>
+        <div class="cal-sub">Largest open window — SD ticket cleanup, GPO follow-up, or patch planning</div>
+      </div>
+    </div>
+
+    <div class="cal-item">
+      <div class="time-pill flag">4:30 PM ⚑</div>
+      <div class="cal-body">
+        <strong>Pick Up Kids</strong>
+        <div class="cal-sub">4:30 – 5:30 PM &nbsp;·&nbsp; Extends past end-of-day</div>
+        <span class="cal-tag tag-warn">After 4:30 PM</span>
+        <span class="cal-tag tag-personal">Personal</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- EMAIL -->
+  <div class="card email">
+    <h2>Email</h2>
+
+    <div class="email-group-label">Important Contacts</div>
+
+    <div class="email-item">
+      <div class="dot red"></div>
+      <div class="email-body">
+        <span class="sender">Lance Means</span><span class="badge warn">High Priority · Unread</span>
+        <div class="subject">Canceled: OI Backups</div>
+        <div class="summary">Meeting with Conrad Palmer and Chris Irwin (Olympic Industries) has been canceled. Worth checking with Lance if a reschedule is needed.</div>
+      </div>
+    </div>
+
+    <div class="email-item">
+      <div class="dot orange"></div>
+      <div class="email-body">
+        <span class="sender">Joshua Rosales</span>
+        <div class="subject">Fw: Fortinet FortiClient EMS 7.4.x — CVSS 9.11 Vulnerabilities, Upgrade to 7.4.7</div>
+        <div class="summary">FG-IR-26-099 (API auth bypass) — Fortinet says no action needed. FG-IR-25-1142 (SQLi in admin interface) — review whether action is still pending. Relevant to CISA KEV update today.</div>
+      </div>
+    </div>
+
+    <div class="email-item">
+      <div class="dot green"></div>
+      <div class="email-body">
+        <span class="sender">Joshua Rosales</span>
+        <div class="subject">Re: SOC-2069645 — M365 Login from Mexico (albert.arias@fctg.com) ✅ Resolved</div>
+        <div class="summary">Confirmed — Albert is traveling in Baja, MX until next week. No action required.</div>
+      </div>
+    </div>
+
+    <div class="email-item">
+      <div class="dot blue"></div>
+      <div class="email-body">
+        <span class="sender">Janice Clark</span>
+        <div class="subject">RE: Computer down — Chris Leuth (SIFP)</div>
+        <div class="summary">Chris emailed from his phone — desktop won't connect to internet after restart. Janice responded. You're CC'd; may need to follow up if it hasn't been resolved.</div>
+      </div>
+    </div>
+
+    <div class="email-group-label">Urgent — Security</div>
+
+    <div class="email-item">
+      <div class="dot red"></div>
+      <div class="email-body">
+        <span class="sender">CyberMaxx SOC / Service Desk</span><span class="badge alert">Ticket #94799 · Unread</span>
+        <div class="subject">SOC-2069905 — M365 Logins from Multiple Locations: jared.priestley@plateaufp.com (Washington + Canada)</div>
+        <div class="summary">Medium risk. Logins from WA IP 50.45.235.34 and a Canadian IP — potential impossible travel or compromised credential. Status: OPEN, not yet confirmed with user.</div>
+        <button class="reply-toggle" onclick="this.nextElementSibling.classList.toggle('open'); this.textContent = this.nextElementSibling.classList.contains('open') ? 'Hide reply' : 'Show reply'">Show reply</button>
+        <div class="reply-box">Hi Joshua / Team,
+
+Re SOC-2069905 — jared.priestley@plateaufp.com shows concurrent logins from Washington state (50.45.235.34) and Canada. This looks like a potential impossible travel scenario.
+
+Can someone contact Jared directly to confirm? If we can't verify within the next 30 minutes, I'd recommend temporarily suspending the account pending confirmation.
+
+Will bring this to the 10 AM Security &amp; Infrastructure call for discussion.
+
+— Chuck Littlefield
+charles.littlefield@sifp.com</div>
+      </div>
+    </div>
+
+    <div class="email-item">
+      <div class="dot red"></div>
+      <div class="email-body">
+        <span class="sender">Christmas@lumber.com → cybersecurity@fctg.com</span><span class="badge alert">Unread</span>
+        <div class="subject">"Probably not legit..." — Suspicious meeting invite reported</div>
+        <div class="summary">External contact received unexpected meeting invite, suspects phishing, not clicking anything. Good instinct — review the headers of the reported email and consider a domain block if confirmed malicious.</div>
+      </div>
+    </div>
+
+    <div class="email-item">
+      <div class="dot red"></div>
+      <div class="email-body">
+        <span class="sender">Mike Nelson → cybersecurity@fctg.com</span>
+        <div class="subject">FW: Important Update Please Review Contract Document — Likely Phishing</div>
+        <div class="summary">SPF softfail · DKIM none · DMARC fail. Classic BEC-style phishing lure. Originating IP: 170.10.132.61. Assess for IOCs and consider blocking.</div>
+      </div>
+    </div>
+
+    <div class="email-group-label">Service Desk — Assigned to You</div>
+
+    <div class="email-item">
+      <div class="dot orange"></div>
+      <div class="email-body">
+        <span class="sender">Service Desk — #94785 &amp; #94786 (Baldwin_Robert)</span>
+        <div class="subject">Fw: We found suspicious content in a message — Email release requested</div>
+        <div class="summary">Two duplicate tickets from Tuesday evening. User wants a quarantined message released. Review the original flagged content before approving.</div>
+      </div>
+    </div>
+
+    <div class="email-item">
+      <div class="dot blue"></div>
+      <div class="email-body">
+        <span class="sender">Netwrix Auditor (helpdesk@fctg.com)</span><span class="badge info">Has Attachment · Unread</span>
+        <div class="subject">Active Directory Password Expiration Report — SIFP-Expiring-Passwords</div>
+        <div class="summary">Report attached — review and notify affected SIFP users before accounts are locked. Top priority this morning.</div>
+      </div>
+    </div>
+
+    <div class="email-group-label">FYI</div>
+
+    <div class="email-item">
+      <div class="dot gray"></div>
+      <div class="email-body">
+        <span class="sender">iSolved / Forest City Trading Group</span>
+        <div class="subject">Your Pay Statement Is Ready to View</div>
+        <div class="summary">Available at amcheck.myisolved.com.</div>
+      </div>
+    </div>
+
+    <div class="email-item">
+      <div class="dot gray"></div>
+      <div class="email-body">
+        <span class="sender">Jeff Kern (SIFP) + Lisa Bruckert + Cheetah Design</span>
+        <div class="subject">SIFP Website — Contact &amp; Resume Submission Forms Still Broken</div>
+        <div class="summary">Issue started last Friday, likely PHP update related. Cheetah Design had a 9 AM call with Lisa yesterday. Follow up to confirm resolution status.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- NEWS -->
+  <div class="card news">
+    <h2>News &amp; Updates</h2>
+
+    <div class="news-item">
+      <div class="news-label">Patch Tuesday · Critical</div>
+      <a href="https://cybersecuritynews.com/microsoft-patch-tuesday-april-2026/" target="_blank">Microsoft Patch Tuesday April 2026 — 168 Vulnerabilities Fixed, Including Actively Exploited 0-Day</a>
+      <div class="news-desc">CVE-2026-32201 (SharePoint Server spoofing) is being exploited in the wild. Critical RCEs also patched in Windows TCP/IP and Active Directory. KB5083769 dropped April 14 — plan patching this cycle.</div>
+    </div>
+
+    <div class="news-item">
+      <div class="news-label">CISA KEV · Fortinet</div>
+      <a href="https://thehackernews.com/2026/04/cisa-adds-6-known-exploited-flaws-in.html" target="_blank">CISA Adds 6 Known Exploited Flaws in Fortinet, Microsoft, and Adobe</a>
+      <div class="news-desc">CVE-2026-21643 (Fortinet FortiClient EMS SQL injection) now on CISA KEV — directly related to Josh's FortiClient upgrade email. Confirms urgency of the 7.4.7 upgrade.</div>
+    </div>
+
+    <div class="news-item">
+      <div class="news-label">Malware · Chrome</div>
+      <a href="https://thehackernews.com/" target="_blank">100+ Malicious Chrome Extensions Stealing Google OAuth2 Tokens Found in Web Store</a>
+      <div class="news-desc">Extensions deploying backdoors and stealing Bearer tokens for account takeover. Consider auditing browser extensions on managed FCTG/SIFP endpoints — especially relevant given the active M365 login alerts.</div>
+    </div>
+
+    <div class="news-item">
+      <div class="news-label">Industry · Forest Products</div>
+      <a href="https://www.indexbox.io/blog/lumber-prices-rise-modestly-in-april-2026-amid-supply-tightening/" target="_blank">Lumber Prices Rise in April 2026 as Supply Tightens</a>
+      <div class="news-desc">Western SPF 2x4 at $490/MBF, up ~4% month-over-month. Canadian tariffs limiting supply; construction uptick in southern states stretching sawmill order files into late April.</div>
+    </div>
+
+    <div class="news-item">
+      <div class="news-label">Outlook · Forest Products</div>
+      <a href="https://www.farmcrediteast.com/en/resources/Industry-Trends-and-Outlooks/Reports/2603KEP_ForestProductsOutlook" target="_blank">Forest Products Industry Outlook: Softwood Markets Set to Stabilize in 2026</a>
+      <div class="news-desc">Modest improvement expected in 2026 lumber pricing, supply-side driven. Operating rates only slightly higher — overall cautious optimism heading into H2 2026.</div>
+    </div>
+
+  </div>
+
+</div>
+<script>
+  const h = new Date().getHours();
+  const el = document.getElementById('greeting');
+  if (h >= 12 && h < 17) el.textContent = 'Good afternoon, Chuck.';
+  else if (h >= 17) el.textContent = 'Good evening, Chuck.';
+</script>
+</body>
+</html>

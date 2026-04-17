@@ -1,0 +1,103 @@
+{
+  "cachedGrowthBookFeatures": {
+    "tengu_mcp_tool_search": true,
+    "tengu_scratch": false,
+    "tengu_disable_bypass_permissions_mode": false,
+    "tengu_1p_event_batch_config": {
+      "scheduledDelayMillis": 5000,
+      "maxExportBatchSize": 200,
+      "maxQueueSize": 8192
+    },
+    "tengu_claudeai_mcp_connectors": true,
+    "tengu_event_sampling_config": {},
+    "tengu_log_segment_events": false,
+    "tengu_log_datadog_events": true,
+    "tengu_marble_anvil": true,
+    "tengu_tool_pear": false,
+    "tengu_scarf_coffee": false,
+    "tengu_keybinding_customization_release": true,
+    "tengu_penguins_enabled": true,
+    "tengu_thinkback": false,
+    "tengu_oboe": true,
+    "tengu_chomp_inflection": true,
+    "tengu_penguins_off": null,
+    "tengu_copper_lantern": false,
+    "tengu_pid_based_version_locking": true,
+    "tengu_marble_lantern_disabled": false,
+    "tengu_vscode_review_upsell": false,
+    "tengu_vscode_onboarding": false,
+    "tengu_quiet_fern": true,
+    "tengu_plan_mode_interview_phase": false,
+    "tengu_vinteuil_phrase": true,
+    "tengu_coral_fern": false,
+    "tengu_system_prompt_global_cache": true,
+    "enhanced_telemetry_beta": false,
+    "tengu_cache_plum_violet": true,
+    "tengu_streaming_tool_execution2": true,
+    "tengu_tool_search_unsupported_models": [
+      "haiku"
+    ],
+    "tengu_attribution_header": true,
+    "tengu_tst_names_in_messages": false,
+    "tengu_bergotte_lantern": false,
+    "tengu_copper_lantern_config": {
+      "meridian": "2026-02-05T07:59:00Z"
+    },
+    "tengu_fgts": false,
+    "tengu_mulberry_fog": false,
+    "tengu_prompt_cache_1h_config": {
+      "allowlist": [
+        "repl_main_thread*",
+        "sdk"
+      ]
+    },
+    "tengu_moth_copse": false
+  },
+  "firstStartTime": "2026-02-12T19:22:27.113Z",
+  "userID": "c1676cacadeeadc17e55ef1fe3cdb36dda944bfbfc5a6a49ccc52b05b0c2ddd7",
+  "opusProMigrationComplete": true,
+  "oauthAccount": {
+    "accountUuid": "8e1f1165-553d-419b-b089-05b3f2914d55",
+    "emailAddress": "chuck.littlefield.public@gmail.com",
+    "organizationUuid": "fc5e5932-059b-42fc-bcfa-1bdd4a2f193f",
+    "hasExtraUsageEnabled": false,
+    "billingType": "stripe_subscription",
+    "accountCreatedAt": "2026-02-12T01:17:45.351359Z",
+    "subscriptionCreatedAt": "2026-02-12T19:24:41.213782Z",
+    "displayName": "Chuck"
+  },
+  "penguinModeOrgEnabled": false,
+  "clientDataCache": {
+    "data": {
+      "explore_agent_variant": "restrictive"
+    },
+    "timestamp": 1771511588799
+  },
+  "s1mAccessCache": {
+    "fc5e5932-059b-42fc-bcfa-1bdd4a2f193f": {
+      "hasAccess": false,
+      "hasAccessNotAsDefault": false,
+      "timestamp": 1771273728109
+    }
+  },
+  "groveConfigCache": {
+    "8e1f1165-553d-419b-b089-05b3f2914d55": {
+      "grove_enabled": true,
+      "timestamp": 1771511500280
+    }
+  },
+  "sonnet1m45MigrationComplete": true,
+  "cachedExtraUsageDisabledReason": "org_level_disabled",
+  "projects": {
+    "C:\\Users\\charles30\\Claude": {
+      "allowedTools": [],
+      "mcpContextUris": [],
+      "enabledMcpjsonServers": [],
+      "disabledMcpjsonServers": [],
+      "hasTrustDialogAccepted": true,
+      "projectOnboardingSeenCount": 0,
+      "hasClaudeMdExternalIncludesApproved": false,
+      "hasClaudeMdExternalIncludesWarningShown": false
+    }
+  }
+}

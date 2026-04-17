@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIFP Firewall Traffic Analysis</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #18181f;
+    --border: rgba(255,255,255,0.07);
+    --text: #e8e8f0;
+    --muted: #6b6b7e;
+    --accent: #DA7756;
+    --green: #34d399;
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --blue: #60a5fa;
+    --purple: #a78bfa;
+    --teal: #2dd4bf;
+    --pink: #f472b6;
+    --orange: #fb923c;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, #0f0f1a 0%, #1a0f1a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 40px 24px;
+  }
+  header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: #fff;
+  }
+  header h1 span { color: var(--accent); }
+  header p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  .stats-row {
+    display: flex;
+    gap: 24px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .stat-pill {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .stat-pill .num {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .stat-pill .lbl {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .stat-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  /* ── LAYOUT ── */
+  .layout {
+    display: flex;
+    height: calc(100vh - 140px);
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 280px;
+    min-width: 280px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 16px 0;
+  }
+  .sidebar-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    padding: 10px 20px 6px;
+  }
+  .src-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  .src-item:hover { background: var(--surface2); }
+  .src-item.active {
+    background: var(--surface2);
+    border-left-color: var(--accent);
+  }
+  .src-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .src-info { flex: 1; min-width: 0; }
+  .src-ip { font-size: 13px; font-weight: 600; color: #fff; font-family: 'SF Mono', 'Consolas', monospace; }
+  .src-name { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .src-count {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    padding: 2px 7px;
+    white-space: nowrap;
+  }
+
+  /* ── MAIN ── */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 32px;
+    background: var(--bg);
+  }
+
+  .source-header {
+    margin-bottom: 20px;
+  }
+  .source-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    font-family: 'SF Mono', 'Consolas', monospace;
+  }
+  .source-header .desc {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .source-header .meta {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .meta-badge {
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    border: 1px solid;
+  }
+
+  /* ── CATEGORY SECTION ── */
+  .cat-section { margin-bottom: 28px; }
+  .cat-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cat-icon { font-size: 16px; }
+  .cat-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .cat-count { font-size: 12px; color: var(--muted); background: rgba(255,255,255,0.05); padding: 1px 7px; border-radius: 10px; }
+
+  /* ── FLOW TABLE ── */
+  .flow-table { width: 100%; border-collapse: collapse; }
+  .flow-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+    padding: 7px 12px;
+    background: rgba(255,255,255,0.02);
+    border-bottom: 1px solid var(--border);
+  }
+  .flow-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 13px;
+    vertical-align: middle;
+  }
+  .flow-table tr:last-child td { border-bottom: none; }
+  .flow-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .flow-table tbody { background: var(--surface); border-radius: 8px; }
+  .flow-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .dst-cell { font-family: 'SF Mono', 'Consolas', monospace; font-size: 12px; color: var(--text); }
+  .dst-label { font-size: 11px; color: var(--muted); display: block; margin-top: 1px; }
+
+  .svc-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 5px;
+    white-space: nowrap;
+  }
+
+  .count-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .count-bar {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--accent);
+    opacity: 0.5;
+    flex-shrink: 0;
+  }
+  .count-num { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; }
+
+  .action-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .allow { background: rgba(52,211,153,0.12); color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
+  .deny  { background: rgba(248,113,113,0.12); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
+  .mixed { background: rgba(251,191,36,0.12); color: var(--yellow); border: 1px solid rgba(251,191,36,0.2); }
+
+  /* service colors */
+  .svc-ad    { background: rgba(96,165,250,0.1); color: var(--blue); }
+  .svc-web   { background: rgba(167,139,250,0.1); color: var(--purple); }
+  .svc-cloud { background: rgba(45,212,191,0.1); color: var(--teal); }
+  .svc-sec   { background: rgba(250,113,113,0.1); color: #fca5a5; }
+  .svc-mon   { background: rgba(251,191,36,0.1); color: var(--yellow); }
+  .svc-voip  { background: rgba(244,114,182,0.1); color: var(--pink); }
+  .svc-dns   { background: rgba(52,211,153,0.1); color: var(--green); }
+  .svc-db    { background: rgba(251,146,60,0.1); color: var(--orange); }
+  .svc-rpc   { background: rgba(148,163,184,0.1); color: #94a3b8; }
+  .svc-other { background: rgba(255,255,255,0.05); color: var(--muted); }
+
+  .note-box {
+    background: rgba(218,119,86,0.08);
+    border: 1px solid rgba(218,119,86,0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #e8b49a;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .note-box .icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 80px 40px;
+    color: var(--muted);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-state p { font-size: 14px; }
+
+  .bytes-cell { font-size: 12px; color: var(--muted); white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔥 <span>SIFP</span> Firewall Traffic Analysis</h1>
+  <p>FortiGate forwarded traffic · April 17, 2026 · 600,000 log entries · Grouped by Source → Destination → Service</p>
+  <div class="stats-row">
+    <div class="stat-pill"><div class="stat-dot" style="background:#34d399"></div><div><div class="num">577K+</div><div class="lbl">Allowed Connections</div></div></div>
+    <div class="stat-pill"><div class="stat-dot" style="background:#f87171"></div><div><div class="num">22K+</div><div class="lbl">Denied Connections</div></div></div>
+    <div class="stat-pill"><div class="stat-dot" style="background:#60a5fa"></div><div><div class="num">14</div><div class="lbl">Source Subnets / Hosts</div></div></div>
+    <div class="stat-pill"><div class="stat-dot" style="background:#a78bfa"></div><div><div class="num">7,304</div><div class="lbl">Unique Flow Combinations</div></div></div>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-section-label">Server Farm · 10.30.1.0/24</div>
+    <div class="src-item active" onclick="show('dc30')" id="tab-dc30">
+      <div class="src-dot" style="background:#DA7756"></div>
+      <div class="src-info">
+        <div class="src-ip">10.30.1.246</div>
+        <div class="src-name">FCTGNETDC30 · DNS/AD</div>
+      </div>
+      <div class="src-count">86K</div>
+    </div>
+    <div class="src-item" onclick="show('sa3')" id="tab-sa3">
+      <div class="src-dot" style="background:#fb923c"></div>
+      <div class="src-info">
+        <div class="src-ip">10.30.1.242</div>
+        <div class="src-name">SIFPSA3 · App Server</div>
+      </div>
+      <div class="src-count">18K</div>
+    </div>
+    <div class="src-item" onclick="show('azdf1')" id="tab-azdf1">
+      <div class="src-dot" style="background:#60a5fa"></div>
+      <div class="src-info">
+        <div class="src-ip">10.30.1.243</div>
+        <div class="src-name">SIFPAZUREDF1 · Azure DF</div>
+      </div>
+      <div class="src-count">13K</div>
+    </div>
+    <div class="src-item" onclick="show('fs01')" id="tab-fs01">
+      <div class="src-dot" style="background:#34d399"></div>
+      <div class="src-info">
+        <div class="src-ip">10.30.1.245</div>
+        <div class="src-name">SIFPFS01 · File/Mgmt Server</div>
+      </div>
+      <div class="src-count">11K</div>
+    </div>
+    <div class="src-item" onclick="show('bk01')" id="tab-bk01">
+      <div class="src-dot" style="background:#a78bfa"></div>
+      <div class="src-info">
+        <div class="src-ip">10.30.1.241</div>
+        <div class="src-name">SIFPBACKUP01 · Backup</div>
+      </div>
+      <div class="src-count">6.4K</div>
+    </div>
+    <div class="src-item" onclick="show('ts01')" id="tab-ts01">
+      <div class="src-dot" style="background:#2dd4bf"></div>
+      <div class="src-info">
+        <div class="src-ip">10.30.1.244</div>
+        <div class="src-name">SIFPTS01 · TS Server</div>
+      </div>
+      <div class="src-count">4.3K</div>
+    </div>
+
+    <div class="sidebar-section-label" style="margin-top:12px">Workstations</div>
+    <div class="src-item" onclick="show('ws5')" id="tab-ws5">
+      <div class="src-dot" style="background:#f472b6"></div>
+      <div class="src-info">
+        <div class="src-ip">10.30.5.0/24</div>
+        <div class="src-name">SIFPWorkstation · Primary</div>
+      </div>
+      <div class="src-count">213K</div>
+    </div>
+    <div class="src-item" onclick="show('ws13')" id="tab-ws13">
+      <div class="src-dot" style="background:#fb923c"></div>
+      <div class="src-info">
+        <div class="src-ip">10.30.13.0/24</div>
+        <div class="src-name">SIFP-Internal · Secondary</div>
+      </div>
+      <div class="src-count">99K</div>
+    </div>
+
+    <div class="sidebar-section-label" style="margin-top:12px">Opus Network · 10.1.0.0/16</div>
+    <div class="src-item" onclick="show('opus141')" id="tab-opus141">
+      <div class="src-dot" style="background:#60a5fa"></div>
+      <div class="src-info">
+        <div class="src-ip">10.1.1.141</div>
+        <div class="src-name">Infra Mgmt / SIEM Host</div>
+      </div>
+      <div class="src-count">51K</div>
+    </div>
+    <div class="src-item" onclick="show('opus172')" id="tab-opus172">
+      <div class="src-dot" style="background:#60a5fa"></div>
+      <div class="src-info">
+        <div class="src-ip">10.1.1.172</div>
+        <div class="src-name">SA3 SQL / HTTP Client</div>
+      </div>
+      <div class="src-count">4.5K</div>
+    </div>
+    <div class="src-item" onclick="show('opus18')" id="tab-opus18">
+      <div class="src-dot" style="background:#60a5fa"></div>
+      <div class="src-info">
+        <div class="src-ip">10.1.1.18</div>
+        <div class="src-name">Netwrix Audit Server</div>
+      </div>
+      <div class="src-count">810</div>
+    </div>
+    <div class="src-item" onclick="show('opus106')" id="tab-opus106">
+      <div class="src-dot" style="background:#60a5fa"></div>
+      <div class="src-info">
+        <div class="src-ip">10.1.1.106</div>
+        <div class="src-name">RESSAHQ2 · TruckerSearch</div>
+      </div>
+      <div class="src-count">345</div>
+    </div>
+    <div class="src-item" onclick="show('opus167')" id="tab-opus167">
+      <div class="src-dot" style="background:#60a5fa"></div>
+      <div class="src-info">
+        <div class="src-ip">10.1.1.167 / .169</div>
+        <div class="src-name">Delinia Servers · SSH Access</div>
+      </div>
+      <div class="src-count">258</div>
+    </div>
+    <div class="src-item" onclick="show('opus67')" id="tab-opus67">
+      <div class="src-dot" style="background:#60a5fa"></div>
+      <div class="src-info">
+        <div class="src-ip">10.1.1.67</div>
+        <div class="src-name">Check Printing Server</div>
+      </div>
+      <div class="src-count">289</div>
+    </div>
+
+    <div class="sidebar-section-label" style="margin-top:12px">Infrastructure · Shared</div>
+    <div class="src-item" onclick="show('voice')" id="tab-voice">
+      <div class="src-dot" style="background:#f472b6"></div>
+      <div class="src-info">
+        <div class="src-ip">10.30.20.0/24</div>
+        <div class="src-name">SIFPVoice · VoIP</div>
+      </div>
+      <div class="src-count">14K</div>
+    </div>
+    <div class="src-item" onclick="show('vpn')" id="tab-vpn">
+      <div class="src-dot" style="background:#34d399"></div>
+      <div class="src-info">
+        <div class="src-ip">10.30.100.0/24</div>
+        <div class="src-name">FCT_SAML · VPN Users</div>
+      </div>
+      <div class="src-count">5.3K</div>
+    </div>
+
+    <div class="sidebar-section-label" style="margin-top:12px">Additional SIFP Servers</div>
+    <div class="src-item" onclick="show('nessus')" id="tab-nessus">
+      <div class="src-dot" style="background:#DA7756"></div>
+      <div class="src-info">
+        <div class="src-ip">10.30.1.227</div>
+        <div class="src-name">Nessus / Tenable Scanner</div>
+      </div>
+      <div class="src-count">1.1K</div>
+    </div>
+    <div class="src-item" onclick="show('nas1')" id="tab-nas1">
+      <div class="src-dot" style="background:#DA7756"></div>
+      <div class="src-info">
+        <div class="src-ip">10.30.1.33</div>
+        <div class="src-name">SIFPNAS1 · Synology NAS</div>
+      </div>
+      <div class="src-count">543</div>
+    </div>
+    <div class="src-item" onclick="show('vcenter')" id="tab-vcenter">
+      <div class="src-dot" style="background:#DA7756"></div>
+      <div class="src-info">
+        <div class="src-ip">10.30.1.9</div>
+        <div class="src-name">vCenter Server</div>
+      </div>
+      <div class="src-count">327</div>
+    </div>
+
+    <div class="sidebar-section-label" style="margin-top:12px">BP Network · 10.10.0.0/16</div>
+    <div class="src-item" onclick="show('bp')" id="tab-bp">
+      <div class="src-dot" style="background:#fbbf24"></div>
+      <div class="src-info">
+        <div class="src-ip">10.10.198.31 / .86</div>
+        <div class="src-name">RailTraffic_From_BP · RDP</div>
+      </div>
+      <div class="src-count">40</div>
+    </div>
+
+    <div class="sidebar-section-label" style="margin-top:12px">Isolated Segments</div>
+    <div class="src-item" onclick="show('guest')" id="tab-guest">
+      <div class="src-dot" style="background:#fbbf24"></div>
+      <div class="src-info">
+        <div class="src-ip">10.30.11.0/24</div>
+        <div class="src-name">SIFP-Guest · Guest WiFi</div>
+      </div>
+      <div class="src-count">54K</div>
+    </div>
+    <div class="src-item" onclick="show('av')" id="tab-av">
+      <div class="src-dot" style="background:#94a3b8"></div>
+      <div class="src-info">
+        <div class="src-ip">10.30.27.0/24</div>
+        <div class="src-name">SIFPAV · AV Network</div>
+      </div>
+      <div class="src-count">6.1K</div>
+    </div>
+    <div class="src-item" onclick="show('iot')" id="tab-iot">
+      <div class="src-dot" style="background:#f87171"></div>
+      <div class="src-info">
+        <div class="src-ip">10.30.128.0/24</div>
+        <div class="src-name">IoT / Door Security</div>
+      </div>
+      <div class="src-count">4.6K</div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main" id="main-content">
+    <!-- populated by JS -->
+  </main>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+
+const sources = {
+
+  dc30: {
+    ip: '10.30.1.246',
+    name: 'FCTGNETDC30',
+    role: 'DNS Server / Domain Controller',
+    iface: 'SIFPServers',
+    total: 86404,
+    color: '#DA7756',
+    note: 'This host generates the highest individual connection count. The 48K DNS queries to Google 8.8.8.8 indicate it is forwarding DNS for the entire server subnet. Heavy Windows AD replication/authentication traffic to Opus and Azure DCs.',
+    categories: [
+      {
+        label: 'DNS Resolution', icon: '🌐', flows: [
+          { dst: '8.8.8.8 (Google)', label: 'Google Public DNS', svc: 'Google-DNS', svcClass: 'svc-dns', count: 48007, maxCount: 48007, action: 'allow', sent: '5.1 MB', recv: '11.5 MB' },
+          { dst: '10.1.1.173', label: 'Opus Domain Controller', svc: 'DNS', svcClass: 'svc-dns', count: 2605, maxCount: 48007, action: 'allow', sent: '0.2 MB', recv: '0.3 MB' },
+          { dst: '10.1.1.81', label: 'Opus Secondary DC', svc: 'DNS', svcClass: 'svc-dns', count: 320, maxCount: 48007, action: 'allow', sent: '< 1 MB', recv: '< 1 MB' },
+          { dst: '10.2.1.132', label: 'Azure DNS', svc: 'DNS', svcClass: 'svc-dns', count: 610, maxCount: 48007, action: 'allow', sent: '0.1 MB', recv: '0.1 MB' },
+        ]
+      },
+      {
+        label: 'Active Directory / AD Sync', icon: '🔐', flows: [
+          { dst: '10.2.151.68', label: 'Azure Domain Controller', svc: 'Windows AD', svcClass: 'svc-ad', count: 11947, maxCount: 48007, action: 'allow', sent: '276.8 MB', recv: '25.0 MB' },
+          { dst: '10.1.1.81', label: 'Opus Secondary DC', svc: 'Windows AD', svcClass: 'svc-ad', count: 9196, maxCount: 48007, action: 'allow', sent: '551.5 MB', recv: '81.8 MB' },
+          { dst: '10.1.1.173', label: 'Opus Primary DC', svc: 'Windows AD', svcClass: 'svc-ad', count: 6647, maxCount: 48007, action: 'allow', sent: '396.7 MB', recv: '22.6 MB' },
+        ]
+      },
+      {
+        label: 'Cloud & Monitoring', icon: '☁️', flows: [
+          { dst: 'Datadog', label: 'Monitoring Agent', svc: 'Datadog-Datadog', svcClass: 'svc-mon', count: 1308, maxCount: 48007, action: 'allow', sent: '186.5 MB', recv: '12.1 MB' },
+          { dst: 'SentinelOne Cloud', label: 'EDR Agent', svc: 'SentinelOne', svcClass: 'svc-sec', count: 315, maxCount: 48007, action: 'allow', sent: '28.6 MB', recv: '72.0 MB' },
+          { dst: 'Microsoft Azure', label: 'Windows Update', svc: 'Microsoft-Azure', svcClass: 'svc-cloud', count: 882, maxCount: 48007, action: 'allow', sent: '3.4 MB', recv: '6.6 MB' },
+          { dst: 'Zoho Site24x7', label: 'Uptime Monitor', svc: 'Site24x7.Monitor', svcClass: 'svc-mon', count: 231, maxCount: 48007, action: 'allow', sent: '1.1 MB', recv: '1.4 MB' },
+        ]
+      },
+      {
+        label: 'Denied Traffic', icon: '🚫', flows: [
+          { dst: '10.1.1.18', label: 'Opus Host', svc: 'TCP/9004', svcClass: 'svc-other', count: 1765, maxCount: 48007, action: 'deny', sent: '—', recv: '—' },
+          { dst: '10.1.1.157', label: 'EventLog Analyzer', svc: 'EventLog_Analyzer', svcClass: 'svc-other', count: 618, maxCount: 48007, action: 'deny', sent: '—', recv: '—' },
+          { dst: '10.30.3.255', label: 'Broadcast / Netwrix', svc: 'Netwrix', svcClass: 'svc-other', count: 544, maxCount: 48007, action: 'deny', sent: '—', recv: '—' },
+        ]
+      }
+    ]
+  },
+
+  sa3: {
+    ip: '10.30.1.242',
+    name: 'SIFPSA3',
+    role: 'Application Server — TruckerSearch / Web App',
+    iface: 'SIFPServers',
+    total: 18145,
+    color: '#fb923c',
+    note: 'Hosts the TruckerSearch web application — serves HTTP requests from the Opus network (10.1.1.0/24). Also syncs large volumes of data to Azure SQL MI. Denied RPC traffic to 10.31.20.5 is a notable blocked probe.',
+    categories: [
+      {
+        label: 'Application Traffic', icon: '🖥️', flows: [
+          { dst: '10.1.1.106', label: 'Opus TruckerSearch Client', svc: 'HTTP', svcClass: 'svc-web', count: 3688, maxCount: 10362, action: 'allow', sent: '56.4 MB', recv: '2,811.8 MB' },
+          { dst: '10.2.105.11', label: 'Azure SQL Managed Instance', svc: 'Azure_SQL_MI', svcClass: 'svc-db', count: 201, maxCount: 10362, action: 'allow', sent: '906,189 MB', recv: '31,369 MB' },
+        ]
+      },
+      {
+        label: 'Cloud Services', icon: '☁️', flows: [
+          { dst: 'Microsoft Azure', label: 'Windows Update / Azure', svc: 'Microsoft-Azure', svcClass: 'svc-cloud', count: 4520, maxCount: 10362, action: 'allow', sent: '1,572 MB', recv: '1,157 MB' },
+          { dst: 'Datadog', label: 'Monitoring Agent', svc: 'Datadog-Datadog', svcClass: 'svc-mon', count: 3125, maxCount: 10362, action: 'allow', sent: '753.1 MB', recv: '47.5 MB' },
+          { dst: 'SentinelOne Cloud', label: 'EDR Agent', svc: 'SentinelOne', svcClass: 'svc-sec', count: 320, maxCount: 10362, action: 'allow', sent: '38.7 MB', recv: '80.2 MB' },
+          { dst: 'Zoho Site24x7', label: 'Uptime Monitor', svc: 'Site24x7.Monitor', svcClass: 'svc-mon', count: 229, maxCount: 10362, action: 'allow', sent: '1.1 MB', recv: '1.4 MB' },
+          { dst: 'Mimecast', label: 'Email Security', svc: 'Mimecast', svcClass: 'svc-sec', count: 30, maxCount: 10362, action: 'allow', sent: '5.9 MB', recv: '0.2 MB' },
+        ]
+      },
+      {
+        label: 'Active Directory', icon: '🔐', flows: [
+          { dst: '10.1.1.173', label: 'Opus Primary DC', svc: 'Windows AD', svcClass: 'svc-ad', count: 761, maxCount: 10362, action: 'allow', sent: '5.8 MB', recv: '9.5 MB' },
+          { dst: '10.2.151.68', label: 'Azure DC', svc: 'Windows AD', svcClass: 'svc-ad', count: 301, maxCount: 10362, action: 'allow', sent: '1.7 MB', recv: '2.7 MB' },
+          { dst: '10.8.1.108', label: 'RightFax Server', svc: 'RightFax clients', svcClass: 'svc-other', count: 103, maxCount: 10362, action: 'mixed', sent: '0.5 MB', recv: '0.2 MB' },
+        ]
+      },
+      {
+        label: 'Denied Traffic', icon: '🚫', flows: [
+          { dst: '10.31.20.5', label: 'External / Unknown Host', svc: 'lower RCP', svcClass: 'svc-rpc', count: 3425, maxCount: 10362, action: 'deny', sent: '—', recv: '—' },
+          { dst: '10.1.1.157', label: 'EventLog Analyzer', svc: 'EventLog_Analyzer', svcClass: 'svc-other', count: 612, maxCount: 10362, action: 'deny', sent: '—', recv: '—' },
+          { dst: '10.30.3.255', label: 'Netwrix Broadcast', svc: 'Netwrix', svcClass: 'svc-other', count: 30, maxCount: 10362, action: 'deny', sent: '—', recv: '—' },
+        ]
+      }
+    ]
+  },
+
+  azdf1: {
+    ip: '10.30.1.243',
+    name: 'SIFPAZUREDF1',
+    role: 'Azure Data Factory / Integration Server',
+    iface: 'SIFPServers',
+    total: 13076,
+    color: '#60a5fa',
+    note: 'Primarily moves data to Azure: heavy MS-SQL traffic to 10.2.151.8 (Azure SQL) and HTTPS to 10.2.151.7. The 4.4GB sent via SQL with minimal receive is consistent with data pipeline push behavior.',
+    categories: [
+      {
+        label: 'Azure Data Pipeline', icon: '🗄️', flows: [
+          { dst: '10.2.151.8', label: 'Azure SQL Database', svc: 'MS-SQL', svcClass: 'svc-db', count: 5078, maxCount: 5078, action: 'allow', sent: '4,383.6 MB', recv: '57.7 MB' },
+          { dst: '10.2.151.7', label: 'Azure App Server', svc: 'HTTPS', svcClass: 'svc-web', count: 3516, maxCount: 5078, action: 'allow', sent: '217.1 MB', recv: '126.2 MB' },
+        ]
+      },
+      {
+        label: 'Monitoring & Security', icon: '🛡️', flows: [
+          { dst: 'Datadog', label: 'Monitoring Agent', svc: 'Datadog-Datadog', svcClass: 'svc-mon', count: 1679, maxCount: 5078, action: 'allow', sent: '344.5 MB', recv: '17.7 MB' },
+          { dst: 'SentinelOne Cloud', label: 'EDR Agent', svc: 'SentinelOne', svcClass: 'svc-sec', count: 304, maxCount: 5078, action: 'allow', sent: '15.9 MB', recv: '63.8 MB' },
+          { dst: 'Zoho Site24x7', label: 'Uptime Monitor', svc: 'Site24x7.Monitor', svcClass: 'svc-mon', count: 227, maxCount: 5078, action: 'allow', sent: '1.0 MB', recv: '1.4 MB' },
+          { dst: 'Microsoft Azure', label: 'Windows Update', svc: 'Microsoft-Azure', svcClass: 'svc-cloud', count: 1167, maxCount: 5078, action: 'allow', sent: '24.7 MB', recv: '17.8 MB' },
+        ]
+      },
+      {
+        label: 'Active Directory', icon: '🔐', flows: [
+          { dst: '10.1.1.81', label: 'Opus DNS / DC', svc: 'DNS', svcClass: 'svc-dns', count: 587, maxCount: 5078, action: 'allow', sent: '0.1 MB', recv: '0.1 MB' },
+          { dst: '10.1.1.173', label: 'Opus Primary DC', svc: 'Windows AD', svcClass: 'svc-ad', count: 69, maxCount: 5078, action: 'allow', sent: '0.2 MB', recv: '0.4 MB' },
+          { dst: '10.2.151.68', label: 'Azure DC', svc: 'Windows AD', svcClass: 'svc-ad', count: 55, maxCount: 5078, action: 'allow', sent: '0.2 MB', recv: '0.4 MB' },
+        ]
+      },
+      {
+        label: 'Denied Traffic', icon: '🚫', flows: [
+          { dst: '10.30.3.255', label: 'Netwrix Broadcast', svc: 'Netwrix', svcClass: 'svc-other', count: 33, maxCount: 5078, action: 'deny', sent: '—', recv: '—' },
+          { dst: '10.0.1.101', label: 'Unknown Host', svc: 'LDAP_UDP', svcClass: 'svc-other', count: 5, maxCount: 5078, action: 'deny', sent: '—', recv: '—' },
+        ]
+      }
+    ]
+  },
+
+  fs01: {
+    ip: '10.30.1.245',
+    name: 'SIFPFS01',
+    role: 'File Server / Network Management',
+    iface: 'SIFPServers',
+    total: 11713,
+    color: '#34d399',
+    note: 'Actively polls FortiSwitches via SNMP and PING (10.33.255.5). Hosts Desktop Central MSP agent — VPN users connect for endpoint management. Also ships monitoring data to both Datadog and Zoho Site24x7.',
+    categories: [
+      {
+        label: 'Network Management', icon: '📡', flows: [
+          { dst: '10.33.255.5', label: 'FortiSwitch Management', svc: 'SNMP', svcClass: 'svc-mon', count: 1598, maxCount: 2038, action: 'allow', sent: '7.9 MB', recv: '57.9 MB' },
+          { dst: '10.33.255.5', label: 'FortiSwitch Reachability', svc: 'PING', svcClass: 'svc-mon', count: 1601, maxCount: 2038, action: 'allow', sent: '0.2 MB', recv: '0.2 MB' },
+          { dst: '10.2.151.68', label: 'Azure DC Reachability', svc: 'PING', svcClass: 'svc-mon', count: 81, maxCount: 2038, action: 'allow', sent: '< 1 MB', recv: '< 1 MB' },
+        ]
+      },
+      {
+        label: 'Monitoring & Security', icon: '🛡️', flows: [
+          { dst: 'Datadog', label: 'Monitoring Agent', svc: 'Datadog-Datadog', svcClass: 'svc-mon', count: 2038, maxCount: 2038, action: 'allow', sent: '897.9 MB', recv: '24.0 MB' },
+          { dst: 'SentinelOne Cloud', label: 'EDR Agent', svc: 'SentinelOne', svcClass: 'svc-sec', count: 1902, maxCount: 2038, action: 'allow', sent: '19.3 MB', recv: '60.1 MB' },
+          { dst: 'Zoho Site24x7', label: 'Uptime Monitor', svc: 'Site24x7.Monitor', svcClass: 'svc-mon', count: 1106, maxCount: 2038, action: 'allow', sent: '3.0 MB', recv: '9.4 MB' },
+          { dst: 'Cloudflare CDN', label: 'SSL/Content', svc: 'Cloudflare-CDN', svcClass: 'svc-cloud', count: 200, maxCount: 2038, action: 'allow', sent: '113.5 MB', recv: '44.8 MB' },
+          { dst: 'AWS CloudFront', label: 'Software Distribution', svc: 'CloudFront', svcClass: 'svc-cloud', count: 158, maxCount: 2038, action: 'allow', sent: '5.4 MB', recv: '218.9 MB' },
+        ]
+      },
+      {
+        label: 'Active Directory', icon: '🔐', flows: [
+          { dst: '10.1.1.173', label: 'Opus Primary DC', svc: 'Windows AD', svcClass: 'svc-ad', count: 501, maxCount: 2038, action: 'allow', sent: '2.5 MB', recv: '3.2 MB' },
+          { dst: '10.2.151.68', label: 'Azure DC', svc: 'Windows AD', svcClass: 'svc-ad', count: 463, maxCount: 2038, action: 'allow', sent: '11.7 MB', recv: '12.2 MB' },
+          { dst: '10.1.1.81', label: 'Opus Secondary DC', svc: 'Windows AD', svcClass: 'svc-ad', count: 431, maxCount: 2038, action: 'allow', sent: '2.3 MB', recv: '2.5 MB' },
+        ]
+      },
+      {
+        label: 'Denied Traffic', icon: '🚫', flows: [
+          { dst: '192.168.223.1', label: 'VMware vSwitch / Local', svc: 'lower RCP', svcClass: 'svc-rpc', count: 252, maxCount: 2038, action: 'deny', sent: '—', recv: '—' },
+          { dst: '10.30.3.255', label: 'Netwrix Broadcast', svc: 'Netwrix', svcClass: 'svc-other', count: 90, maxCount: 2038, action: 'deny', sent: '—', recv: '—' },
+          { dst: '10.30.3.255', label: 'SNMP Broadcast', svc: 'SNMP', svcClass: 'svc-other', count: 58, maxCount: 2038, action: 'deny', sent: '—', recv: '—' },
+        ]
+      }
+    ]
+  },
+
+  bk01: {
+    ip: '10.30.1.241',
+    name: 'SIFPBACKUP01',
+    role: 'Backup Server',
+    iface: 'SIFPServers',
+    total: 6442,
+    color: '#a78bfa',
+    note: '⚠️ Notably, this server sent over 106 GB outbound via HTTPS to US cloud destinations — consistent with cloud backup jobs. The Datadog agent sends ~60 MB of metrics. All other traffic is standard server baseline.',
+    categories: [
+      {
+        label: 'Cloud Backup', icon: '💾', flows: [
+          { dst: 'HTTPS — US Cloud', label: 'Backup destination (cloud)', svc: 'HTTPS', svcClass: 'svc-cloud', count: 3593, maxCount: 3593, action: 'allow', sent: '106,173 MB', recv: '1,695 MB' },
+          { dst: 'AWS CloudFront', label: 'Content/Software Distribution', svc: 'CloudFront', svcClass: 'svc-cloud', count: 152, maxCount: 3593, action: 'allow', sent: '0.1 MB', recv: '0.8 MB' },
+          { dst: 'DigiCert OCSP', label: 'Certificate Validation', svc: 'DigiCert-OCSP', svcClass: 'svc-sec', count: 169, maxCount: 3593, action: 'mixed', sent: '0.1 MB', recv: '0.1 MB' },
+        ]
+      },
+      {
+        label: 'Monitoring & Security', icon: '🛡️', flows: [
+          { dst: 'Datadog', label: 'Monitoring Agent', svc: 'Datadog-Datadog', svcClass: 'svc-mon', count: 1460, maxCount: 3593, action: 'allow', sent: '59.8 MB', recv: '15.3 MB' },
+          { dst: 'SentinelOne Cloud', label: 'EDR Agent', svc: 'SentinelOne', svcClass: 'svc-sec', count: 314, maxCount: 3593, action: 'allow', sent: '17.3 MB', recv: '52.8 MB' },
+          { dst: 'Zoho Site24x7', label: 'Uptime Monitor', svc: 'Site24x7.Monitor', svcClass: 'svc-mon', count: 216, maxCount: 3593, action: 'allow', sent: '1.3 MB', recv: '1.5 MB' },
+          { dst: 'Microsoft Azure', label: 'Windows Update', svc: 'Microsoft-Azure', svcClass: 'svc-cloud', count: 43, maxCount: 3593, action: 'allow', sent: '0.1 MB', recv: '0.5 MB' },
+        ]
+      },
+      {
+        label: 'Active Directory', icon: '🔐', flows: [
+          { dst: '10.2.151.68', label: 'Azure DC', svc: 'Windows AD', svcClass: 'svc-ad', count: 120, maxCount: 3593, action: 'allow', sent: '1.3 MB', recv: '2.1 MB' },
+          { dst: '10.1.1.81', label: 'Opus Secondary DC', svc: 'Windows AD', svcClass: 'svc-ad', count: 117, maxCount: 3593, action: 'allow', sent: '1.2 MB', recv: '1.9 MB' },
+          { dst: '10.1.1.173', label: 'Opus Primary DC', svc: 'Windows AD', svcClass: 'svc-ad', count: 22, maxCount: 3593, action: 'allow', sent: '0.1 MB', recv: '< 1 MB' },
+        ]
+      },
+      {
+        label: 'Denied Traffic', icon: '🚫', flows: [
+          { dst: '10.30.3.255', label: 'Netwrix Broadcast', svc: 'Netwrix', svcClass: 'svc-other', count: 30, maxCount: 3593, action: 'deny', sent: '—', recv: '—' },
+          { dst: '10.0.1.101', label: 'Unknown Host', svc: 'LDAP_UDP', svcClass: 'svc-other', count: 8, maxCount: 3593, action: 'deny', sent: '—', recv: '—' },
+        ]
+      }
+    ]
+  },
+
+  ts01: {
+    ip: '10.30.1.244',
+    name: 'SIFPTS01',
+    role: 'Terminal Services / Remote Desktop Server',
+    iface: 'SIFPServers',
+    total: 4311,
+    color: '#2dd4bf',
+    note: 'Standard server traffic pattern. Monitoring via Datadog is the primary activity. Office365 connections suggest this TS server is used for user sessions with email access.',
+    categories: [
+      {
+        label: 'Monitoring & Security', icon: '🛡️', flows: [
+          { dst: 'Datadog', label: 'Monitoring Agent', svc: 'Datadog-Datadog', svcClass: 'svc-mon', count: 1651, maxCount: 1651, action: 'allow', sent: '259.7 MB', recv: '15.7 MB' },
+          { dst: 'SentinelOne Cloud', label: 'EDR Agent', svc: 'SentinelOne', svcClass: 'svc-sec', count: 304, maxCount: 1651, action: 'allow', sent: '20.9 MB', recv: '50.8 MB' },
+          { dst: 'Zoho Site24x7', label: 'Uptime Monitor', svc: 'Site24x7.Monitor', svcClass: 'svc-mon', count: 225, maxCount: 1651, action: 'allow', sent: '1.1 MB', recv: '1.4 MB' },
+          { dst: 'Microsoft Azure', label: 'Windows Update', svc: 'Microsoft-Azure', svcClass: 'svc-cloud', count: 1038, maxCount: 1651, action: 'allow', sent: '9.0 MB', recv: '10.0 MB' },
+        ]
+      },
+      {
+        label: 'Productivity (User Sessions)', icon: '💼', flows: [
+          { dst: 'Microsoft Office365', label: 'Email / SharePoint / Teams', svc: 'Office365.Published', svcClass: 'svc-web', count: 206, maxCount: 1651, action: 'allow', sent: '39.6 MB', recv: '33.9 MB' },
+          { dst: 'Microsoft Outlook', label: 'Outlook Online', svc: 'Microsoft-Outlook', svcClass: 'svc-web', count: 17, maxCount: 1651, action: 'mixed', sent: '1.7 MB', recv: '0.7 MB' },
+        ]
+      },
+      {
+        label: 'Active Directory', icon: '🔐', flows: [
+          { dst: '10.2.151.68', label: 'Azure DC', svc: 'Windows AD', svcClass: 'svc-ad', count: 315, maxCount: 1651, action: 'allow', sent: '2.0 MB', recv: '3.1 MB' },
+          { dst: '10.1.1.173', label: 'Opus Primary DC', svc: 'Windows AD', svcClass: 'svc-ad', count: 64, maxCount: 1651, action: 'allow', sent: '0.2 MB', recv: '0.3 MB' },
+          { dst: '10.1.1.81', label: 'Opus Secondary DC', svc: 'Windows AD', svcClass: 'svc-ad', count: 25, maxCount: 1651, action: 'allow', sent: '< 1 MB', recv: '< 1 MB' },
+        ]
+      },
+      {
+        label: 'Denied Traffic', icon: '🚫', flows: [
+          { dst: '10.30.3.255', label: 'Netwrix Broadcast', svc: 'Netwrix', svcClass: 'svc-other', count: 113, maxCount: 1651, action: 'deny', sent: '—', recv: '—' },
+          { dst: '10.0.1.101', label: 'Unknown Host', svc: 'LDAP_UDP', svcClass: 'svc-other', count: 5, maxCount: 1651, action: 'deny', sent: '—', recv: '—' },
+        ]
+      }
+    ]
+  },
+
+  ws5: {
+    ip: '10.30.5.0/24',
+    name: 'SIFPWorkstation',
+    role: 'Primary Workstation Subnet — General Business Users',
+    iface: 'SIFPWorkstation',
+    total: 212681,
+    color: '#f472b6',
+    note: 'Highest connection volume of any segment. Meta-Web traffic (37K) is the top flow — this includes Facebook and Instagram. Heavy Office365 and RingCentral use confirm this is the primary end-user segment. Denied tcp/7680 traffic to internal hosts is Windows Update Delivery Optimization (WUDO) being blocked across subnets.',
+    categories: [
+      {
+        label: 'Internet — Productivity & Comms', icon: '🌐', flows: [
+          { dst: 'Meta (Facebook/Instagram)', label: 'Social Media', svc: 'Meta-Web', svcClass: 'svc-web', count: 37088, maxCount: 37088, action: 'mixed', sent: '10,655 MB', recv: '7,462 MB' },
+          { dst: 'Microsoft Azure', label: 'Azure Services / Cloud', svc: 'Microsoft-Azure', svcClass: 'svc-cloud', count: 37081, maxCount: 37088, action: 'mixed', sent: '2,440 MB', recv: '2,330 MB' },
+          { dst: 'Microsoft Office365', label: 'Email / SharePoint / Teams', svc: 'Office365.Published', svcClass: 'svc-web', count: 28688, maxCount: 37088, action: 'mixed', sent: '7,807 MB', recv: '14,880 MB' },
+          { dst: 'RingCentral', label: 'VoIP / Video Conferencing', svc: 'RingCentral', svcClass: 'svc-voip', count: 11633, maxCount: 37088, action: 'allow', sent: '13,340 MB', recv: '9,076 MB' },
+          { dst: 'Google (Search / Web)', label: 'Browsing / Google Apps', svc: 'Google-Web', svcClass: 'svc-web', count: 15223, maxCount: 37088, action: 'mixed', sent: '350.8 MB', recv: '1,757 MB' },
+          { dst: 'Google Gmail', label: 'Email', svc: 'Google-Gmail', svcClass: 'svc-web', count: 939, maxCount: 37088, action: 'allow', sent: '—', recv: '—' },
+          { dst: 'Microsoft Outlook', label: 'Outlook Online', svc: 'Microsoft-Outlook', svcClass: 'svc-web', count: 1742, maxCount: 37088, action: 'mixed', sent: '55.2 MB', recv: '57.3 MB' },
+        ]
+      },
+      {
+        label: 'Internet — CDN & Infrastructure', icon: '🏗️', flows: [
+          { dst: 'Akamai CDN', label: 'Content Delivery', svc: 'Akamai-CDN', svcClass: 'svc-cloud', count: 7890, maxCount: 37088, action: 'mixed', sent: '319.8 MB', recv: '8,058 MB' },
+          { dst: 'Amazon AWS / EC2', label: 'SaaS Backends', svc: 'Amazon-AWS.EC2', svcClass: 'svc-cloud', count: 5164, maxCount: 37088, action: 'mixed', sent: '1,670 MB', recv: '1,660 MB' },
+          { dst: 'Cloudflare CDN', label: 'Content Delivery', svc: 'Cloudflare-CDN', svcClass: 'svc-cloud', count: 5308, maxCount: 37088, action: 'mixed', sent: '329.3 MB', recv: '939.8 MB' },
+          { dst: 'Amazon CloudFront', label: 'Software / Media Delivery', svc: 'AWS.CloudFront', svcClass: 'svc-cloud', count: 3736, maxCount: 37088, action: 'mixed', sent: '65.1 MB', recv: '987.4 MB' },
+          { dst: 'Microsoft Windows Update', label: 'Patch Management', svc: 'Microsoft-Update', svcClass: 'svc-cloud', count: 2690, maxCount: 37088, action: 'allow', sent: '20.5 MB', recv: '887.7 MB' },
+          { dst: 'Google Cloud', label: 'GCP Backend Services', svc: 'Google-Google.Cloud', svcClass: 'svc-cloud', count: 3574, maxCount: 37088, action: 'mixed', sent: '58.6 MB', recv: '74.1 MB' },
+        ]
+      },
+      {
+        label: 'Security & Monitoring Agents', icon: '🛡️', flows: [
+          { dst: 'SentinelOne Cloud', label: 'EDR Agent', svc: 'SentinelOne', svcClass: 'svc-sec', count: 6707, maxCount: 37088, action: 'allow', sent: '569.8 MB', recv: '1,350.8 MB' },
+          { dst: 'Zoho Site24x7', label: 'Uptime Monitor', svc: 'Site24x7.Monitor', svcClass: 'svc-mon', count: 4577, maxCount: 37088, action: 'allow', sent: '28.9 MB', recv: '32.1 MB' },
+        ]
+      },
+      {
+        label: 'Internal — Active Directory', icon: '🔐', flows: [
+          { dst: '10.1.1.173', label: 'Opus Primary DC', svc: 'Windows AD', svcClass: 'svc-ad', count: 6799, maxCount: 37088, action: 'mixed', sent: '106.1 MB', recv: '182.8 MB' },
+          { dst: '10.1.1.81', label: 'Opus Secondary DC', svc: 'Windows AD', svcClass: 'svc-ad', count: 6435, maxCount: 37088, action: 'mixed', sent: '126.0 MB', recv: '210.0 MB' },
+          { dst: '10.2.151.68', label: 'Azure Domain Controller', svc: 'Windows AD', svcClass: 'svc-ad', count: 5177, maxCount: 37088, action: 'mixed', sent: '82.4 MB', recv: '138.6 MB' },
+          { dst: '10.1.1.81', label: 'Opus DNS', svc: 'DNS', svcClass: 'svc-dns', count: 2321, maxCount: 37088, action: 'allow', sent: '0.2 MB', recv: '0.4 MB' },
+        ]
+      },
+      {
+        label: 'Denied Traffic', icon: '🚫', flows: [
+          { dst: '10.30.11.100 / .101', label: 'Guest WiFi Hosts — WUDO blocked', svc: 'TCP/7680', svcClass: 'svc-other', count: 4076, maxCount: 37088, action: 'deny', sent: '—', recv: '—' },
+        ]
+      }
+    ]
+  },
+
+  ws13: {
+    ip: '10.30.13.0/24',
+    name: 'SIFP-Internal',
+    role: 'Secondary Workstation Subnet',
+    iface: 'SIFP-Internal',
+    total: 98968,
+    color: '#fb923c',
+    note: 'Similar profile to 10.30.5.0/24 but with notably more FortiGuard and FortiClient EMS traffic — suggests this segment has more Fortinet endpoint management. Also receives Fortinet Fabric updates. WUDO (tcp/7680) denials match the workstation pattern.',
+    categories: [
+      {
+        label: 'Internet — Productivity & Comms', icon: '🌐', flows: [
+          { dst: 'Microsoft Azure', label: 'Azure Services / Cloud', svc: 'Microsoft-Azure', svcClass: 'svc-cloud', count: 17578, maxCount: 17578, action: 'mixed', sent: '6,808 MB', recv: '10,651 MB' },
+          { dst: 'Microsoft Office365', label: 'Email / SharePoint / Teams', svc: 'Office365.Published', svcClass: 'svc-web', count: 9226, maxCount: 17578, action: 'mixed', sent: '2,576 MB', recv: '3,999 MB' },
+          { dst: 'RingCentral', label: 'VoIP / Video Conferencing', svc: 'RingCentral', svcClass: 'svc-voip', count: 4588, maxCount: 17578, action: 'allow', sent: '2,978 MB', recv: '2,473 MB' },
+          { dst: 'Google (Search / Web)', label: 'Browsing / Google Apps', svc: 'Google-Web', svcClass: 'svc-web', count: 3488, maxCount: 17578, action: 'mixed', sent: '68.5 MB', recv: '264.4 MB' },
+          { dst: 'Meta (Facebook/Instagram)', label: 'Social Media', svc: 'Meta-Web', svcClass: 'svc-web', count: 2839, maxCount: 17578, action: 'mixed', sent: '271.7 MB', recv: '560.2 MB' },
+          { dst: 'Akamai CDN', label: 'Content Delivery', svc: 'Akamai-CDN', svcClass: 'svc-cloud', count: 2046, maxCount: 17578, action: 'mixed', sent: '93.3 MB', recv: '5,250.2 MB' },
+        ]
+      },
+      {
+        label: 'Fortinet Security Fabric', icon: '🔒', flows: [
+          { dst: 'Fortinet FortiGuard', label: 'Threat Intelligence / AV Updates', svc: 'FortiGuard', svcClass: 'svc-sec', count: 6022, maxCount: 17578, action: 'allow', sent: '130.8 MB', recv: '157.2 MB' },
+          { dst: 'Fortinet FortiClient EMS', label: 'Endpoint Management', svc: 'FortiClient.EMS', svcClass: 'svc-sec', count: 2983, maxCount: 17578, action: 'mixed', sent: '7.2 MB', recv: '3.3 MB' },
+          { dst: 'SentinelOne Cloud', label: 'EDR Agent', svc: 'SentinelOne', svcClass: 'svc-sec', count: 7246, maxCount: 17578, action: 'allow', sent: '604.4 MB', recv: '1,616.8 MB' },
+          { dst: 'Zoho Site24x7', label: 'Uptime Monitor', svc: 'Site24x7.Monitor', svcClass: 'svc-mon', count: 5082, maxCount: 17578, action: 'allow', sent: '27.9 MB', recv: '34.3 MB' },
+          { dst: 'Microsoft Windows Update', label: 'Patch Management', svc: 'Microsoft-Update', svcClass: 'svc-cloud', count: 4732, maxCount: 17578, action: 'allow', sent: '14.3 MB', recv: '444.7 MB' },
+        ]
+      },
+      {
+        label: 'Internal — Active Directory', icon: '🔐', flows: [
+          { dst: '10.2.151.68', label: 'Azure Domain Controller', svc: 'Windows AD', svcClass: 'svc-ad', count: 3778, maxCount: 17578, action: 'mixed', sent: '71.1 MB', recv: '121.3 MB' },
+          { dst: '10.1.1.173', label: 'Opus Primary DC', svc: 'Windows AD', svcClass: 'svc-ad', count: 3374, maxCount: 17578, action: 'allow', sent: '76.5 MB', recv: '129.4 MB' },
+          { dst: '10.1.1.81', label: 'Opus DNS / DC', svc: 'DNS', svcClass: 'svc-dns', count: 2929, maxCount: 17578, action: 'allow', sent: '0.2 MB', recv: '0.5 MB' },
+          { dst: '10.1.1.81', label: 'Opus Secondary DC', svc: 'Windows AD', svcClass: 'svc-ad', count: 2793, maxCount: 17578, action: 'allow', sent: '43.2 MB', recv: '75.6 MB' },
+        ]
+      },
+      {
+        label: 'Denied Traffic', icon: '🚫', flows: [
+          { dst: '10.30.11.100 / .101 / .102', label: 'Guest WiFi Hosts — WUDO blocked', svc: 'TCP/7680', svcClass: 'svc-other', count: 7445, maxCount: 17578, action: 'deny', sent: '—', recv: '—' },
+        ]
+      }
+    ]
+  },
+
+  opus141: {
+    ip: '10.1.1.141',
+    name: 'FCTG SIEM / Infra Mgmt',
+    role: 'Opus Infrastructure — SIEM, Syslog Collector, Monitoring',
+    iface: 'SIFP_OPUS',
+    total: 51522,
+    color: '#60a5fa',
+    note: 'This is the Opus/FCTG SIEM and infrastructure management server — the highest-volume source on the Opus network. Over 90% of its 51,522 sessions are denied lower RCP and SIP probes sent systematically to every known SIFP server and workstation IP. This is automated infrastructure discovery behavior typical of a SIEM. The small number of allowed flows use the "FCTG Infrastructure Support" policy (HTTP/SMB/HTTPS). vCenter (10.30.1.9) ships 58 GB of syslog to this host.',
+    categories: [
+      {
+        label: 'Infrastructure Support — Allowed', icon: '🔧', flows: [
+          { dst: 'SIFP Servers (×7)', label: 'HTTP — Server Management', svc: 'HTTP', svcClass: 'svc-web', count: 1155, maxCount: 4500, action: 'mixed', sent: '0.7 MB', recv: '0.3 MB' },
+          { dst: 'SIFP Servers & Workstations (×40+)', label: 'SMB — Share / Agent Access', svc: 'SMB', svcClass: 'svc-rpc', count: 3200, maxCount: 4500, action: 'mixed', sent: '4.0 MB', recv: '0.1 MB' },
+          { dst: 'SIFP Servers (×3)', label: 'HTTPS — Secure Management', svc: 'HTTPS', svcClass: 'svc-web', count: 175, maxCount: 4500, action: 'mixed', sent: '0.3 MB', recv: '0.2 MB' },
+        ]
+      },
+      {
+        label: 'Denied — RCP Probes to Servers', icon: '🚫', flows: [
+          { dst: '10.30.1.245 (SIFPFS01)', label: 'lower RCP — Blocked', svc: 'lower RCP', svcClass: 'svc-rpc', count: 1374, maxCount: 4500, action: 'deny', sent: '—', recv: '—' },
+          { dst: '10.30.1.241 (SIFPBACKUP01)', label: 'lower RCP — Blocked', svc: 'lower RCP', svcClass: 'svc-rpc', count: 1241, maxCount: 4500, action: 'deny', sent: '—', recv: '—' },
+          { dst: '10.30.1.244 (SIFPTS01)', label: 'lower RCP — Blocked', svc: 'lower RCP', svcClass: 'svc-rpc', count: 1197, maxCount: 4500, action: 'deny', sent: '—', recv: '—' },
+          { dst: '10.30.1.242 (SIFPSA3)', label: 'lower RCP — Blocked', svc: 'lower RCP', svcClass: 'svc-rpc', count: 1134, maxCount: 4500, action: 'deny', sent: '—', recv: '—' },
+          { dst: '10.30.1.246 (FCTGNETDC30)', label: 'lower RCP — Blocked', svc: 'lower RCP', svcClass: 'svc-rpc', count: 1089, maxCount: 4500, action: 'deny', sent: '—', recv: '—' },
+          { dst: '10.30.1.243 (SIFPAZUREDF1)', label: 'lower RCP — Blocked', svc: 'lower RCP', svcClass: 'svc-rpc', count: 1089, maxCount: 4500, action: 'deny', sent: '—', recv: '—' },
+        ]
+      },
+      {
+        label: 'Denied — RCP Probes to Workstations', icon: '🚫', flows: [
+          { dst: '10.30.13.x Workstations (×20+ hosts)', label: 'lower RCP sweep — Blocked', svc: 'lower RCP', svcClass: 'svc-rpc', count: 4400, maxCount: 4500, action: 'deny', sent: '—', recv: '—' },
+          { dst: '10.30.5.70 / .79', label: 'lower RCP — Blocked', svc: 'lower RCP', svcClass: 'svc-rpc', count: 958, maxCount: 4500, action: 'deny', sent: '—', recv: '—' },
+        ]
+      },
+      {
+        label: 'Denied — SIP Probes (All Hosts)', icon: '🚫', flows: [
+          { dst: 'All SIFP Servers (×9 hosts)', label: 'SIP probe — Blocked', svc: 'SIP', svcClass: 'svc-voip', count: 3348, maxCount: 4500, action: 'deny', sent: '—', recv: '—' },
+          { dst: '10.30.13.x / 10.30.5.x Workstations', label: 'SIP sweep — Blocked', svc: 'SIP', svcClass: 'svc-voip', count: 4200, maxCount: 4500, action: 'deny', sent: '—', recv: '—' },
+        ]
+      },
+      {
+        label: 'Denied — Event Log Collection', icon: '🚫', flows: [
+          { dst: 'SIFP Servers & Workstations', label: 'EventLog_Analyzer — Blocked', svc: 'EventLog_Analyzer', svcClass: 'svc-mon', count: 1200, maxCount: 4500, action: 'deny', sent: '—', recv: '—' },
+        ]
+      }
+    ]
+  },
+
+  opus172: {
+    ip: '10.1.1.172',
+    name: 'SA3 SQL Client',
+    role: 'Opus Application Server — TruckerSearch & File Access',
+    iface: 'SIFP_OPUS',
+    total: 4527,
+    color: '#60a5fa',
+    note: 'This Opus server accesses SIFP\'s TruckerSearch application via HTTP and direct MS-SQL, and reads SIFPFS01 file shares via SMB. All traffic is under "FCTG Infrastructure Support" or "MSSQL to SIFPSA3" policies. The mix of HTTP (2,285) and MS-SQL (1,123) to the same server suggests both web-tier and database-tier access.',
+    categories: [
+      {
+        label: 'TruckerSearch Application (SIFPSA3)', icon: '🖥️', flows: [
+          { dst: '10.30.1.242 (SIFPSA3)', label: 'HTTP — Web Application', svc: 'HTTP', svcClass: 'svc-web', count: 2285, maxCount: 2285, action: 'mixed', sent: '0.7 MB', recv: '2.0 MB' },
+          { dst: '10.30.1.242 (SIFPSA3)', label: 'MS-SQL — Database', svc: 'MS-SQL', svcClass: 'svc-db', count: 1123, maxCount: 2285, action: 'allow', sent: '0.2 MB', recv: '0.1 MB' },
+        ]
+      },
+      {
+        label: 'File Server Access', icon: '📂', flows: [
+          { dst: '10.30.1.245 (SIFPFS01)', label: 'SMB — File Share', svc: 'SMB', svcClass: 'svc-rpc', count: 1119, maxCount: 2285, action: 'mixed', sent: '0.2 MB', recv: '0.1 MB' },
+        ]
+      }
+    ]
+  },
+
+  opus18: {
+    ip: '10.1.1.18',
+    name: 'Netwrix Server',
+    role: 'Opus Netwrix Auditing — Active Directory Change Tracking',
+    iface: 'SIFP_OPUS',
+    total: 810,
+    color: '#60a5fa',
+    note: '⚠️ The Netwrix flow to FCTGNETDC30 shows 122 TB sent and 88 TB received — this is an auditing agent continuously streaming Active Directory change data. The byte volume is large enough to suggest this captures cumulative session data across multiple log periods rather than a single session.',
+    categories: [
+      {
+        label: 'Netwrix Active Directory Audit', icon: '📋', flows: [
+          { dst: '10.30.1.246 (FCTGNETDC30)', label: 'Netwrix — AD Change Auditing', svc: 'Netwrix', svcClass: 'svc-mon', count: 682, maxCount: 682, action: 'mixed', sent: '122,902 MB', recv: '88,040 MB' },
+        ]
+      },
+      {
+        label: 'Domain Controller Connectivity', icon: '🔐', flows: [
+          { dst: '10.30.1.246 (FCTGNETDC30)', label: 'ICMP Ping — Reachability Check', svc: 'PING', svcClass: 'svc-other', count: 128, maxCount: 682, action: 'allow', sent: '—', recv: '—' },
+        ]
+      }
+    ]
+  },
+
+  opus106: {
+    ip: '10.1.1.106',
+    name: 'RESSAHQ2',
+    role: 'Opus Report Server — SIFP File & App Access',
+    iface: 'SIFP_OPUS',
+    total: 345,
+    color: '#60a5fa',
+    note: 'RESSAHQ2 accesses SIFP servers for reporting functions: SMB to SIFPSA3 (policy "RESSAHQ2 to SIFPSA3") and SIFPFS01 (policy "FCTG-Reports to SIFPFS01"), plus HTTP to the TruckerSearch web application.',
+    categories: [
+      {
+        label: 'Application & File Access', icon: '📊', flows: [
+          { dst: '10.30.1.242 (SIFPSA3)', label: 'SMB — Report Data Access', svc: 'SMB', svcClass: 'svc-rpc', count: 128, maxCount: 128, action: 'mixed', sent: '0.7 MB', recv: '0.2 MB' },
+          { dst: '10.30.1.245 (SIFPFS01)', label: 'SMB — Report Output / Files', svc: 'SMB', svcClass: 'svc-rpc', count: 116, maxCount: 128, action: 'mixed', sent: '1.9 MB', recv: '0.3 MB' },
+          { dst: '10.30.1.242 (SIFPSA3)', label: 'HTTP — TruckerSearch App', svc: 'HTTP', svcClass: 'svc-web', count: 101, maxCount: 128, action: 'mixed', sent: '36.9 MB', recv: '12.6 MB' },
+        ]
+      }
+    ]
+  },
+
+  opus167: {
+    ip: '10.1.1.167 / .169',
+    name: 'Delinia Servers',
+    role: 'Opus — Delinia SSH Management Sessions',
+    iface: 'SIFP_OPUS',
+    total: 258,
+    color: '#60a5fa',
+    note: 'Two Delinia servers (.167 and .169) maintain SSH sessions into three SIFP hosts: 10.30.1.236, 10.30.1.237, and 10.30.1.9 (vCenter). All sessions are authorized under the "AccessfromDeliniaServers" firewall policy. Traffic is symmetric between the two hosts — they likely provide redundant management access.',
+    categories: [
+      {
+        label: 'SSH Management — AccessfromDeliniaServers', icon: '🔑', flows: [
+          { dst: '10.30.1.236', label: 'SSH — Remote Management (.167 & .169)', svc: 'SSH', svcClass: 'svc-other', count: 85, maxCount: 91, action: 'mixed', sent: '0.2 MB', recv: '0.2 MB' },
+          { dst: '10.30.1.237', label: 'SSH — Remote Management (.167 & .169)', svc: 'SSH', svcClass: 'svc-other', count: 85, maxCount: 91, action: 'mixed', sent: '0.2 MB', recv: '0.2 MB' },
+          { dst: '10.30.1.9 (vCenter)', label: 'SSH — vCenter Access (.167 & .169)', svc: 'SSH', svcClass: 'svc-other', count: 85, maxCount: 91, action: 'mixed', sent: '0.2 MB', recv: '0.4 MB' },
+          { dst: '10.30.13.18', label: 'DCE-RPC — Single Session (.169 only)', svc: 'DCE-RPC', svcClass: 'svc-rpc', count: 3, maxCount: 91, action: 'allow', sent: '—', recv: '—' },
+        ]
+      }
+    ]
+  },
+
+  opus67: {
+    ip: '10.1.1.67',
+    name: 'Check Printing Server',
+    role: 'Opus — GP Check Printing & File Access',
+    iface: 'SIFP_OPUS',
+    total: 289,
+    color: '#60a5fa',
+    note: 'This Opus server drives check printing operations across multiple SIFP printers (10.30.7.16, .20, .201, .205) via the GP_Check_Printing service under the "FCTG-GP to CheckPrinter" policy. It also accesses SIFPFS01 via SMB for check data or output files.',
+    categories: [
+      {
+        label: 'Check Printing — FCTG-GP to CheckPrinter', icon: '🖨️', flows: [
+          { dst: '10.30.7.16', label: 'GP_Check_Printing', svc: 'GP_Check_Printing', svcClass: 'svc-other', count: 75, maxCount: 75, action: 'allow', sent: '< 1 MB', recv: '< 1 MB' },
+          { dst: '10.30.7.20', label: 'GP_Check_Printing', svc: 'GP_Check_Printing', svcClass: 'svc-other', count: 62, maxCount: 75, action: 'allow', sent: '< 1 MB', recv: '< 1 MB' },
+          { dst: '10.30.7.205', label: 'GP_Check_Printing', svc: 'GP_Check_Printing', svcClass: 'svc-other', count: 54, maxCount: 75, action: 'allow', sent: '0.1 MB', recv: '< 1 MB' },
+          { dst: '10.30.7.201', label: 'GP_Check_Printing', svc: 'GP_Check_Printing', svcClass: 'svc-other', count: 48, maxCount: 75, action: 'allow', sent: '0.1 MB', recv: '0.1 MB' },
+        ]
+      },
+      {
+        label: 'File Server Access', icon: '📂', flows: [
+          { dst: '10.30.1.245 (SIFPFS01)', label: 'SMB — File Share', svc: 'SMB', svcClass: 'svc-rpc', count: 50, maxCount: 75, action: 'mixed', sent: '4.7 MB', recv: '2.8 MB' },
+        ]
+      }
+    ]
+  },
+
+  guest: {
+    ip: '10.30.11.0/24',
+    name: 'SIFP-Guest',
+    role: 'Guest WiFi Network — Internet Access Only',
+    iface: 'SIFP-Guest',
+    total: 54354,
+    color: '#fbbf24',
+    note: 'Properly segmented — all traffic is internet-bound only. No internal resource access is permitted or observed. High UDP/443 (QUIC protocol) usage alongside HTTPS reflects modern browser behavior. DNS goes to public resolvers (8.8.8.8, 9.9.9.9).',
+    categories: [
+      {
+        label: 'Internet Access', icon: '🌐', flows: [
+          { dst: 'Internet — HTTPS', label: 'General Secure Web Browsing', svc: 'HTTPS', svcClass: 'svc-web', count: 16977, maxCount: 16977, action: 'allow', sent: '487.6 MB', recv: '5,296.6 MB' },
+          { dst: 'Internet — UDP/443 (QUIC)', label: 'QUIC Protocol (Chrome / Apps)', svc: 'UDP/443', svcClass: 'svc-web', count: 9583, maxCount: 16977, action: 'allow', sent: '245.7 MB', recv: '2,709.6 MB' },
+          { dst: 'Internet — TCP/5223', label: 'Apple Push Notifications', svc: 'TCP/5223', svcClass: 'svc-other', count: 759, maxCount: 16977, action: 'allow', sent: '95.9 MB', recv: '80.0 MB' },
+        ]
+      },
+      {
+        label: 'DNS Resolution', icon: '🌐', flows: [
+          { dst: '8.8.8.8 / 9.9.9.9', label: 'Public DNS Resolvers', svc: 'DNS', svcClass: 'svc-dns', count: 5686, maxCount: 16977, action: 'allow', sent: '0.5 MB', recv: '0.9 MB' },
+        ]
+      },
+      {
+        label: 'Denied — Internal Access Attempts', icon: '🚫', flows: [
+          { dst: '10.30.x.x Workstations', label: 'WUDO Delivery Optimization — Blocked', svc: 'TCP/7680', svcClass: 'svc-other', count: 21000, maxCount: 16977, action: 'deny', sent: '—', recv: '—' },
+          { dst: '10.30.1.245', label: 'Desktop Central Agent — Blocked', svc: 'Desktop_Central_MSP', svcClass: 'svc-other', count: 618, maxCount: 16977, action: 'deny', sent: '—', recv: '—' },
+        ]
+      }
+    ]
+  },
+
+  voice: {
+    ip: '10.30.20.0/24',
+    name: 'SIFPVoice',
+    role: 'VoIP / Telephony System',
+    iface: 'SIFPVoice',
+    total: 14267,
+    color: '#f472b6',
+    note: 'TCP/5090 is the SIP-TLS signaling port — 10,362 sessions to the internet with massive data volumes (238 GB sent, 148 GB received) is consistent with an active cloud PBX system. NTP synchronization is critical for VoIP quality and is handled directly.',
+    categories: [
+      {
+        label: 'SIP Telephony', icon: '📞', flows: [
+          { dst: 'Internet — SIP TLS', label: 'SIP-TLS — Cloud PBX Signaling & Media', svc: 'TCP/5090', svcClass: 'svc-voip', count: 10362, maxCount: 10362, action: 'allow', sent: '238,050 MB', recv: '148,202 MB' },
+          { dst: 'Internet — Upper RPC', label: 'VoIP Control', svc: 'Upper RPC', svcClass: 'svc-voip', count: 126, maxCount: 10362, action: 'allow', sent: '39.4 MB', recv: '45.1 MB' },
+          { dst: 'Internet — UDP (RTP Media)', label: 'Real-Time Media Streams', svc: 'UDP/Various', svcClass: 'svc-voip', count: 34, maxCount: 10362, action: 'allow', sent: '~72 MB', recv: '~81 MB' },
+        ]
+      },
+      {
+        label: 'Time Synchronization & Management', icon: '⏱️', flows: [
+          { dst: 'Internet — NTP (US)', label: 'Time Sync — Primary', svc: 'NTP', svcClass: 'svc-mon', count: 1192, maxCount: 10362, action: 'allow', sent: '1,033.5 MB', recv: '1,032.3 MB' },
+          { dst: 'Internet — NTP (EU/AS)', label: 'Time Sync — Redundant', svc: 'NTP', svcClass: 'svc-mon', count: 281, maxCount: 10362, action: 'allow', sent: '27.6 MB', recv: '27.6 MB' },
+          { dst: 'Internet — LDAP-SSL', label: 'Directory Authentication', svc: 'TCP/636', svcClass: 'svc-ad', count: 83, maxCount: 10362, action: 'allow', sent: '0.4 MB', recv: '1.3 MB' },
+          { dst: '10.1.1.81', label: 'Opus DNS', svc: 'DNS', svcClass: 'svc-dns', count: 632, maxCount: 10362, action: 'allow', sent: '< 1 MB', recv: '< 1 MB' },
+          { dst: 'Internet — HTTPS', label: 'Management / Provisioning', svc: 'HTTPS', svcClass: 'svc-web', count: 1332, maxCount: 10362, action: 'allow', sent: '4.7 MB', recv: '24.5 MB' },
+        ]
+      }
+    ]
+  },
+
+  vpn: {
+    ip: '10.30.100.0/24',
+    name: 'FCT_SAML',
+    role: 'IPSEC VPN — Remote Users',
+    iface: 'FCT_SAML',
+    total: 5313,
+    color: '#34d399',
+    note: 'VPN users access SIFP internal servers for DNS, endpoint management (Desktop Central), file share access, and the TruckerSearch web app. Access is appropriately limited to defined services.',
+    categories: [
+      {
+        label: 'Internal Server Access', icon: '🔒', flows: [
+          { dst: '10.30.1.246 (FCTGNETDC30)', label: 'Internal DNS Resolution', svc: 'DNS', svcClass: 'svc-dns', count: 1332, maxCount: 1332, action: 'allow', sent: '0.2 MB', recv: '0.5 MB' },
+          { dst: '10.2.151.68', label: 'Azure DNS', svc: 'DNS', svcClass: 'svc-dns', count: 878, maxCount: 1332, action: 'allow', sent: '0.1 MB', recv: '0.1 MB' },
+          { dst: '10.30.1.245 (SIFPFS01)', label: 'File Server — RPC/Management', svc: 'RPC-Upper', svcClass: 'svc-rpc', count: 756, maxCount: 1332, action: 'mixed', sent: '8.5 MB', recv: '6.0 MB' },
+          { dst: '10.30.1.242 (SIFPSA3)', label: 'TruckerSearch Web App', svc: 'HTTP', svcClass: 'svc-web', count: 416, maxCount: 1332, action: 'allow', sent: '178.9 MB', recv: '329.1 MB' },
+          { dst: '10.30.1.245 (SIFPFS01)', label: 'Desktop Central Agent', svc: 'Desktop_Central_MSP', svcClass: 'svc-mon', count: 76, maxCount: 1332, action: 'allow', sent: '48.6 MB', recv: '2,944.2 MB' },
+          { dst: '10.30.1.245 (SIFPFS01)', label: 'File Share', svc: 'SMB', svcClass: 'svc-rpc', count: 37, maxCount: 1332, action: 'allow', sent: '21.4 MB', recv: '124.7 MB' },
+          { dst: '10.30.1.246 (FCTGNETDC30)', label: 'Netwrix Audit', svc: 'Netwrix', svcClass: 'svc-mon', count: 345, maxCount: 1332, action: 'mixed', sent: '0.6 MB', recv: '0.3 MB' },
+        ]
+      },
+      {
+        label: 'Denied Traffic', icon: '🚫', flows: [
+          { dst: '10.28.5.112', label: 'External Host — Blocked', svc: 'Upper RPC', svcClass: 'svc-rpc', count: 164, maxCount: 1332, action: 'deny', sent: '—', recv: '—' },
+        ]
+      }
+    ]
+  },
+
+  av: {
+    ip: '10.30.27.0/24',
+    name: 'SIFPAV',
+    role: 'Audio/Visual Equipment Network',
+    iface: 'SIFPAV',
+    total: 6117,
+    color: '#94a3b8',
+    note: 'AV devices use 10.30.1.246 for DNS resolution (allowed). All internet NTP and PING attempts are denied — these devices cannot reach the internet directly. This segment is tightly restricted.',
+    categories: [
+      {
+        label: 'Allowed Traffic', icon: '✅', flows: [
+          { dst: '10.30.1.246 (FCTGNETDC30)', label: 'Internal DNS Resolution', svc: 'DNS', svcClass: 'svc-dns', count: 3098, maxCount: 3098, action: 'allow', sent: '0.2 MB', recv: '0.4 MB' },
+        ]
+      },
+      {
+        label: 'Denied — Internet Access Blocked', icon: '🚫', flows: [
+          { dst: 'Internet — NTP', label: 'Time Sync — Denied (all regions)', svc: 'NTP', svcClass: 'svc-mon', count: 2014, maxCount: 3098, action: 'deny', sent: '—', recv: '—' },
+          { dst: 'Internet — PING', label: 'Reachability Test — Denied (all regions)', svc: 'PING', svcClass: 'svc-other', count: 999, maxCount: 3098, action: 'deny', sent: '—', recv: '—' },
+        ]
+      }
+    ]
+  },
+
+  iot: {
+    ip: '10.30.128.0/24',
+    name: 'IoT / Door Security',
+    role: 'Physical Access Control / IoT Devices',
+    iface: 'SIFPTest3',
+    total: 4626,
+    color: '#f87171',
+    note: '⚠️ 2,398 denied connections to port 8883 (Germany) — this is the MQTT protocol used by IoT devices. These devices are attempting to reach an MQTT broker in Germany but are being blocked. HTTPS traffic to US/EU hosts is allowed and likely device management.',
+    categories: [
+      {
+        label: 'Allowed Traffic', icon: '✅', flows: [
+          { dst: 'Internet — HTTPS', label: 'Device Management / Cloud', svc: 'HTTPS', svcClass: 'svc-web', count: 1076, maxCount: 2398, action: 'allow', sent: '28.2 MB', recv: '30.3 MB' },
+          { dst: 'Internet — DNS', label: 'DNS to 8.8.8.8', svc: 'DNS', svcClass: 'svc-dns', count: 952, maxCount: 2398, action: 'allow', sent: '0.1 MB', recv: '0.2 MB' },
+          { dst: 'Internet — HTTP', label: 'Device Updates (HTTP)', svc: 'HTTP', svcClass: 'svc-web', count: 41, maxCount: 2398, action: 'allow', sent: '2.7 MB', recv: '1,007 MB' },
+          { dst: 'Internet — NTP', label: 'Time Synchronization', svc: 'NTP', svcClass: 'svc-mon', count: 5, maxCount: 2398, action: 'allow', sent: '< 1 MB', recv: '< 1 MB' },
+        ]
+      },
+      {
+        label: 'Denied — MQTT Broker Blocked', icon: '🚫', flows: [
+          { dst: 'Internet — TCP/8883 (Germany)', label: '⚠️ MQTT Broker — IoT devices blocked from cloud broker', svc: 'TCP/8883', svcClass: 'svc-other', count: 2398, maxCount: 2398, action: 'deny', sent: '—', recv: '—' },
+          { dst: 'Internet — Desktop_Central_MSP', label: 'Desktop Central — Blocked', svc: 'Desktop_Central_MSP', svcClass: 'svc-other', count: 109, maxCount: 2398, action: 'deny', sent: '—', recv: '—' },
+        ]
+      }
+    ]
+  },
+
+  bp: {
+    ip: '10.10.198.31 / .86',
+    name: 'RailTraffic_From_BP',
+    role: 'BP Network — Terminal Server RDP Access',
+    iface: 'SIFP_BP',
+    total: 40,
+    color: '#fb923c',
+    note: 'Two BP hosts connect to SIFPTS01 (Terminal Server at 10.30.1.244) via RDP under the "RailTraffic_From_BP" policy. .31 is the primary user with 32 sessions and substantial data volume (187 MB sent, 606 MB received — consistent with an active RDP desktop session). .86 is a secondary host with 8 sessions.',
+    categories: [
+      {
+        label: 'RDP — Terminal Server Access', icon: '🖥️', flows: [
+          { dst: '10.30.1.244 (SIFPTS01)', label: 'RDP — 10.10.198.31 (Primary)', svc: 'RDP', svcClass: 'svc-other', count: 32, maxCount: 32, action: 'allow', sent: '187.6 MB', recv: '606.2 MB' },
+          { dst: '10.30.1.244 (SIFPTS01)', label: 'RDP — 10.10.198.86 (Secondary)', svc: 'RDP', svcClass: 'svc-other', count: 8, maxCount: 32, action: 'allow', sent: '6.5 MB', recv: '22.8 MB' },
+        ]
+      }
+    ]
+  },
+
+  nessus: {
+    ip: '10.30.1.227',
+    name: 'Nessus Scanner',
+    role: 'SIFP Server Farm — Tenable Vulnerability Scanner',
+    iface: 'SIFPServers',
+    total: 1126,
+    color: '#a78bfa',
+    note: 'Nessus vulnerability scanner phones home to Tenable.io cloud (861 sessions) and resolves hostnames via Opus DNS (10.1.1.81). The small number of cloud service connections (Cloudflare, Azure) are likely plugin/signature updates. Several NTP and hosting cloud attempts are denied.',
+    categories: [
+      {
+        label: 'Tenable Cloud Connectivity', icon: '🛡️', flows: [
+          { dst: 'Tenable.io Cloud Scanner', label: 'Scanner Check-in / Plugin Updates', svc: 'Tenable-Tenable.io.Cloud.Scanner', svcClass: 'svc-sec', count: 861, maxCount: 861, action: 'mixed', sent: '1.5 MB', recv: '5.0 MB' },
+          { dst: 'Cloudflare CDN', label: 'Content Delivery', svc: 'Cloudflare-CDN', svcClass: 'svc-cloud', count: 56, maxCount: 861, action: 'allow', sent: '< 1 MB', recv: '< 1 MB' },
+          { dst: 'Microsoft Azure', label: 'Updates / Auth', svc: 'Microsoft-Azure', svcClass: 'svc-cloud', count: 7, maxCount: 861, action: 'allow', sent: '< 1 MB', recv: '< 1 MB' },
+        ]
+      },
+      {
+        label: 'Internal Services', icon: '🔐', flows: [
+          { dst: '10.1.1.81 (Opus DNS)', label: 'DNS Resolution', svc: 'DNS', svcClass: 'svc-dns', count: 160, maxCount: 861, action: 'allow', sent: '< 1 MB', recv: '< 1 MB' },
+        ]
+      },
+      {
+        label: 'Denied — Outbound Blocked', icon: '🚫', flows: [
+          { dst: 'ntp.org / Internet NTP', label: 'NTP Time Sync — Blocked', svc: 'NTP', svcClass: 'svc-mon', count: 13, maxCount: 861, action: 'deny', sent: '—', recv: '—' },
+          { dst: 'Akamai Linode / Vultr / Hetzner', label: 'Cloud Hosts — Blocked', svc: 'HTTPS', svcClass: 'svc-cloud', count: 15, maxCount: 861, action: 'deny', sent: '—', recv: '—' },
+        ]
+      }
+    ]
+  },
+
+  nas1: {
+    ip: '10.30.1.33',
+    name: 'SIFPNAS1',
+    role: 'SIFP Server Farm — Synology NAS',
+    iface: 'SIFPServers',
+    total: 543,
+    color: '#a78bfa',
+    note: 'Synology NAS device. Sends cloud backup/sync traffic to Synology\'s hosted service (159.100.4.x) via the "Synology_To_Internet" policy. 413 denied Netwrix broadcast attempts suggest the Netwrix agent is installed but the broadcast destination (10.30.3.255) is blocked. NTP synchronizes to the Opus primary DC (10.1.1.173) via the "SIFP to ENS ADSync" policy.',
+    categories: [
+      {
+        label: 'Cloud Backup / Sync', icon: '☁️', flows: [
+          { dst: 'Synology Cloud (159.100.4.x)', label: 'HTTPS — Synology Cloud Backup', svc: 'HTTPS', svcClass: 'svc-cloud', count: 75, maxCount: 413, action: 'mixed', sent: '1.7 MB', recv: '1.6 MB' },
+        ]
+      },
+      {
+        label: 'Internal Services', icon: '🔐', flows: [
+          { dst: '10.1.1.173 (Opus Primary DC)', label: 'NTP Time Sync', svc: 'NTP', svcClass: 'svc-mon', count: 49, maxCount: 413, action: 'allow', sent: '< 1 MB', recv: '< 1 MB' },
+          { dst: '10.1.1.81 (Opus DNS)', label: 'DNS Resolution', svc: 'DNS', svcClass: 'svc-dns', count: 6, maxCount: 413, action: 'allow', sent: '< 1 MB', recv: '< 1 MB' },
+        ]
+      },
+      {
+        label: 'Denied — Netwrix Broadcast Blocked', icon: '🚫', flows: [
+          { dst: '10.30.3.255 (Broadcast)', label: 'Netwrix Agent Broadcast — Blocked', svc: 'Netwrix', svcClass: 'svc-mon', count: 413, maxCount: 413, action: 'deny', sent: '—', recv: '—' },
+        ]
+      }
+    ]
+  },
+
+  vcenter: {
+    ip: '10.30.1.9',
+    name: 'vCenter',
+    role: 'SIFP Server Farm — VMware vCenter Server',
+    iface: 'SIFPServers',
+    total: 327,
+    color: '#a78bfa',
+    note: 'VMware vCenter ships 58 GB of syslog to the Opus SIEM (10.1.1.141) via the "Syslog To FCTG" policy — confirming 10.1.1.141 is the central log aggregation target. VMware-Web traffic (102 sessions, 96 MB received) fetches patches and updates under "Vcenter_Update". NTP synchronizes to Google NTP servers.',
+    categories: [
+      {
+        label: 'Syslog — FCTG SIEM', icon: '📡', flows: [
+          { dst: '10.1.1.141 (FCTG SIEM)', label: 'SYSLOG — Continuous Log Shipping', svc: 'SYSLOG', svcClass: 'svc-mon', count: 203, maxCount: 203, action: 'mixed', sent: '58,045 MB', recv: '< 1 MB' },
+        ]
+      },
+      {
+        label: 'VMware Updates & Time Sync', icon: '🔄', flows: [
+          { dst: 'VMware Web (Updates)', label: 'Patches & Software Updates', svc: 'VMware-Web', svcClass: 'svc-cloud', count: 102, maxCount: 203, action: 'mixed', sent: '1.0 MB', recv: '96.6 MB' },
+          { dst: 'Google NTP', label: 'NTP Time Synchronization', svc: 'NTP', svcClass: 'svc-mon', count: 22, maxCount: 203, action: 'allow', sent: '< 1 MB', recv: '< 1 MB' },
+        ]
+      }
+    ]
+  }
+
+};
+
+// ── RENDER ─────────────────────────────────────────────────────────────────────
+
+function getActionBadge(action) {
+  if (action === 'allow') return '<span class="action-badge allow">Allow</span>';
+  if (action === 'deny')  return '<span class="action-badge deny">Deny</span>';
+  return '<span class="action-badge mixed">Mixed</span>';
+}
+
+function fmtCount(n, max) {
+  const pct = Math.max(6, Math.round((n / max) * 180));
+  const num = n >= 1000 ? (n >= 10000 ? Math.round(n/1000)+'K' : (n/1000).toFixed(1)+'K') : n.toString();
+  return `<div class="count-bar-wrap"><div class="count-bar" style="width:${pct}px;min-width:6px"></div><span class="count-num">${num.toLocaleString()}</span></div>`;
+}
+
+function renderSource(id) {
+  const s = sources[id];
+  if (!s) return '<div class="empty-state"><div class="icon">🔍</div><p>Select a source from the sidebar.</p></div>';
+
+  let html = `
+    <div class="source-header">
+      <h2 style="color:${s.color}">${s.ip}</h2>
+      <div class="desc">${s.name} &nbsp;·&nbsp; ${s.role}</div>
+      <div class="meta">
+        <span class="meta-badge" style="color:${s.color};border-color:${s.color}40;background:${s.color}12">Interface: ${s.iface}</span>
+        <span class="meta-badge" style="color:#86868b;border-color:#ffffff18;background:#ffffff08">Total Sessions: ${s.total.toLocaleString()}</span>
+      </div>
+    </div>`;
+
+  if (s.note) {
+    html += `<div class="note-box"><span class="icon">💡</span><span>${s.note}</span></div>`;
+  }
+
+  for (const cat of s.categories) {
+    const totalFlows = cat.flows.reduce((a, f) => a + f.count, 0);
+    html += `
+      <div class="cat-section">
+        <div class="cat-header">
+          <span class="cat-icon">${cat.icon}</span>
+          <span class="cat-title">${cat.label}</span>
+          <span class="cat-count">${totalFlows.toLocaleString()} sessions</span>
+        </div>
+        <div class="flow-wrap">
+          <table class="flow-table">
+            <thead>
+              <tr>
+                <th style="width:34%">Destination</th>
+                <th style="width:18%">Service</th>
+                <th style="width:22%">Sessions</th>
+                <th style="width:14%">Data (Sent/Recv)</th>
+                <th style="width:12%">Action</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+    for (const f of cat.flows) {
+      html += `
+        <tr>
+          <td class="dst-cell">${f.dst}<span class="dst-label">${f.label}</span></td>
+          <td><span class="svc-badge ${f.svcClass}">${f.svc}</span></td>
+          <td>${fmtCount(f.count, f.maxCount)}</td>
+          <td class="bytes-cell">${f.sent} / ${f.recv}</td>
+          <td>${getActionBadge(f.action)}</td>
+        </tr>`;
+    }
+
+    html += `</tbody></table></div></div>`;
+  }
+
+  return html;
+}
+
+function show(id) {
+  // Update sidebar
+  document.querySelectorAll('.src-item').forEach(el => el.classList.remove('active'));
+  const tab = document.getElementById('tab-' + id);
+  if (tab) tab.classList.add('active');
+
+  // Render content
+  document.getElementById('main-content').innerHTML = renderSource(id);
+
+  // Scroll to top
+  document.getElementById('main-content').scrollTop = 0;
+}
+
+// Initialize
+show('dc30');
+</script>
+</body>
+</html>

@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIFP Fortigate — Connections to 10.0.0.0/16 (FCTG HQ)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+    background: #09090f;
+    color: #e8e8f0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  .header {
+    padding: 36px 48px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    background: linear-gradient(180deg, rgba(20,20,40,0.9) 0%, transparent 100%);
+  }
+  .header h1 {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: #f0f0f8;
+  }
+  .header h1 span { color: #6e7cf8; }
+  .header p {
+    margin-top: 6px;
+    font-size: 14px;
+    color: #7878a0;
+    letter-spacing: 0.3px;
+  }
+  .badge-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  .badge-blue  { background: rgba(110,124,248,0.18); color: #9aa5ff; border: 1px solid rgba(110,124,248,0.35); }
+  .badge-green { background: rgba(72,200,140,0.15); color: #6fd9a8; border: 1px solid rgba(72,200,140,0.3); }
+  .badge-amber { background: rgba(255,180,60,0.15); color: #ffcc70; border: 1px solid rgba(255,180,60,0.3); }
+  .badge-red   { background: rgba(255,90,90,0.15); color: #ff9090; border: 1px solid rgba(255,90,90,0.3); }
+
+  /* ── Layout ── */
+  .main { display: flex; gap: 0; min-height: calc(100vh - 120px); }
+
+  /* ── Diagram panel ── */
+  .diagram-panel {
+    flex: 1;
+    padding: 32px 32px 32px 48px;
+    position: relative;
+  }
+  .diagram-wrap {
+    position: relative;
+    width: 100%;
+  }
+  svg.diagram {
+    width: 100%;
+    height: 560px;
+    display: block;
+  }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: #8888aa;
+  }
+  .legend-line {
+    width: 28px;
+    height: 3px;
+    border-radius: 2px;
+  }
+
+  /* ── Policy cards panel ── */
+  .policy-panel {
+    width: 400px;
+    background: rgba(255,255,255,0.025);
+    border-left: 1px solid rgba(255,255,255,0.07);
+    padding: 24px 20px;
+    overflow-y: auto;
+    max-height: calc(100vh - 120px);
+  }
+  .policy-panel h2 {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #6e7cf8;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(110,124,248,0.2);
+  }
+
+  .policy-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    border-left: 3px solid transparent;
+  }
+  .policy-card:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.13);
+    transform: translateX(2px);
+  }
+  .policy-card.active {
+    background: rgba(110,124,248,0.1);
+    border-color: rgba(110,124,248,0.4);
+    border-left-color: #6e7cf8;
+  }
+  .policy-card.dir-out { border-left-color: #48c88c; }
+  .policy-card.dir-out.active { border-left-color: #48c88c; border-color: rgba(72,200,140,0.4); background: rgba(72,200,140,0.08); }
+  .policy-card.dir-in  { border-left-color: #f8aa6e; }
+  .policy-card.dir-in.active  { border-left-color: #f8aa6e; border-color: rgba(248,170,110,0.4); background: rgba(248,170,110,0.08); }
+
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .card-id {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #5558a8;
+    text-transform: uppercase;
+  }
+  .card-dir {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .dir-out-badge { background: rgba(72,200,140,0.2); color: #6fd9a8; }
+  .dir-in-badge  { background: rgba(248,170,110,0.2); color: #f8aa6e; }
+
+  .card-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #dde0f8;
+    margin-bottom: 9px;
+    line-height: 1.3;
+  }
+  .card-row {
+    font-size: 11px;
+    color: #8888aa;
+    margin-bottom: 4px;
+    display: flex;
+    gap: 6px;
+  }
+  .card-row .label {
+    color: #6868a0;
+    font-weight: 600;
+    min-width: 36px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-size: 10px;
+  }
+  .card-row .val { color: #b0b0d0; flex: 1; line-height: 1.4; }
+  .svc-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .svc-chip {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: rgba(110,124,248,0.12);
+    color: #9090d8;
+    border: 1px solid rgba(110,124,248,0.2);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── Tooltip ── */
+  #tooltip {
+    position: fixed;
+    pointer-events: none;
+    background: rgba(15,15,30,0.97);
+    border: 1px solid rgba(110,124,248,0.4);
+    border-radius: 9px;
+    padding: 12px 16px;
+    font-size: 12px;
+    max-width: 280px;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.15s;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  #tooltip.show { opacity: 1; }
+  #tooltip .tt-title { font-size: 13px; font-weight: 700; color: #c8ccff; margin-bottom: 6px; }
+  #tooltip .tt-row { color: #8888b0; margin-bottom: 3px; }
+  #tooltip .tt-row span { color: #c0c0e0; }
+
+  /* ── Stats bar ── */
+  .stats-bar {
+    display: flex;
+    gap: 24px;
+    padding: 16px 48px;
+    background: rgba(255,255,255,0.02);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    flex-wrap: wrap;
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .stat .num { font-size: 22px; font-weight: 700; color: #9090ff; }
+  .stat .lbl { font-size: 11px; color: #666688; text-transform: uppercase; letter-spacing: 0.7px; }
+
+  /* ── Node labels ── */
+  .node-bg { fill: rgba(15,15,35,0.95); }
+  .svg-label { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif; }
+
+  /* ── Section below diagram ── */
+  .service-section {
+    padding: 20px 48px 36px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  .service-section h3 {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #6e7cf8;
+    margin-bottom: 14px;
+  }
+  .service-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .svc-block {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 7px;
+    padding: 10px 14px;
+    font-size: 12px;
+    min-width: 160px;
+  }
+  .svc-block .svc-name { font-weight: 700; color: #c8ccff; margin-bottom: 3px; }
+  .svc-block .svc-port { color: #7878aa; }
+
+  /* addr table */
+  .addr-section {
+    padding: 0 48px 36px;
+  }
+  .addr-section h3 {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #f8aa6e;
+    margin-bottom: 14px;
+  }
+  table.addr-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  table.addr-table th {
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #55557a;
+    padding: 6px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  table.addr-table td {
+    padding: 7px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: #c0c0e0;
+  }
+  table.addr-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .ipmask { font-family: 'Courier New', monospace; color: #9090cc; font-size: 11px; }
+  .role-fctg { color: #9aa5ff; font-weight: 600; }
+  .role-sifp { color: #6fd9a8; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>SIFP Fortigate — Connections to <span>10.0.0.0/16</span> (FCTG HQ)</h1>
+  <p>SIFPFort2 · FortiGate-100F · FG100F-7.6.6-build3652 · Firewall policy analysis from sifpfortigate.xlsx</p>
+  <div class="badge-row">
+    <span class="badge badge-blue">FCTGHQ · 10.0.0.0/16</span>
+    <span class="badge badge-green">7 Matching Policies</span>
+    <span class="badge badge-amber">5 Outbound · 2 Inbound</span>
+    <span class="badge badge-red">Interface: FCTGWANConnection</span>
+  </div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat"><div class="num">7</div><div class="lbl">Policies matched</div></div>
+  <div class="stat"><div class="num">5</div><div class="lbl">FCTG → SIFP</div></div>
+  <div class="stat"><div class="num">2</div><div class="lbl">SIFP → FCTG</div></div>
+  <div class="stat"><div class="num">12</div><div class="lbl">Unique services</div></div>
+  <div class="stat"><div class="num">7</div><div class="lbl">Destination hosts</div></div>
+</div>
+
+<div class="main">
+  <!-- Left: diagram + lower sections -->
+  <div style="flex:1; display:flex; flex-direction:column;">
+    <div class="diagram-panel">
+      <div class="legend">
+        <div class="legend-item"><div class="legend-line" style="background:#48c88c;"></div> FCTG HQ → SIFP (Outbound)</div>
+        <div class="legend-item"><div class="legend-line" style="background:#f8aa6e;"></div> SIFP → FCTG HQ (Inbound)</div>
+        <div class="legend-item"><div class="legend-line" style="background:#6e7cf8; height:2px; border-top: 2px dashed #6e7cf8; background:transparent;"></div> IPSEC / SAML VPN</div>
+      </div>
+
+      <div class="diagram-wrap">
+        <svg class="diagram" viewBox="0 0 900 520" id="mainSvg">
+          <defs>
+            <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#48c88c"/>
+            </marker>
+            <marker id="arrow-amber" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#f8aa6e"/>
+            </marker>
+            <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#6e7cf8"/>
+            </marker>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="glow-strong">
+              <feGaussianBlur stdDeviation="5" result="coloredBlur"/>
+              <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <!-- Background glow zones -->
+          <ellipse cx="165" cy="260" rx="130" ry="200" fill="rgba(110,124,248,0.04)"/>
+          <ellipse cx="735" cy="260" rx="130" ry="200" fill="rgba(72,200,140,0.04)"/>
+          <ellipse cx="450" cy="260" rx="90" ry="170" fill="rgba(255,255,255,0.02)"/>
+
+          <!-- ── FCTG HQ node (left) ── -->
+          <rect x="40" y="200" width="240" height="120" rx="14" fill="rgba(110,124,248,0.1)" stroke="rgba(110,124,248,0.4)" stroke-width="1.5"/>
+          <text x="160" y="233" text-anchor="middle" class="svg-label" font-size="13" font-weight="700" fill="#9aa5ff">FCTG HQ</text>
+          <text x="160" y="253" text-anchor="middle" class="svg-label" font-size="11" fill="#6e7cf8">10.0.0.0 / 16</text>
+          <line x1="60" y1="265" x2="260" y2="265" stroke="rgba(110,124,248,0.2)" stroke-width="1"/>
+          <text x="160" y="283" text-anchor="middle" class="svg-label" font-size="10" fill="#7878aa">Workstation Subnet</text>
+          <text x="160" y="298" text-anchor="middle" class="svg-label" font-size="10" fill="#6060aa">10.0.127.0 / 24</text>
+          <text x="160" y="313" text-anchor="middle" class="svg-label" font-size="10" fill="#7878aa">SSL VPN Pool</text>
+          <text x="160" y="328" text-anchor="middle" class="svg-label" font-size="10" fill="#6060aa">10.101.1.0 / 24</text>
+
+          <!-- ── Firewall node (center) ── -->
+          <rect x="360" y="180" width="180" height="160" rx="14" fill="rgba(255,80,80,0.08)" stroke="rgba(255,80,80,0.35)" stroke-width="1.5" filter="url(#glow)"/>
+          <text x="450" y="215" text-anchor="middle" class="svg-label" font-size="13" font-weight="700" fill="#ff8888">SIFPFort2</text>
+          <text x="450" y="233" text-anchor="middle" class="svg-label" font-size="10" fill="#aa6666">FortiGate-100F</text>
+          <line x1="375" y1="245" x2="525" y2="245" stroke="rgba(255,80,80,0.2)" stroke-width="1"/>
+          <text x="450" y="263" text-anchor="middle" class="svg-label" font-size="10" fill="#886666">FCTGWANConnection</text>
+          <text x="450" y="278" text-anchor="middle" class="svg-label" font-size="10" fill="#7a5a5a">← FCTG side</text>
+          <line x1="375" y1="290" x2="525" y2="290" stroke="rgba(255,80,80,0.2)" stroke-width="1"/>
+          <text x="450" y="308" text-anchor="middle" class="svg-label" font-size="10" fill="#886666">SIFPInternal</text>
+          <text x="450" y="323" text-anchor="middle" class="svg-label" font-size="10" fill="#7a5a5a">← SIFP side</text>
+
+          <!-- ── SIFP Internal hosts (right) ── -->
+          <!-- SIFP subnet block -->
+          <rect x="620" y="80" width="240" height="80" rx="12" fill="rgba(72,200,140,0.08)" stroke="rgba(72,200,140,0.3)" stroke-width="1.2"/>
+          <text x="740" y="108" text-anchor="middle" class="svg-label" font-size="12" font-weight="700" fill="#6fd9a8">SIFP Subnet</text>
+          <text x="740" y="126" text-anchor="middle" class="svg-label" font-size="10" fill="#48c88c">10.30.0.0 / 16</text>
+          <text x="740" y="144" text-anchor="middle" class="svg-label" font-size="10" fill="#488c6c">GW: 10.30.1.1 (FortiGate)</text>
+
+          <!-- SIFPSA3 -->
+          <rect x="620" y="185" width="110" height="55" rx="9" fill="rgba(72,200,140,0.06)" stroke="rgba(72,200,140,0.25)" stroke-width="1"/>
+          <text x="675" y="208" text-anchor="middle" class="svg-label" font-size="11" font-weight="700" fill="#80d8b0">SIFPSA3</text>
+          <text x="675" y="226" text-anchor="middle" class="svg-label" font-size="10" fill="#406050">10.30.1.242</text>
+
+          <!-- SIFPTS01 / SIFPAZUREDF1 -->
+          <rect x="748" y="185" width="112" height="55" rx="9" fill="rgba(72,200,140,0.06)" stroke="rgba(72,200,140,0.25)" stroke-width="1"/>
+          <text x="804" y="208" text-anchor="middle" class="svg-label" font-size="11" font-weight="700" fill="#80d8b0">SIFPTS01</text>
+          <text x="804" y="226" text-anchor="middle" class="svg-label" font-size="10" fill="#406050">10.30.1.244</text>
+
+          <!-- SIFPAZUREDF1 -->
+          <rect x="620" y="258" width="110" height="55" rx="9" fill="rgba(72,200,140,0.06)" stroke="rgba(72,200,140,0.25)" stroke-width="1"/>
+          <text x="675" y="279" text-anchor="middle" class="svg-label" font-size="10.5" font-weight="700" fill="#80d8b0">SIFPAZUREDF1</text>
+          <text x="675" y="297" text-anchor="middle" class="svg-label" font-size="10" fill="#406050">10.30.1.243</text>
+
+          <!-- SIFPFS01 -->
+          <rect x="748" y="258" width="112" height="55" rx="9" fill="rgba(72,200,140,0.06)" stroke="rgba(72,200,140,0.25)" stroke-width="1"/>
+          <text x="804" y="279" text-anchor="middle" class="svg-label" font-size="11" font-weight="700" fill="#80d8b0">SIFPFS01</text>
+          <text x="804" y="297" text-anchor="middle" class="svg-label" font-size="10" fill="#406050">10.30.1.245</text>
+
+          <!-- SIFPDCs -->
+          <rect x="684" y="330" width="112" height="55" rx="9" fill="rgba(72,200,140,0.06)" stroke="rgba(72,200,140,0.25)" stroke-width="1"/>
+          <text x="740" y="353" text-anchor="middle" class="svg-label" font-size="11" font-weight="700" fill="#80d8b0">SIFPDCs</text>
+          <text x="740" y="371" text-anchor="middle" class="svg-label" font-size="10" fill="#406050">Domain Controllers</text>
+
+          <!-- SIFPSSOVPN -->
+          <rect x="684" y="403" width="112" height="55" rx="9" fill="rgba(248,170,110,0.07)" stroke="rgba(248,170,110,0.25)" stroke-width="1"/>
+          <text x="740" y="426" text-anchor="middle" class="svg-label" font-size="10.5" font-weight="700" fill="#f8c88c">SIFPSSOVPN</text>
+          <text x="740" y="444" text-anchor="middle" class="svg-label" font-size="10" fill="#886840">10.30.100.100-200</text>
+
+          <!-- ══════════════════════════════════════
+               OUTBOUND CONNECTIONS (FCTG → SIFP)
+               Green arrows, left-to-right
+          ══════════════════════════════════════ -->
+
+          <!-- Policy 4: FCTG IT WS → SIFPSA3 (MS-SQL, RDP, SMB) -->
+          <path id="line-p4" d="M 280 230 Q 450 130 620 210"
+            stroke="#48c88c" stroke-width="2" fill="none" opacity="0.7"
+            stroke-dasharray="0"
+            marker-end="url(#arrow-green)" class="policy-line" data-id="p4" cursor="pointer"/>
+
+          <!-- Policy 5: FCTG_10.0.0.0-16 → SIFP Subnet (ICMP) -->
+          <path id="line-p5" d="M 280 255 C 380 200 480 155 620 135"
+            stroke="#48c88c" stroke-width="1.8" fill="none" opacity="0.55"
+            marker-end="url(#arrow-green)" class="policy-line" data-id="p5" cursor="pointer"/>
+
+          <!-- Policy 10: FCTG Infra Support → SIFP Subnet (HTTP/HTTPS/RDP/SMB/SSH) -->
+          <path id="line-p10" d="M 280 260 C 390 220 490 170 620 120"
+            stroke="#48c88c" stroke-width="2.5" fill="none" opacity="0.8"
+            marker-end="url(#arrow-green)" class="policy-line" data-id="p10" cursor="pointer"/>
+
+          <!-- Policy 89: FCTG_10.0.0.0-16 → SIFPTS01 + SIFPAZUREDF1 (RDP) -->
+          <path id="line-p89" d="M 280 270 Q 500 290 748 212"
+            stroke="#48c88c" stroke-width="1.8" fill="none" opacity="0.6"
+            marker-end="url(#arrow-green)" class="policy-line" data-id="p89" cursor="pointer"/>
+
+          <!-- Policy 90: FCTG IT WS → SIFPSA3 (HTTP/HTTPS) -->
+          <path id="line-p90" d="M 280 285 Q 460 320 620 235"
+            stroke="#48c88c" stroke-width="1.6" fill="none" opacity="0.55"
+            marker-end="url(#arrow-green)" class="policy-line" data-id="p90" cursor="pointer"/>
+
+          <!-- ══════════════════════════════════════
+               INBOUND CONNECTIONS (SIFP → FCTG)
+               Amber arrows, right-to-left
+          ══════════════════════════════════════ -->
+
+          <!-- Policy 14: SIFP Subnet → FCTG_10.0.0.0-16 (ICMP) -->
+          <path id="line-p14" d="M 620 145 C 490 185 380 240 280 305"
+            stroke="#f8aa6e" stroke-width="1.8" fill="none" opacity="0.7"
+            marker-end="url(#arrow-amber)" class="policy-line" data-id="p14" cursor="pointer"/>
+
+          <!-- Policy 112: SIFPSSOVPN (SAML) → FCTG_10.0.0.0-16 (ALL) — VPN -->
+          <path id="line-p112" d="M 684 430 Q 520 430 400 350 Q 330 310 280 315"
+            stroke="#6e7cf8" stroke-width="2" fill="none" opacity="0.75"
+            stroke-dasharray="6,4"
+            marker-end="url(#arrow-blue)" class="policy-line" data-id="p112" cursor="pointer"/>
+
+          <!-- ── Port labels on lines (static small text) ── -->
+          <text x="430" y="148" text-anchor="middle" class="svg-label" font-size="9" fill="#48c88c" opacity="0.8">MS-SQL · RDP · SMB</text>
+          <text x="450" y="176" text-anchor="middle" class="svg-label" font-size="9" fill="#48c88c" opacity="0.65">ICMP</text>
+          <text x="430" y="128" text-anchor="middle" class="svg-label" font-size="9" fill="#48c88c" opacity="0.9">HTTP · HTTPS · RDP · SMB · SSH</text>
+          <text x="530" y="268" text-anchor="middle" class="svg-label" font-size="9" fill="#48c88c" opacity="0.65">RDP</text>
+          <text x="450" y="315" text-anchor="middle" class="svg-label" font-size="9" fill="#48c88c" opacity="0.6">HTTP · HTTPS</text>
+          <text x="470" y="196" text-anchor="middle" class="svg-label" font-size="9" fill="#f8aa6e" opacity="0.75">ICMP</text>
+          <text x="490" y="415" text-anchor="middle" class="svg-label" font-size="9" fill="#9090ff" opacity="0.85">IPSEC / SAML · ALL</text>
+
+        </svg>
+      </div>
+    </div>
+
+    <!-- Address reference table -->
+    <div class="addr-section">
+      <h3>Address Objects Referenced — 10.0.0.0/16 Side</h3>
+      <table class="addr-table">
+        <thead>
+          <tr>
+            <th>Object Name</th>
+            <th>IP / Subnet</th>
+            <th>Role</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>FCTG_10.0.0.0-16</strong></td>
+            <td class="ipmask">10.0.0.0 / 255.255.0.0</td>
+            <td><span class="role-fctg">FCTG HQ</span></td>
+            <td>Entire FCTG HQ network</td>
+          </tr>
+          <tr>
+            <td><strong>FCTG IT Workstation Subnet</strong></td>
+            <td class="ipmask">10.0.127.0 / 255.255.255.0</td>
+            <td><span class="role-fctg">FCTG HQ</span></td>
+            <td>IT workstation subnet within FCTG HQ</td>
+          </tr>
+          <tr>
+            <td><strong>FCTG_SSL_VPN</strong></td>
+            <td class="ipmask">10.101.1.0 / 255.255.255.0</td>
+            <td><span class="role-fctg">FCTG VPN</span></td>
+            <td>FCTG SSL VPN pool</td>
+          </tr>
+          <tr>
+            <td><strong>FCTG_10.1.0.0/16</strong></td>
+            <td class="ipmask">10.1.0.0 / 255.255.0.0</td>
+            <td><span class="role-fctg">FCTG OPUS</span></td>
+            <td>FCTG OPUS network (co-source in several policies)</td>
+          </tr>
+          <tr>
+            <td><strong>SIFP_Subnet_10.30.0.0</strong></td>
+            <td class="ipmask">10.30.0.0 / 255.255.0.0</td>
+            <td><span class="role-sifp">SIFP Internal</span></td>
+            <td>Full SIFP internal network</td>
+          </tr>
+          <tr>
+            <td><strong>SIFPSSOVPN</strong></td>
+            <td class="ipmask">10.30.100.100 – 10.30.100.200</td>
+            <td><span class="role-sifp">SIFP VPN</span></td>
+            <td>SIFP SSO VPN address pool (SAML/IPSEC)</td>
+          </tr>
+          <tr>
+            <td><strong>SIFPSA3</strong></td>
+            <td class="ipmask">10.30.1.242</td>
+            <td><span class="role-sifp">SIFP Server</span></td>
+            <td>SIFP SA3 application server</td>
+          </tr>
+          <tr>
+            <td><strong>SIFPTS01</strong></td>
+            <td class="ipmask">10.30.1.244</td>
+            <td><span class="role-sifp">SIFP Server</span></td>
+            <td>SIFP terminal server</td>
+          </tr>
+          <tr>
+            <td><strong>SIFPAZUREDF1</strong></td>
+            <td class="ipmask">10.30.1.243</td>
+            <td><span class="role-sifp">SIFP Server</span></td>
+            <td>Azure Data Factory integration host</td>
+          </tr>
+          <tr>
+            <td><strong>SIFPFS01</strong></td>
+            <td class="ipmask">10.30.1.245</td>
+            <td><span class="role-sifp">SIFP Server</span></td>
+            <td>SIFP file server</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Services reference -->
+    <div class="service-section">
+      <h3>Services Used Across Matched Policies</h3>
+      <div class="service-grid">
+        <div class="svc-block"><div class="svc-name">MS-SQL</div><div class="svc-port">TCP 1433, 1434</div></div>
+        <div class="svc-block"><div class="svc-name">RDP</div><div class="svc-port">TCP 3389</div></div>
+        <div class="svc-block"><div class="svc-name">SMB</div><div class="svc-port">TCP 445</div></div>
+        <div class="svc-block"><div class="svc-name">HTTP</div><div class="svc-port">TCP 80</div></div>
+        <div class="svc-block"><div class="svc-name">HTTPS</div><div class="svc-port">TCP 443</div></div>
+        <div class="svc-block"><div class="svc-name">SSH</div><div class="svc-port">TCP 22</div></div>
+        <div class="svc-block"><div class="svc-name">ALL_ICMP</div><div class="svc-port">ICMP (all types)</div></div>
+        <div class="svc-block"><div class="svc-name">Windows AD</div><div class="svc-port">DCE-RPC, DNS, Kerberos, LDAP</div></div>
+        <div class="svc-block"><div class="svc-name">Global Catalog</div><div class="svc-port">TCP 3268</div></div>
+        <div class="svc-block"><div class="svc-name">Vcenter Admin</div><div class="svc-port">TCP 5480</div></div>
+        <div class="svc-block"><div class="svc-name">ALL</div><div class="svc-port">All protocols/ports</div></div>
+        <div class="svc-block"><div class="svc-name">PING</div><div class="svc-port">ICMP echo</div></div>
+      </div>
+    </div>
+  </div><!-- end left column -->
+
+  <!-- Right: Policy cards -->
+  <div class="policy-panel">
+    <h2>Matched Firewall Policies</h2>
+
+    <!-- Policy 4 -->
+    <div class="policy-card dir-out" id="card-p4" onclick="highlight('p4')">
+      <div class="card-header">
+        <span class="card-id">Policy ID 4</span>
+        <span class="card-dir dir-out-badge">FCTG → SIFP</span>
+      </div>
+      <div class="card-name">FCTG RDP/SQL to SA3</div>
+      <div class="card-row"><span class="label">From</span><span class="val">FCTG IT Workstation Subnet (10.0.127.0/24)<br>+ FCTG_SSL_VPN (10.101.1.0/24)</span></div>
+      <div class="card-row"><span class="label">To</span><span class="val">SIFPSA3 (10.30.1.242)</span></div>
+      <div class="card-row"><span class="label">Via</span><span class="val">FCTGWANConnection → SIFPInternal</span></div>
+      <div class="svc-chips">
+        <span class="svc-chip">MS-SQL :1433</span>
+        <span class="svc-chip">RDP :3389</span>
+        <span class="svc-chip">SMB :445</span>
+      </div>
+    </div>
+
+    <!-- Policy 5 -->
+    <div class="policy-card dir-out" id="card-p5" onclick="highlight('p5')">
+      <div class="card-header">
+        <span class="card-id">Policy ID 5</span>
+        <span class="card-dir dir-out-badge">FCTG → SIFP</span>
+      </div>
+      <div class="card-name">ICMP TEST FROM FCTG</div>
+      <div class="card-row"><span class="label">From</span><span class="val">FCTG_10.0.0.0-16 (10.0.0.0/16)<br>+ FCTG_10.1.0.0/16</span></div>
+      <div class="card-row"><span class="label">To</span><span class="val">SIFP_Subnet_10.30.0.0 (10.30.0.0/16)</span></div>
+      <div class="card-row"><span class="label">Via</span><span class="val">FCTGWANConnection → SIFPInternal</span></div>
+      <div class="svc-chips">
+        <span class="svc-chip">ALL_ICMP</span>
+      </div>
+    </div>
+
+    <!-- Policy 10 -->
+    <div class="policy-card dir-out" id="card-p10" onclick="highlight('p10')">
+      <div class="card-header">
+        <span class="card-id">Policy ID 10</span>
+        <span class="card-dir dir-out-badge">FCTG → SIFP</span>
+      </div>
+      <div class="card-name">FCTG Infrastructure Support</div>
+      <div class="card-row"><span class="label">From</span><span class="val">FCTG IT Workstation Subnet, FCTG_10.0.0.0-16, FCTG_SSL_VPN, FCTG03025 (10.1.1.165), FCTG_10.1.0.0/16</span></div>
+      <div class="card-row"><span class="label">To</span><span class="val">SIFP_Subnet_10.30.0.0 (10.30.0.0/16)</span></div>
+      <div class="card-row"><span class="label">Via</span><span class="val">FCTGWANConnection → SIFPInternal</span></div>
+      <div class="svc-chips">
+        <span class="svc-chip">HTTP :80</span>
+        <span class="svc-chip">HTTPS :443</span>
+        <span class="svc-chip">RDP :3389</span>
+        <span class="svc-chip">SMB :445</span>
+        <span class="svc-chip">SSH :22</span>
+        <span class="svc-chip">Vcenter :5480</span>
+      </div>
+    </div>
+
+    <!-- Policy 89 -->
+    <div class="policy-card dir-out" id="card-p89" onclick="highlight('p89')">
+      <div class="card-header">
+        <span class="card-id">Policy ID 89</span>
+        <span class="card-dir dir-out-badge">FCTG → SIFP</span>
+      </div>
+      <div class="card-name">RDP_to_SIFPTS01</div>
+      <div class="card-row"><span class="label">From</span><span class="val">FCTG_10.0.0.0-16 (10.0.0.0/16)<br>+ FCTG_10.1.0.0/16 + Buckeye_Rail_Workstations</span></div>
+      <div class="card-row"><span class="label">To</span><span class="val">SIFPTS01 (10.30.1.244)<br>+ SIFPAZUREDF1 (10.30.1.243)</span></div>
+      <div class="card-row"><span class="label">Via</span><span class="val">FCTGWANConnection → SIFPInternal</span></div>
+      <div class="svc-chips">
+        <span class="svc-chip">RDP :3389</span>
+      </div>
+    </div>
+
+    <!-- Policy 90 -->
+    <div class="policy-card dir-out" id="card-p90" onclick="highlight('p90')">
+      <div class="card-header">
+        <span class="card-id">Policy ID 90</span>
+        <span class="card-dir dir-out-badge">FCTG → SIFP</span>
+      </div>
+      <div class="card-name">FCTG_HTTP_To_SIFPSA3</div>
+      <div class="card-row"><span class="label">From</span><span class="val">FCTG IT Workstation Subnet (10.0.127.0/24)</span></div>
+      <div class="card-row"><span class="label">To</span><span class="val">SIFPSA3 (10.30.1.242)</span></div>
+      <div class="card-row"><span class="label">Via</span><span class="val">FCTGWANConnection → SIFPInternal</span></div>
+      <div class="svc-chips">
+        <span class="svc-chip">HTTP :80</span>
+        <span class="svc-chip">HTTPS :443</span>
+      </div>
+    </div>
+
+    <!-- Policy 14 (inbound) -->
+    <div class="policy-card dir-in" id="card-p14" onclick="highlight('p14')">
+      <div class="card-header">
+        <span class="card-id">Policy ID 14</span>
+        <span class="card-dir dir-in-badge">SIFP → FCTG</span>
+      </div>
+      <div class="card-name">ICMP to FCTG</div>
+      <div class="card-row"><span class="label">From</span><span class="val">SIFP_Subnet_10.30.0.0 (10.30.0.0/16)</span></div>
+      <div class="card-row"><span class="label">To</span><span class="val">FCTG_10.0.0.0-16 (10.0.0.0/16)<br>+ FCTG_10.1.0.0/16</span></div>
+      <div class="card-row"><span class="label">Via</span><span class="val">SIFPInternal → FCTGWANConnection</span></div>
+      <div class="svc-chips">
+        <span class="svc-chip">ALL_ICMP</span>
+      </div>
+    </div>
+
+    <!-- Policy 112 (inbound IPSEC) -->
+    <div class="policy-card dir-in" id="card-p112" onclick="highlight('p112')">
+      <div class="card-header">
+        <span class="card-id">Policy ID 112</span>
+        <span class="card-dir dir-in-badge">SIFP → FCTG</span>
+      </div>
+      <div class="card-name">IPSEC_VPN_to_FCTG</div>
+      <div class="card-row"><span class="label">From</span><span class="val">SIFPSSOVPN (10.30.100.100–200)<br><em style="color:#666">via SAML/IPSEC VPN</em></span></div>
+      <div class="card-row"><span class="label">To</span><span class="val">FCTG_10.0.0.0-16 (10.0.0.0/16)<br>+ FCTG_10.1.0.0/16</span></div>
+      <div class="card-row"><span class="label">Via</span><span class="val">FCT_SAML → FCTGWANConnection</span></div>
+      <div class="svc-chips">
+        <span class="svc-chip">ALL</span>
+      </div>
+    </div>
+
+  </div><!-- end policy panel -->
+</div><!-- end main -->
+
+<div id="tooltip">
+  <div class="tt-title" id="tt-title"></div>
+  <div class="tt-row" id="tt-from"></div>
+  <div class="tt-row" id="tt-dst"></div>
+  <div class="tt-row" id="tt-svc"></div>
+</div>
+
+<script>
+const policyData = {
+  p4:  { name:'FCTG RDP/SQL to SA3',        from:'FCTG IT WS (10.0.127.0/24)', to:'SIFPSA3 (10.30.1.242)',           svc:'MS-SQL · RDP · SMB' },
+  p5:  { name:'ICMP TEST FROM FCTG',         from:'FCTG HQ (10.0.0.0/16)',      to:'SIFP Subnet (10.30.0.0/16)',     svc:'ALL_ICMP' },
+  p10: { name:'FCTG Infrastructure Support', from:'FCTG HQ / IT WS / SSL VPN',  to:'SIFP Subnet (10.30.0.0/16)',     svc:'HTTP · HTTPS · RDP · SMB · SSH · VCenter' },
+  p89: { name:'RDP_to_SIFPTS01',             from:'FCTG HQ (10.0.0.0/16)',      to:'SIFPTS01 / SIFPAZUREDF1',        svc:'RDP' },
+  p90: { name:'FCTG_HTTP_To_SIFPSA3',        from:'FCTG IT WS (10.0.127.0/24)', to:'SIFPSA3 (10.30.1.242)',          svc:'HTTP · HTTPS' },
+  p14: { name:'ICMP to FCTG',                from:'SIFP Subnet (10.30.0.0/16)', to:'FCTG HQ (10.0.0.0/16)',          svc:'ALL_ICMP' },
+  p112:{ name:'IPSEC_VPN_to_FCTG',           from:'SIFPSSOVPN via SAML',        to:'FCTG HQ (10.0.0.0/16)',          svc:'ALL (IPSEC tunnel)' }
+};
+
+let activeId = null;
+
+function highlight(id) {
+  // Reset all lines
+  document.querySelectorAll('.policy-line').forEach(el => {
+    el.style.opacity = '0.5';
+    el.style.strokeWidth = el.getAttribute('stroke-width');
+  });
+  document.querySelectorAll('.policy-card').forEach(el => el.classList.remove('active'));
+
+  if (activeId === id) {
+    // toggle off
+    activeId = null;
+    document.querySelectorAll('.policy-line').forEach(el => { el.style.opacity = null; });
+    return;
+  }
+  activeId = id;
+
+  const line = document.getElementById('line-' + id);
+  if (line) {
+    line.style.opacity = '1';
+    line.style.strokeWidth = (parseFloat(line.getAttribute('stroke-width')) + 1.5) + 'px';
+    line.style.filter = 'url(#glow-strong)';
+  }
+  const card = document.getElementById('card-' + id);
+  if (card) {
+    card.classList.add('active');
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+// Tooltip on hover for lines
+const tooltip = document.getElementById('tooltip');
+document.querySelectorAll('.policy-line').forEach(line => {
+  line.addEventListener('mouseenter', (e) => {
+    const id = line.dataset.id;
+    const p = policyData[id];
+    if (!p) return;
+    document.getElementById('tt-title').textContent = p.name;
+    document.getElementById('tt-from').innerHTML = `<span style="color:#6868a0">From:</span> <span>${p.from}</span>`;
+    document.getElementById('tt-dst').innerHTML = `<span style="color:#6868a0">To:</span> <span>${p.to}</span>`;
+    document.getElementById('tt-svc').innerHTML = `<span style="color:#6868a0">Svc:</span> <span>${p.svc}</span>`;
+    tooltip.classList.add('show');
+  });
+  line.addEventListener('mousemove', (e) => {
+    tooltip.style.left = (e.clientX + 16) + 'px';
+    tooltip.style.top  = (e.clientY - 10) + 'px';
+  });
+  line.addEventListener('mouseleave', () => {
+    tooltip.classList.remove('show');
+  });
+  line.addEventListener('click', () => {
+    highlight(line.dataset.id);
+  });
+});
+</script>
+</body>
+</html>

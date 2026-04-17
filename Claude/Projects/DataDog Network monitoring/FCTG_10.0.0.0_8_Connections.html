@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FCTG-FG-DC-1 — All Internal (10.0.0.0/8) Connections</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;background:#09090f;color:#e0e0f0;min-height:100vh;overflow-x:hidden}
+
+.hdr{padding:26px 44px 16px;border-bottom:1px solid rgba(255,255,255,0.06);background:linear-gradient(180deg,rgba(14,14,34,0.97) 0%,transparent 100%)}
+.hdr h1{font-size:25px;font-weight:700;letter-spacing:-.4px;color:#f0f0f8}.hdr h1 span{color:#7c8fff}
+.hdr p{margin-top:5px;font-size:13px;color:#60608a}
+.badges{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.badge{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:3px 9px;border-radius:4px}
+.b-blue{background:rgba(124,143,255,0.15);color:#9aabff;border:1px solid rgba(124,143,255,0.3)}
+.b-green{background:rgba(72,200,140,0.12);color:#5dcc98;border:1px solid rgba(72,200,140,0.25)}
+.b-amber{background:rgba(255,185,60,0.12);color:#ffc870;border:1px solid rgba(255,185,60,0.25)}
+.b-red{background:rgba(255,90,80,0.12);color:#ff9080;border:1px solid rgba(255,90,80,0.25)}
+.b-purple{background:rgba(180,100,255,0.12);color:#cc88ff;border:1px solid rgba(180,100,255,0.25)}
+.b-teal{background:rgba(60,200,220,0.12);color:#70d8e8;border:1px solid rgba(60,200,220,0.25)}
+
+.stats{display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.stat{padding:11px 24px;border-right:1px solid rgba(255,255,255,0.05);text-align:center}
+.stat .num{font-size:22px;font-weight:700;color:#7c8fff}
+.stat .lbl{font-size:10px;color:#50508a;text-transform:uppercase;letter-spacing:.7px;margin-top:2px}
+
+.legend{display:flex;gap:18px;padding:8px 44px;border-bottom:1px solid rgba(255,255,255,0.04);flex-wrap:wrap;background:rgba(255,255,255,0.01)}
+.leg{display:flex;align-items:center;gap:6px;font-size:11px;color:#5a5a90;cursor:pointer}
+.leg:hover{color:#9090cc}
+.leg-ln{width:20px;height:3px;border-radius:2px}
+
+.main{display:flex;height:calc(100vh - 152px)}
+.diag{flex:1;position:relative;overflow:hidden}
+#svg{width:100%;height:100%}
+
+.panel{width:390px;border-left:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;background:rgba(8,8,20,0.9)}
+.phdr{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.phdr h2{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7c8fff}
+.phdr .sub{font-size:11px;color:#50508a;margin-top:3px}
+.pbody{flex:1;overflow-y:auto;padding:10px 12px}
+
+.fbar{display:flex;gap:5px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap}
+.fbtn{font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#7070aa;cursor:pointer;transition:.15s;text-transform:uppercase;letter-spacing:.4px}
+.fbtn:hover,.fbtn.act{border-color:rgba(124,143,255,0.5);background:rgba(124,143,255,0.12);color:#aab0ff}
+
+.pc{background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.06);border-left:3px solid #333;border-radius:8px;padding:11px 13px;margin-bottom:7px;cursor:pointer;transition:.15s}
+.pc:hover{background:rgba(255,255,255,0.05);transform:translateX(2px)}
+.pc.hl{background:rgba(124,143,255,0.1);border-color:rgba(124,143,255,0.35)}
+.pc .pid{font-size:9px;font-weight:700;letter-spacing:1px;color:#3a3a80;text-transform:uppercase}
+.pc .pn{font-size:13px;font-weight:600;color:#d0d4ff;margin:3px 0 6px;line-height:1.3}
+.pc .pr{font-size:10px;color:#606090;margin-bottom:3px;display:flex;gap:5px}
+.pc .pr .l{color:#424280;font-weight:700;text-transform:uppercase;font-size:9px;letter-spacing:.4px;min-width:26px}
+.pc .pr .v{color:#8888c0;flex:1;line-height:1.4}
+.chips{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px}
+.chip{font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(124,143,255,0.1);color:#7878cc;border:1px solid rgba(124,143,255,0.18);font-weight:600}
+
+.qi{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s}
+.qi:hover{background:rgba(255,255,255,0.05)}
+.qi .ql{font-size:11px;color:#8080bb}
+.qi .qc{font-size:11px;font-weight:700;padding:1px 7px;border-radius:3px;background:rgba(0,0,0,0.3)}
+
+#tip{position:fixed;pointer-events:none;background:rgba(8,8,24,0.98);border:1px solid rgba(124,143,255,0.4);border-radius:10px;padding:11px 15px;font-size:12px;max-width:270px;z-index:9999;opacity:0;transition:.12s;box-shadow:0 10px 40px rgba(0,0,0,0.6)}
+#tip.show{opacity:1}
+#tip .tt{font-size:13px;font-weight:700;color:#b8c4ff;margin-bottom:5px}
+#tip .tr{color:#606090;margin-bottom:3px}
+#tip .tr span{color:#a0a8d8}
+
+.zone-lbl{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;font-weight:700}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>FCTG-FG-DC-1 — Connections Across <span>10.0.0.0/8</span></h1>
+  <p>FortiGate-101F · FW 7.6.6-build3652 · US/Pacific · Source: fctgFortiGate.xlsx · 105 total policies</p>
+  <div class="badges">
+    <span class="badge b-blue">FCTG HQ 10.0.0.0/16 · 10.1.0.0/16</span>
+    <span class="badge b-green">105 Policies · 33 Flows</span>
+    <span class="badge b-amber">OpCo IPsec (SIFP · AIFP · BP · OI · others)</span>
+    <span class="badge b-red">Azure 10.2.x · OPUS 10.1.x</span>
+    <span class="badge b-purple">FCT-SAML IPSEC VPN · SSL VPN</span>
+    <span class="badge b-teal">Convey Vendor Zone · Contractor DMZ</span>
+  </div>
+</div>
+<div class="stats">
+  <div class="stat"><div class="num">105</div><div class="lbl">Policies</div></div>
+  <div class="stat"><div class="num">33</div><div class="lbl">Flows</div></div>
+  <div class="stat"><div class="num">19</div><div class="lbl">DC→Internet</div></div>
+  <div class="stat"><div class="num">19</div><div class="lbl">OpCo→DC</div></div>
+  <div class="stat"><div class="num">12</div><div class="lbl">DC→OpCo</div></div>
+  <div class="stat"><div class="num">30</div><div class="lbl">VPN Tunnels</div></div>
+</div>
+<div class="legend">
+  <div class="leg"><div class="leg-ln" style="background:#7c8fff"></div>DC Trusted ↔ OpCo IPsec</div>
+  <div class="leg"><div class="leg-ln" style="background:#48c88c"></div>DC Trusted → Internet</div>
+  <div class="leg"><div class="leg-ln" style="background:#ff6c6c"></div>FCT-SAML IPSEC VPN</div>
+  <div class="leg"><div class="leg-ln" style="background:#ffaa40"></div>SSL VPN</div>
+  <div class="leg"><div class="leg-ln" style="background:#c87cff"></div>Azure</div>
+  <div class="leg"><div class="leg-ln" style="background:#3cc8dc"></div>Convey / Contractor</div>
+  <div class="leg"><div class="leg-ln" style="background:#f0c040"></div>Switches / Internal</div>
+</div>
+
+<div class="main">
+<div class="diag">
+<svg id="svg" viewBox="0 0 1080 640" preserveAspectRatio="xMidYMid meet">
+<defs>
+  <marker id="a1" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#7c8fff"/></marker>
+  <marker id="a2" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#48c88c"/></marker>
+  <marker id="a3" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#ff6c6c"/></marker>
+  <marker id="a4" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#ffaa40"/></marker>
+  <marker id="a5" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#c87cff"/></marker>
+  <marker id="a6" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#3cc8dc"/></marker>
+  <marker id="a7" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#f0c040"/></marker>
+  <filter id="glow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="glow2"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <radialGradient id="fw-grad" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="rgba(255,80,80,0.22)"/>
+    <stop offset="100%" stop-color="rgba(255,80,80,0.04)"/>
+  </radialGradient>
+</defs>
+
+<!-- Background glows -->
+<ellipse cx="200" cy="310" rx="160" ry="200" fill="rgba(124,143,255,0.04)"/>
+<ellipse cx="860" cy="310" rx="170" ry="220" fill="rgba(124,143,255,0.04)"/>
+<ellipse cx="530" cy="75" rx="115" ry="60" fill="rgba(72,200,140,0.03)"/>
+<ellipse cx="530" cy="580" rx="160" ry="55" fill="rgba(255,108,108,0.03)"/>
+
+<!-- ══ FCTG DC Trusted VLANs (left) ══ -->
+<rect x="18" y="190" width="218" height="150" rx="12" fill="rgba(124,143,255,0.08)" stroke="rgba(124,143,255,0.38)" stroke-width="1.5"/>
+<text x="127" y="218" text-anchor="middle" class="zone-lbl" font-size="13" fill="#9aaeff">FCTG DC Trusted VLANs</text>
+<text x="127" y="234" text-anchor="middle" font-family="monospace" font-size="9" fill="#6060a8">10.0.0.0/16 · 10.1.0.0/16</text>
+<line x1="36" y1="244" x2="218" y2="244" stroke="rgba(124,143,255,0.15)" stroke-width="1"/>
+<text x="127" y="260" text-anchor="middle" font-size="9" fill="#7070a0">FCTG_DC_trusted_vlans iface</text>
+<text x="127" y="274" text-anchor="middle" font-size="9" fill="#5a5a88">Servers · Domain Controllers</text>
+<text x="127" y="288" text-anchor="middle" font-size="9" fill="#5a5a88">iSeries · FAX · Dev Servers</text>
+<text x="127" y="302" text-anchor="middle" font-size="9" fill="#5a5a88">IT Workstations · NPS · Audit</text>
+<text x="127" y="316" text-anchor="middle" font-size="9" fill="#5a5a88">19→Internet · 12→OpCo · 19←OpCo</text>
+
+<!-- ══ CENTER: FCTG-FG-DC-1 ══ -->
+<rect x="405" y="228" width="210" height="168" rx="14" fill="url(#fw-grad)" stroke="rgba(255,100,100,0.48)" stroke-width="2" filter="url(#glow)"/>
+<text x="510" y="260" text-anchor="middle" class="zone-lbl" font-size="14" fill="#ff9090">FCTG-FG-DC-1</text>
+<text x="510" y="277" text-anchor="middle" font-size="10" fill="#a06060">FortiGate-101F · FW 7.6.6</text>
+<line x1="422" y1="288" x2="596" y2="288" stroke="rgba(255,100,100,0.18)" stroke-width="1"/>
+<text x="510" y="304" text-anchor="middle" font-size="9" fill="#886060">INTERFACES</text>
+<text x="510" y="319" text-anchor="middle" font-size="9" fill="#745050">FCTG_DC_trusted_vlans</text>
+<text x="510" y="333" text-anchor="middle" font-size="9" fill="#745050">FCTG_OpCo_ENS_IPsec</text>
+<text x="510" y="347" text-anchor="middle" font-size="9" fill="#745050">FCT-SAML · ssl.root</text>
+<text x="510" y="361" text-anchor="middle" font-size="9" fill="#745050">fctg_contractor · FCTG_Convey</text>
+<text x="510" y="375" text-anchor="middle" font-size="9" fill="#745050">CONVEY-TEMP · virtual-wan-link</text>
+<text x="510" y="389" text-anchor="middle" font-size="9" fill="#745050">fortilink · Data-Storage · dmz</text>
+
+<!-- ══ Internet/WAN (top) ══ -->
+<rect x="390" y="25" width="240" height="68" rx="12" fill="rgba(72,200,140,0.07)" stroke="rgba(72,200,140,0.3)" stroke-width="1.5"/>
+<text x="510" y="52" text-anchor="middle" class="zone-lbl" font-size="13" fill="#6fd9a8">Internet / WAN</text>
+<text x="510" y="68" text-anchor="middle" font-size="10" fill="#4a9a78">virtual-wan-link · SD-WAN</text>
+<text x="510" y="82" text-anchor="middle" font-size="9" fill="#3a7858">19 outbound policies</text>
+
+<!-- ══ Azure (top right) ══ -->
+<rect x="790" y="25" width="210" height="75" rx="12" fill="rgba(200,124,255,0.07)" stroke="rgba(200,124,255,0.3)" stroke-width="1.5"/>
+<text x="895" y="52" text-anchor="middle" class="zone-lbl" font-size="13" fill="#cc88ff">Azure</text>
+<text x="895" y="68" text-anchor="middle" font-family="monospace" font-size="9" fill="#9060cc">10.2.0.0/15 · UAT Subnet</text>
+<text x="895" y="82" text-anchor="middle" font-size="9" fill="#7050aa">Opus_to_azure · Azure_to_Opus · UAT flows</text>
+
+<!-- ══ OpCo IPsec Sites (right, large) ══ -->
+<rect x="648" y="180" width="240" height="200" rx="13" fill="rgba(124,143,255,0.07)" stroke="rgba(124,143,255,0.3)" stroke-width="1.5"/>
+<text x="768" y="208" text-anchor="middle" class="zone-lbl" font-size="13" fill="#9aaeff">OpCo IPsec Sites</text>
+<text x="768" y="224" text-anchor="middle" font-size="9" fill="#6060a0">FCTG_OpCo_ENS_IPsec interface</text>
+<line x1="664" y1="233" x2="872" y2="233" stroke="rgba(124,143,255,0.15)" stroke-width="1"/>
+<text x="768" y="248" text-anchor="middle" font-size="10" fill="#7070b0">SIFP</text>
+<text x="768" y="261" text-anchor="middle" font-family="monospace" font-size="9" fill="#505090">10.30.0.0/16</text>
+<text x="768" y="278" text-anchor="middle" font-size="10" fill="#7070b0">AIFP · AR</text>
+<text x="768" y="291" text-anchor="middle" font-family="monospace" font-size="9" fill="#505090">10.4.0.0/16</text>
+<text x="768" y="308" text-anchor="middle" font-size="10" fill="#7070b0">BP / BuckEye</text>
+<text x="768" y="321" text-anchor="middle" font-family="monospace" font-size="9" fill="#505090">10.10.0.0/16</text>
+<text x="768" y="338" text-anchor="middle" font-size="10" fill="#7070b0">OI · SMT · TIFP · PFP · RIFP</text>
+<text x="768" y="351" text-anchor="middle" font-family="monospace" font-size="9" fill="#505090">10.18–10.28.x</text>
+<text x="768" y="366" text-anchor="middle" font-size="9" fill="#404080">+ OPCO_SSLVPN_IP_SUBNETS · FCTG-ON-Prem</text>
+
+<!-- ══ FCT-SAML IPSEC VPN (bottom center) ══ -->
+<rect x="370" y="530" width="280" height="68" rx="10" fill="rgba(255,108,108,0.07)" stroke="rgba(255,108,108,0.28)" stroke-width="1.5"/>
+<text x="510" y="556" text-anchor="middle" class="zone-lbl" font-size="12" fill="#ff8888">FCT-SAML IPSEC VPN</text>
+<text x="510" y="572" text-anchor="middle" font-size="9" fill="#b06060">IPSEC-DIALUP-RANGE (remote clients)</text>
+<text x="510" y="585" text-anchor="middle" font-size="9" fill="#905050">8 policies → DC · OpCo · Azure · Convey · iSeries</text>
+
+<!-- ══ SSL VPN (bottom left) ══ -->
+<rect x="60" y="530" width="200" height="65" rx="10" fill="rgba(255,170,64,0.07)" stroke="rgba(255,170,64,0.28)" stroke-width="1.5"/>
+<text x="160" y="555" text-anchor="middle" class="zone-lbl" font-size="12" fill="#ffaa60">SSL VPN</text>
+<text x="160" y="571" text-anchor="middle" font-size="9" fill="#b07840">ssl.root · SSLVPN-RANGE</text>
+<text x="160" y="584" text-anchor="middle" font-size="9" fill="#907030">8 policies → DC · Contractor · OpCo</text>
+
+<!-- ══ Contractor DMZ (bottom right) ══ -->
+<rect x="780" y="430" width="200" height="70" rx="10" fill="rgba(60,200,220,0.06)" stroke="rgba(60,200,220,0.25)" stroke-width="1.2"/>
+<text x="880" y="456" text-anchor="middle" class="zone-lbl" font-size="12" fill="#60d8e8">Contractor DMZ</text>
+<text x="880" y="472" text-anchor="middle" font-size="9" fill="#3898a8">fctg_contractor · FCTGJUMP1/2</text>
+<text x="880" y="486" text-anchor="middle" font-size="9" fill="#287888">RDP access only · Restricted</text>
+
+<!-- ══ Convey Vendor Zone (right lower) ══ -->
+<rect x="648" y="430" width="124" height="70" rx="10" fill="rgba(60,200,220,0.05)" stroke="rgba(60,200,220,0.2)" stroke-width="1.2"/>
+<text x="710" y="455" text-anchor="middle" class="zone-lbl" font-size="11" fill="#50c8d8">FCTG Convey</text>
+<text x="710" y="471" text-anchor="middle" font-size="9" fill="#307888">FCTGJUMPBOX1</text>
+<text x="710" y="485" text-anchor="middle" font-size="9" fill="#286070">12 policies</text>
+
+<!-- ══ CONVEY-TEMP / Vendor (far right) ══ -->
+<rect x="870" y="530" width="170" height="62" rx="9" fill="rgba(60,200,220,0.04)" stroke="rgba(60,200,220,0.15)" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="955" y="554" text-anchor="middle" font-size="11" fill="#44aabb">CONVEY-TEMP</text>
+<text x="955" y="569" text-anchor="middle" font-size="9" fill="#286070">VENDOR-RESTRICTED-RANGE</text>
+<text x="955" y="582" text-anchor="middle" font-size="9" fill="#205060">4 policies → DC · Convey · OpCo</text>
+
+<!-- ══ Switches (left lower) ══ -->
+<rect x="18" y="390" width="160" height="58" rx="9" fill="rgba(240,192,64,0.06)" stroke="rgba(240,192,64,0.22)" stroke-width="1"/>
+<text x="98" y="414" text-anchor="middle" font-size="11" fill="#d8b050">LAN / Data Switches</text>
+<text x="98" y="430" text-anchor="middle" font-size="9" fill="#887020">fortilink · Data-Storage</text>
+<text x="98" y="444" text-anchor="middle" font-size="9" fill="#686010">4 policies (SNMP · PING)</text>
+
+<!-- ══ HYBRID-JOIN (left, small) ══ -->
+<rect x="18" y="460" width="130" height="44" rx="7" fill="rgba(240,192,64,0.04)" stroke="rgba(240,192,64,0.15)" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="83" y="479" text-anchor="middle" font-size="10" fill="#b09040">HYBRID-JOIN</text>
+<text x="83" y="493" text-anchor="middle" font-size="9" fill="#7a6020">1 policy (Windows AD)</text>
+
+<!-- ══ DC Internal traffic ══ -->
+<rect x="18" y="358" width="218" height="28" rx="6" fill="rgba(124,143,255,0.05)" stroke="rgba(124,143,255,0.15)" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="127" y="377" text-anchor="middle" font-size="9" fill="#6060a0">DC Internal: SvrPrt ↔ DEV_SvrPrt (2 policies)</text>
+
+<!-- ═══════════════════
+     FLOW ARROWS
+═══════════════════ -->
+
+<!-- DC Trusted → Internet (19) -->
+<path id="f-dc-wan" d="M 490 228 C 490 185 500 140 505 93"
+  stroke="#48c88c" stroke-width="4" fill="none" opacity=".78"
+  marker-end="url(#a2)" class="fl" data-flow="FCTG_DC_trusted_vlans|virtual-wan-link" cursor="pointer"/>
+<rect x="514" y="146" width="78" height="17" rx="3" fill="rgba(8,8,22,0.85)"/>
+<text x="553" y="159" text-anchor="middle" font-size="10" fill="#6fd9a8" font-weight="700" class="fl" data-flow="FCTG_DC_trusted_vlans|virtual-wan-link" cursor="pointer">19 policies</text>
+
+<!-- DC Trusted → OpCo (12) — upper arrow -->
+<path id="f-dc-opco" d="M 236 265 Q 380 220 648 265"
+  stroke="#7c8fff" stroke-width="3.5" fill="none" opacity=".75"
+  marker-end="url(#a1)" class="fl" data-flow="FCTG_DC_trusted_vlans|FCTG_OpCo_ENS_IPsec" cursor="pointer"/>
+<rect x="386" y="222" width="72" height="17" rx="3" fill="rgba(8,8,22,0.85)"/>
+<text x="422" y="235" text-anchor="middle" font-size="10" fill="#9aaeff" font-weight="700" class="fl" data-flow="FCTG_DC_trusted_vlans|FCTG_OpCo_ENS_IPsec" cursor="pointer">12 policies</text>
+
+<!-- OpCo → DC Trusted (19) — lower arrow -->
+<path id="f-opco-dc" d="M 648 300 Q 490 355 236 315"
+  stroke="#9aaeff" stroke-width="4.5" fill="none" opacity=".72"
+  marker-end="url(#a1)" class="fl" data-flow="FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans" cursor="pointer"/>
+<rect x="380" y="347" width="72" height="17" rx="3" fill="rgba(8,8,22,0.85)"/>
+<text x="416" y="360" text-anchor="middle" font-size="10" fill="#b8c4ff" font-weight="700" class="fl" data-flow="FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans" cursor="pointer">19 policies</text>
+
+<!-- DC → Azure (via OpCo iface) -->
+<path id="f-dc-az" d="M 615 240 C 680 160 750 100 790 70"
+  stroke="#c87cff" stroke-width="2.5" fill="none" opacity=".7"
+  marker-end="url(#a5)" class="fl" data-flow="FCTG_DC_trusted_vlans|FCTG_OpCo_ENS_IPsec-azure" cursor="pointer"/>
+<rect x="668" y="140" width="58" height="16" rx="3" fill="rgba(8,8,22,0.85)"/>
+<text x="697" y="152" text-anchor="middle" font-size="9" fill="#cc88ff" font-weight="700">Azure</text>
+
+<!-- Azure → DC -->
+<path id="f-az-dc" d="M 830 100 C 800 150 740 190 648 240"
+  stroke="#a840ff" stroke-width="2" fill="none" opacity=".6"
+  marker-end="url(#a5)" class="fl" data-flow="FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans-azure" cursor="pointer"/>
+
+<!-- FCT-SAML → DC (4 policies) -->
+<path id="f-saml-dc" d="M 450 530 C 430 490 420 430 415 396"
+  stroke="#ff6c6c" stroke-width="2.5" fill="none" opacity=".75" stroke-dasharray="6,3"
+  marker-end="url(#a3)" class="fl" data-flow="FCT-SAML|FCTG_DC_trusted_vlans" cursor="pointer"/>
+<rect x="390" y="453" width="56" height="16" rx="3" fill="rgba(8,8,22,0.85)"/>
+<text x="418" y="465" text-anchor="middle" font-size="9" fill="#ff8888" font-weight="700">4 → DC</text>
+
+<!-- FCT-SAML → OpCo (3 policies) -->
+<path id="f-saml-opco" d="M 560 530 C 580 490 600 450 648 380"
+  stroke="#ff4c4c" stroke-width="2" fill="none" opacity=".65" stroke-dasharray="6,3"
+  marker-end="url(#a3)" class="fl" data-flow="FCT-SAML|FCTG_OpCo_ENS_IPsec" cursor="pointer"/>
+<rect x="578" y="453" width="56" height="16" rx="3" fill="rgba(8,8,22,0.85)"/>
+<text x="606" y="465" text-anchor="middle" font-size="9" fill="#ff8888" font-weight="700">3 → OpCo</text>
+
+<!-- FCT-SAML → Convey (1) -->
+<path id="f-saml-conv" d="M 595 535 C 640 510 680 490 700 500"
+  stroke="#ff6ca0" stroke-width="1.6" fill="none" opacity=".55" stroke-dasharray="5,3"
+  marker-end="url(#a3)" class="fl" data-flow="FCT-SAML|FCTG_Convey" cursor="pointer"/>
+
+<!-- DC → FCT-SAML (1) -->
+<path id="f-dc-saml" d="M 416 396 C 415 430 430 490 450 530"
+  stroke="#ff9080" stroke-width="1.6" fill="none" opacity=".5" stroke-dasharray="4,3"
+  marker-end="url(#a3)" class="fl" data-flow="FCTG_DC_trusted_vlans|FCT-SAML" cursor="pointer"/>
+
+<!-- OpCo → FCT-SAML (1) -->
+<path id="f-opco-saml" d="M 648 365 C 620 440 580 490 570 530"
+  stroke="#ff8080" stroke-width="1.4" fill="none" opacity=".45" stroke-dasharray="4,3"
+  marker-end="url(#a3)" class="fl" data-flow="FCTG_OpCo_ENS_IPsec|FCT-SAML" cursor="pointer"/>
+
+<!-- SSL VPN → DC (3) -->
+<path id="f-ssl-dc" d="M 220 532 C 250 490 290 420 405 348"
+  stroke="#ffaa40" stroke-width="2.2" fill="none" opacity=".7" stroke-dasharray="5,3"
+  marker-end="url(#a4)" class="fl" data-flow="ssl.root|FCTG_DC_trusted_vlans" cursor="pointer"/>
+<rect x="270" y="430" width="72" height="16" rx="3" fill="rgba(8,8,22,0.85)"/>
+<text x="306" y="442" text-anchor="middle" font-size="9" fill="#ffaa40" font-weight="700">SSL VPN→DC</text>
+
+<!-- SSL VPN → Contractor (3) -->
+<path id="f-ssl-ctr" d="M 240 530 C 320 500 550 460 780 460"
+  stroke="#ff8830" stroke-width="2" fill="none" opacity=".6" stroke-dasharray="5,3"
+  marker-end="url(#a4)" class="fl" data-flow="ssl.root|fctg_contractor" cursor="pointer"/>
+
+<!-- SSL VPN → OpCo (2) -->
+<path id="f-ssl-opco" d="M 260 530 C 350 490 500 430 648 370"
+  stroke="#ff9940" stroke-width="1.6" fill="none" opacity=".5" stroke-dasharray="4,3"
+  marker-end="url(#a4)" class="fl" data-flow="ssl.root|FCTG_OpCo_ENS_IPsec" cursor="pointer"/>
+
+<!-- Contractor → DC (3) -->
+<path id="f-ctr-dc" d="M 820 440 C 780 390 720 350 615 320"
+  stroke="#3cc8dc" stroke-width="2" fill="none" opacity=".65"
+  marker-end="url(#a6)" class="fl" data-flow="fctg_contractor|FCTG_DC_trusted_vlans" cursor="pointer"/>
+
+<!-- Contractor → Internet (1) -->
+<path id="f-ctr-wan" d="M 840 430 C 800 300 700 180 620 93"
+  stroke="#2ca0b8" stroke-width="1.6" fill="none" opacity=".5"
+  marker-end="url(#a6)" class="fl" data-flow="fctg_contractor|virtual-wan-link" cursor="pointer"/>
+
+<!-- Contractor → OpCo (2) -->
+<path id="f-ctr-opco" d="M 870 445 C 870 400 840 350 770 330"
+  stroke="#3ab8cc" stroke-width="1.8" fill="none" opacity=".55"
+  marker-end="url(#a6)" class="fl" data-flow="fctg_contractor|FCTG_OpCo_ENS_IPsec" cursor="pointer"/>
+
+<!-- Convey → DC (4) -->
+<path id="f-conv-dc" d="M 670 430 C 610 390 530 360 405 330"
+  stroke="#3cc8dc" stroke-width="2.2" fill="none" opacity=".68"
+  marker-end="url(#a6)" class="fl" data-flow="FCTG_Convey|FCTG_DC_trusted_vlans" cursor="pointer"/>
+<rect x="490" y="378" width="68" height="16" rx="3" fill="rgba(8,8,22,0.85)"/>
+<text x="524" y="390" text-anchor="middle" font-size="9" fill="#3cc8dc" font-weight="700">Convey→DC</text>
+
+<!-- Convey → OpCo (4) -->
+<path id="f-conv-opco" d="M 726 430 C 740 400 752 385 756 380"
+  stroke="#20a8bc" stroke-width="2" fill="none" opacity=".6"
+  marker-end="url(#a6)" class="fl" data-flow="FCTG_Convey|FCTG_OpCo_ENS_IPsec" cursor="pointer"/>
+
+<!-- DC → Convey (2) -->
+<path id="f-dc-conv" d="M 615 340 C 630 380 660 410 660 430"
+  stroke="#2888a0" stroke-width="1.8" fill="none" opacity=".55"
+  marker-end="url(#a6)" class="fl" data-flow="FCTG_DC_trusted_vlans|FCTG_Convey" cursor="pointer"/>
+
+<!-- OpCo → Convey (2) -->
+<path id="f-opco-conv" d="M 768 380 C 760 400 740 420 734 430"
+  stroke="#208898" stroke-width="1.6" fill="none" opacity=".5"
+  marker-end="url(#a6)" class="fl" data-flow="FCTG_OpCo_ENS_IPsec|FCTG_Convey" cursor="pointer"/>
+
+<!-- CONVEY-TEMP → DC (2) -->
+<path id="f-ct-dc" d="M 870 540 C 800 520 700 460 615 360"
+  stroke="#3cb8cc" stroke-width="1.6" fill="none" opacity=".5" stroke-dasharray="4,3"
+  marker-end="url(#a6)" class="fl" data-flow="CONVEY-TEMP|FCTG_DC_trusted_vlans" cursor="pointer"/>
+
+<!-- CONVEY-TEMP → Convey (1) -->
+<path id="f-ct-conv" d="M 880 530 C 820 510 780 490 760 490"
+  stroke="#3cb0c0" stroke-width="1.4" fill="none" opacity=".45" stroke-dasharray="3,2"
+  marker-end="url(#a6)" class="fl" data-flow="CONVEY-TEMP|FCTG_Convey" cursor="pointer"/>
+
+<!-- CONVEY-TEMP → OpCo (1) -->
+<path id="f-ct-opco" d="M 920 530 C 900 480 860 420 840 395"
+  stroke="#3ca8b8" stroke-width="1.4" fill="none" opacity=".45" stroke-dasharray="3,2"
+  marker-end="url(#a6)" class="fl" data-flow="CONVEY-TEMP|FCTG_OpCo_ENS_IPsec" cursor="pointer"/>
+
+<!-- Switches ↔ DC (4 policies) -->
+<path id="f-sw-dc" d="M 178 388 C 240 380 340 340 405 316"
+  stroke="#f0c040" stroke-width="1.8" fill="none" opacity=".6"
+  marker-end="url(#a7)" class="fl" data-flow="fortilink|FCTG_DC_trusted_vlans" cursor="pointer"/>
+<path id="f-dc-sw" d="M 405 325 C 340 355 240 390 178 400"
+  stroke="#d8a830" stroke-width="1.8" fill="none" opacity=".55"
+  marker-end="url(#a7)" class="fl" data-flow="FCTG_DC_trusted_vlans|Data-Storage" cursor="pointer"/>
+<rect x="262" y="344" width="58" height="16" rx="3" fill="rgba(8,8,22,0.85)"/>
+<text x="291" y="356" text-anchor="middle" font-size="9" fill="#f0c040" font-weight="700">Switches</text>
+
+<!-- WAN → DC (1, SDWAN UP FTP) -->
+<path id="f-wan-dc" d="M 430 93 C 425 140 420 190 415 228"
+  stroke="#48c88c" stroke-width="1.6" fill="none" opacity=".5" stroke-dasharray="4,3"
+  marker-end="url(#a2)" class="fl" data-flow="virtual-wan-link|FCTG_DC_trusted_vlans" cursor="pointer"/>
+
+<!-- HYBRID-JOIN → DC -->
+<path id="f-hj-dc" d="M 130 460 C 165 430 220 380 236 355"
+  stroke="#d0a030" stroke-width="1.4" fill="none" opacity=".45" stroke-dasharray="3,2"
+  marker-end="url(#a7)" class="fl" data-flow="HYBRID-JOIN|FCTG_DC_trusted_vlans" cursor="pointer"/>
+
+<!-- DC Internal (self-loop label) -->
+<path id="f-dc-int" d="M 60 358 C 40 340 40 310 60 295"
+  stroke="#7060c0" stroke-width="1.4" fill="none" opacity=".5"
+  marker-end="url(#a1)" class="fl" data-flow="FCTG_DC_trusted_vlans|FCTG_DC_trusted_vlans" cursor="pointer"/>
+
+<!-- DMZ → WAN (1) -->
+<path id="f-dmz-wan" d="M 236 230 C 300 160 380 120 410 93"
+  stroke="#ff6060" stroke-width="1.4" fill="none" opacity=".4" stroke-dasharray="3,2"
+  marker-end="url(#a3)" class="fl" data-flow="dmz|virtual-wan-link" cursor="pointer"/>
+
+<!-- OpCo → DMZ (1) -->
+<path id="f-opco-dmz" d="M 648 250 C 500 200 350 210 280 228"
+  stroke="#ff5050" stroke-width="1.4" fill="none" opacity=".4" stroke-dasharray="3,2"
+  marker-end="url(#a3)" class="fl" data-flow="FCTG_OpCo_ENS_IPsec|dmz" cursor="pointer"/>
+
+<!-- Convey → WAN (2) -->
+<path id="f-conv-wan" d="M 762 430 C 740 340 680 210 620 93"
+  stroke="#3ca8c0" stroke-width="1.4" fill="none" opacity=".45"
+  marker-end="url(#a6)" class="fl" data-flow="FCTG_Convey|virtual-wan-link" cursor="pointer"/>
+
+<!-- Note labels -->
+<rect x="500" y="108" width="52" height="15" rx="3" fill="rgba(8,8,22,0.8)"/>
+<text x="526" y="119" text-anchor="middle" font-size="8" fill="#ff9090" font-weight="700">19 out</text>
+<rect x="380" y="475" width="80" height="14" rx="3" fill="rgba(8,8,22,0.8)"/>
+<text x="420" y="486" text-anchor="middle" font-size="8" fill="#ff8888">8 VPN policies</text>
+<rect x="108" y="516" width="80" height="14" rx="3" fill="rgba(8,8,22,0.8)"/>
+<text x="148" y="527" text-anchor="middle" font-size="8" fill="#ffaa40">8 SSL policies</text>
+
+</svg>
+</div>
+
+<!-- Side Panel -->
+<div class="panel">
+  <div class="phdr">
+    <h2 id="ptitle">Select a Flow</h2>
+    <div class="sub" id="psub">Click any arrow or label to explore policies</div>
+  </div>
+  <div class="fbar" id="fbar" style="display:none">
+    <button class="fbtn act" onclick="filterCards('all',this)">All</button>
+    <button class="fbtn" onclick="filterCards('accept',this)">Accept</button>
+    <button class="fbtn" onclick="filterCards('deny',this)">Deny</button>
+    <button class="fbtn" onclick="filterCards('disable',this)">Disabled</button>
+  </div>
+  <div class="pbody" id="pbody">
+    <div style="text-align:center;padding:50px 20px">
+      <div style="font-size:32px;opacity:.1">←</div>
+      <div style="font-size:12px;color:#404070;margin-top:12px">Click any flow arrow on the diagram to see the matching firewall policies here</div>
+    </div>
+    <div style="margin-top:16px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#38387a;margin-bottom:10px">Quick Flow Index</div>
+      <div class="qi" onclick="loadFlow('FCTG_DC_trusted_vlans|virtual-wan-link')">
+        <span class="ql">DC Trusted → Internet</span>
+        <span class="qc" style="color:#48c88c">19</span>
+      </div>
+      <div class="qi" onclick="loadFlow('FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans')">
+        <span class="ql">OpCo IPsec → DC Trusted</span>
+        <span class="qc" style="color:#9aaeff">19</span>
+      </div>
+      <div class="qi" onclick="loadFlow('FCTG_DC_trusted_vlans|FCTG_OpCo_ENS_IPsec')">
+        <span class="ql">DC Trusted → OpCo IPsec</span>
+        <span class="qc" style="color:#7c8fff">12</span>
+      </div>
+      <div class="qi" onclick="loadFlow('FCT-SAML|FCTG_DC_trusted_vlans')">
+        <span class="ql">SAML IPSEC VPN → DC</span>
+        <span class="qc" style="color:#ff6c6c">4</span>
+      </div>
+      <div class="qi" onclick="loadFlow('FCTG_Convey|FCTG_DC_trusted_vlans')">
+        <span class="ql">Convey → DC Trusted</span>
+        <span class="qc" style="color:#3cc8dc">4</span>
+      </div>
+      <div class="qi" onclick="loadFlow('FCTG_Convey|FCTG_OpCo_ENS_IPsec')">
+        <span class="ql">Convey → OpCo IPsec</span>
+        <span class="qc" style="color:#3cc8dc">4</span>
+      </div>
+      <div class="qi" onclick="loadFlow('ssl.root|FCTG_DC_trusted_vlans')">
+        <span class="ql">SSL VPN → DC Trusted</span>
+        <span class="qc" style="color:#ffaa40">3</span>
+      </div>
+      <div class="qi" onclick="loadFlow('ssl.root|fctg_contractor')">
+        <span class="ql">SSL VPN → Contractor DMZ</span>
+        <span class="qc" style="color:#ff8830">3</span>
+      </div>
+      <div class="qi" onclick="loadFlow('fctg_contractor|FCTG_DC_trusted_vlans')">
+        <span class="ql">Contractor → DC Trusted</span>
+        <span class="qc" style="color:#3cc8dc">3</span>
+      </div>
+      <div class="qi" onclick="loadFlow('FCT-SAML|FCTG_OpCo_ENS_IPsec')">
+        <span class="ql">SAML IPSEC VPN → OpCo</span>
+        <span class="qc" style="color:#ff4c4c">3</span>
+      </div>
+      <div class="qi" onclick="loadFlow('ssl.root|FCTG_OpCo_ENS_IPsec')">
+        <span class="ql">SSL VPN → OpCo IPsec</span>
+        <span class="qc" style="color:#ff9940">2</span>
+      </div>
+      <div class="qi" onclick="loadFlow('fctg_contractor|FCTG_OpCo_ENS_IPsec')">
+        <span class="ql">Contractor → OpCo</span>
+        <span class="qc" style="color:#3ab8cc">2</span>
+      </div>
+      <div class="qi" onclick="loadFlow('FCTG_DC_trusted_vlans|fctg_contractor')">
+        <span class="ql">DC Trusted → Contractor</span>
+        <span class="qc" style="color:#3cc8dc">2</span>
+      </div>
+      <div class="qi" onclick="loadFlow('CONVEY-TEMP|FCTG_DC_trusted_vlans')">
+        <span class="ql">CONVEY-TEMP → DC Trusted</span>
+        <span class="qc" style="color:#3cc8dc">2</span>
+      </div>
+      <div class="qi" onclick="loadFlow('FCTG_Convey|virtual-wan-link')">
+        <span class="ql">Convey → Internet</span>
+        <span class="qc" style="color:#3ca8c0">2</span>
+      </div>
+      <div class="qi" onclick="loadFlow('FCTG_DC_trusted_vlans|FCTG_Convey')">
+        <span class="ql">DC Trusted → Convey</span>
+        <span class="qc" style="color:#3cc8dc">2</span>
+      </div>
+      <div class="qi" onclick="loadFlow('FCTG_OpCo_ENS_IPsec|FCTG_Convey')">
+        <span class="ql">OpCo → Convey</span>
+        <span class="qc" style="color:#9aaeff">2</span>
+      </div>
+      <div class="qi" onclick="loadFlow('FCTG_DC_trusted_vlans|FCTG_DC_trusted_vlans')">
+        <span class="ql">DC Internal (SvrPrt ↔ DEV)</span>
+        <span class="qc" style="color:#7060c0">2</span>
+      </div>
+      <div class="qi" onclick="loadFlow('virtual-wan-link|FCTG_DC_trusted_vlans')">
+        <span class="ql">Internet → DC (SDWAN FTP)</span>
+        <span class="qc" style="color:#48c88c">1</span>
+      </div>
+      <div class="qi" onclick="loadFlow('FCT-SAML|FCTG_Convey')">
+        <span class="ql">SAML VPN → Convey</span>
+        <span class="qc" style="color:#ff6ca0">1</span>
+      </div>
+      <div class="qi" onclick="loadFlow('FCTG_DC_trusted_vlans|FCT-SAML')">
+        <span class="ql">DC Trusted → FCT-SAML</span>
+        <span class="qc" style="color:#ff9080">1</span>
+      </div>
+      <div class="qi" onclick="loadFlow('FCTG_OpCo_ENS_IPsec|FCT-SAML')">
+        <span class="ql">OpCo → FCT-SAML</span>
+        <span class="qc" style="color:#ff8080">1</span>
+      </div>
+      <div class="qi" onclick="loadFlow('FCTG_OpCo_ENS_IPsec|fctg_contractor')">
+        <span class="ql">OpCo → Contractor</span>
+        <span class="qc" style="color:#3cc8dc">1</span>
+      </div>
+      <div class="qi" onclick="loadFlow('fortilink|FCTG_DC_trusted_vlans')">
+        <span class="ql">FortiLink Switches → DC</span>
+        <span class="qc" style="color:#f0c040">1</span>
+      </div>
+      <div class="qi" onclick="loadFlow('Data-Storage|FCTG_DC_trusted_vlans')">
+        <span class="ql">Data Switches → DC</span>
+        <span class="qc" style="color:#d8a830">1</span>
+      </div>
+      <div class="qi" onclick="loadFlow('FCTG_DC_trusted_vlans|Data-Storage')">
+        <span class="ql">DC → Data Switches</span>
+        <span class="qc" style="color:#f0c040">1</span>
+      </div>
+      <div class="qi" onclick="loadFlow('FCTG_DC_trusted_vlans|fortilink')">
+        <span class="ql">DC → FortiLink Switches</span>
+        <span class="qc" style="color:#d8a030">1</span>
+      </div>
+      <div class="qi" onclick="loadFlow('CONVEY-TEMP|FCTG_Convey')">
+        <span class="ql">CONVEY-TEMP → Convey</span>
+        <span class="qc" style="color:#3cb0c0">1</span>
+      </div>
+      <div class="qi" onclick="loadFlow('CONVEY-TEMP|FCTG_OpCo_ENS_IPsec')">
+        <span class="ql">CONVEY-TEMP → OpCo</span>
+        <span class="qc" style="color:#3ca8b8">1</span>
+      </div>
+      <div class="qi" onclick="loadFlow('HYBRID-JOIN|FCTG_DC_trusted_vlans')">
+        <span class="ql">Hybrid-Join → DC Trusted</span>
+        <span class="qc" style="color:#d0a030">1</span>
+      </div>
+      <div class="qi" onclick="loadFlow('fctg_contractor|virtual-wan-link')">
+        <span class="ql">Contractor → Internet</span>
+        <span class="qc" style="color:#2ca0b8">1</span>
+      </div>
+      <div class="qi" onclick="loadFlow('dmz|virtual-wan-link')">
+        <span class="ql">DMZ → Internet (Disabled)</span>
+        <span class="qc" style="color:#804040">1</span>
+      </div>
+      <div class="qi" onclick="loadFlow('FCTG_OpCo_ENS_IPsec|dmz')">
+        <span class="ql">OpCo → DMZ (Disabled)</span>
+        <span class="qc" style="color:#804040">1</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div id="tip">
+  <div class="tt" id="tt"></div>
+  <div class="tr" id="tr1"></div>
+  <div class="tr" id="tr2"></div>
+</div>
+
+<script>
+const POLICIES = [{"id":"7","name":"OPUS to FCTG_On-Prem","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"dst_addr":["Azure_subnet","OPCO_SUBNETS","OPCO_SSLVPN_IP_SUBNETS","FCTG-ON-Prem"],"services":["ALL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"ALL":"protocol"},"flow":"FCTG_DC_trusted_vlans|FCTG_OpCo_ENS_IPsec"},{"id":"8","name":"OPUS to WEB","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"virtual-wan-link","src_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"dst_addr":["all"],"services":["Web Access","Synology"],"action":"accept","nat":"enable","comments":"","svc_ports":{"Web Access":"protocol","Synology":"TCP 5000-5001"},"flow":"FCTG_DC_trusted_vlans|virtual-wan-link"},{"id":"9","name":"SSLVPN_to_Subnets","status":"enable","src_iface":"ssl.root","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["SSLVPN-RANGE"],"dst_addr":["FCTG_SvrPrt address"],"services":["ALL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"ALL":"protocol"},"flow":"ssl.root|FCTG_DC_trusted_vlans"},{"id":"10","name":"SSLVPN-FCTG-ALL","status":"enable","src_iface":"ssl.root","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["SSLVPN-RANGE"],"dst_addr":["Azure_subnet","OPCO_SUBNETS","FCTG-ON-Prem","Azure_UAT_Subnet"],"services":["ALL"],"action":"accept","nat":"disable","comments":" (Copy of SSLVPN_to_Subnets) (Copy of )","svc_ports":{"ALL":"protocol"},"flow":"ssl.root|FCTG_OpCo_ENS_IPsec"},{"id":"11","name":"OPUS_blocked_outbound","status":"disable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"virtual-wan-link","src_addr":["FCTG_SvrPrt address"],"dst_addr":["Security-blocked"],"services":["ALL"],"action":"deny","nat":"nan","comments":"Cybersecurity directed block list","svc_ports":{"ALL":"protocol"},"flow":"FCTG_DC_trusted_vlans|virtual-wan-link"},{"id":"16","name":"WindowsAD in","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["FCTG-DC-domain-controllers"],"dst_addr":["FCTGNETDC0"],"services":["Windows AD","PING"],"action":"accept","nat":"disable","comments":"","svc_ports":{"Windows AD":"protocol","PING":"protocol"},"flow":"FCTG_DC_trusted_vlans|FCTG_OpCo_ENS_IPsec"},{"id":"17","name":"RESAPPS1","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["OPCO_SUBNETS","OPCO_SSLVPN_IP_SUBNETS","FCTG-ON-Prem"],"dst_addr":["RESAPPS1"],"services":["PING","SMB","SAMBA","HTTP","HTTPS"],"action":"accept","nat":"disable","comments":"","svc_ports":{"PING":"protocol","SMB":"TCP 445","SAMBA":"TCP 139","HTTP":"TCP 80 8020 8080","HTTPS":"TCP 443 4433 8443 8383 10443 444 8060 8384 5222"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans"},{"id":"18","name":"Fortimanager","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["OPCO_SUBNETS","OPCO_SSLVPN_IP_SUBNETS","FCTG-ON-Prem","OpCo_Fortigate_Firewalls"],"dst_addr":["Fortimanager"],"services":["Fortimanager"],"action":"accept","nat":"disable","comments":"","svc_ports":{"Fortimanager":"TCP 541 443 1024-65535, UDP 1024-65535"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans"},{"id":"19","name":"iSeries-IN","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["OPCO_SUBNETS","OPCO_SSLVPN_IP_SUBNETS","FCTG-ON-Prem"],"dst_addr":["iSeries"],"services":["TELNET","AS400 Telnet Addtl Ports","PING","AS400-Additional-Ports"],"action":"accept","nat":"disable","comments":"","svc_ports":{"TELNET":"TCP 23","AS400 Telnet Addtl Ports":"TCP 449 8470-8476 2005 3001-3002 2300 2323 22 446, UDP 449 8470-8476 2005 3001-3002 2300 2323 22 446","PING":"protocol","AS400-Additional-Ports":"TCP 515"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans"},{"id":"20","name":"SDWAN UP FTP","status":"enable","src_iface":"virtual-wan-link","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["UP FTP Range"],"dst_addr":["UP FTP"],"services":["FTP"],"action":"accept","nat":"disable","comments":"","svc_ports":{"FTP":"TCP 21-22 821 990, UDP 821"},"flow":"virtual-wan-link|FCTG_DC_trusted_vlans"},{"id":"21","name":"On-Prem-FCTG_to_Opus","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["OPCO_SUBNETS","OPCO_SSLVPN_IP_SUBNETS","FCTG-ON-Prem"],"dst_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"services":["ALL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"ALL":"protocol"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans"},{"id":"22","name":"FCTGCERTAUTH1","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["OPCO_SUBNETS","OPCO_SSLVPN_IP_SUBNETS","FCTG-ON-Prem"],"dst_addr":["FCTGCERTAUTH1"],"services":["HTTP","LDAP","LDAP SSL","RPC-Dynamic","DCE-RPC","HTTPS"],"action":"accept","nat":"disable","comments":" (Copy of WindowsAD in) (Copy of )","svc_ports":{"HTTP":"TCP 80 8020 8080","LDAP":"TCP 389","LDAP SSL":"TCP 636, UDP 636","RPC-Dynamic":"TCP 1024-65535, UDP 1024-65535","DCE-RPC":"TCP 135, UDP 135","HTTPS":"TCP 443 4433 8443 8383 10443 444 8060 8384 5222"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans"},{"id":"23","name":"RESSAHQ2","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["OPCO_SUBNETS","OPCO_SSLVPN_IP_SUBNETS","FCTG-ON-Prem"],"dst_addr":["RESSAHQ2"],"services":["PING","HTTP","SMB","KERBEROS","LDAP","LDAP_UDP","Credit Desk"],"action":"accept","nat":"disable","comments":" (Copy of WindowsAD in) (Copy of )","svc_ports":{"PING":"protocol","HTTP":"TCP 80 8020 8080","SMB":"TCP 445","KERBEROS":"TCP 88 464, UDP 88 464","LDAP":"TCP 389","LDAP_UDP":"UDP 389","Credit Desk":"TCP 40000"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans"},{"id":"24","name":"FCTGFAX1","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["OPCO_SUBNETS","OPCO_SSLVPN_IP_SUBNETS","FCTG-ON-Prem"],"dst_addr":["FCTGFAX1"],"services":["PING","SMB","HTTP","HTTPS"],"action":"accept","nat":"disable","comments":"","svc_ports":{"PING":"protocol","SMB":"TCP 445","HTTP":"TCP 80 8020 8080","HTTPS":"TCP 443 4433 8443 8383 10443 444 8060 8384 5222"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans"},{"id":"25","name":"FCTGNETAUDIT1","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["OPCO_SUBNETS","FCTG-ON-Prem","OpCo_Fortigate_Firewalls"],"dst_addr":["FCTGNETAUDIT1"],"services":["HTTP","HTTPS","SYSLOG"],"action":"accept","nat":"disable","comments":"","svc_ports":{"HTTP":"TCP 80 8020 8080","HTTPS":"TCP 443 4433 8443 8383 10443 444 8060 8384 5222","SYSLOG":"UDP 514"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans"},{"id":"26","name":"Zoho-ManageEngine","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"virtual-wan-link","src_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"dst_addr":[],"services":[],"action":"accept","nat":"enable","comments":"","svc_ports":{},"flow":"FCTG_DC_trusted_vlans|virtual-wan-link"},{"id":"27","name":"SentinelOne-collector-POC","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"virtual-wan-link","src_addr":["FCTG_SvrPrt address"],"dst_addr":[],"services":[],"action":"accept","nat":"enable","comments":"","svc_ports":{},"flow":"FCTG_DC_trusted_vlans|virtual-wan-link"},{"id":"28","name":"SecretServer-to-Delinea","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"virtual-wan-link","src_addr":["FCTGSECSVR1","FCTGSECSRV2"],"dst_addr":["fctg.secretservercloud.com"],"services":["HTTPS"],"action":"accept","nat":"enable","comments":" ","svc_ports":{"HTTPS":"TCP 443 4433 8443 8383 10443 444 8060 8384 5222"},"flow":"FCTG_DC_trusted_vlans|virtual-wan-link"},{"id":"29","name":"Cloudli","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"virtual-wan-link","src_addr":["FCTGFAX1"],"dst_addr":["Cloudli"],"services":["Cloudli"],"action":"accept","nat":"enable","comments":"","svc_ports":{"Cloudli":"TCP 5060 5443 6443 5066 5566 5065, UDP 1-65535"},"flow":"FCTG_DC_trusted_vlans|virtual-wan-link"},{"id":"30","name":"Azure","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"virtual-wan-link","src_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"dst_addr":[],"services":[],"action":"accept","nat":"enable","comments":"","svc_ports":{},"flow":"FCTG_DC_trusted_vlans|virtual-wan-link"},{"id":"31","name":"Tenable","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"virtual-wan-link","src_addr":["FCTGNessus","FCTGNNM"],"dst_addr":[],"services":[],"action":"accept","nat":"enable","comments":"","svc_ports":{},"flow":"FCTG_DC_trusted_vlans|virtual-wan-link"},{"id":"32","name":"FTP","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"virtual-wan-link","src_addr":["FCTG_SvrPrt address"],"dst_addr":["FTP_FCTG"],"services":["FTP","Bank FTP Upper Range"],"action":"accept","nat":"enable","comments":"","svc_ports":{"FTP":"TCP 21-22 821 990, UDP 821","Bank FTP Upper Range":"TCP 20000-21000"},"flow":"FCTG_DC_trusted_vlans|virtual-wan-link"},{"id":"33","name":"iSeries SFTP","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"virtual-wan-link","src_addr":["iSeries","iSeries too"],"dst_addr":["IBM Electronic Fix Distribution","iSeries SFTP 162.252.12.150","vanftps.liaison.com"],"services":["Secure SSH","IBM Electronic Fix Distribution"],"action":"accept","nat":"enable","comments":"","svc_ports":{"Secure SSH":"TCP 821 1024-65535, UDP 821 1024-65535","IBM Electronic Fix Distribution":"TCP 443 80 20-22 65024-65535"},"flow":"FCTG_DC_trusted_vlans|virtual-wan-link"},{"id":"34","name":"MIMECAST","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"virtual-wan-link","src_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"dst_addr":["Mimecast SMTP Out"],"services":["SMTP","TCP 587","PING"],"action":"accept","nat":"enable","comments":"","svc_ports":{"SMTP":"TCP 25","TCP 587":"TCP 587","PING":"protocol"},"flow":"FCTG_DC_trusted_vlans|virtual-wan-link"},{"id":"35","name":"restricted_to_Azure","status":"enable","src_iface":"fctg_contractor","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["FCTGJUMP1","FCTGJUMP2"],"dst_addr":["Azure_subnet"],"services":["ALL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"ALL":"protocol"},"flow":"fctg_contractor|FCTG_OpCo_ENS_IPsec"},{"id":"37","name":"Block-outbound","status":"disable","src_iface":"dmz","dst_iface":"virtual-wan-link","src_addr":["FCTGJUMP1","FCTGJUMP2"],"dst_addr":["Security-blocked"],"services":["Windows AD"],"action":"deny","nat":"nan","comments":"","svc_ports":{"Windows AD":"protocol"},"flow":"dmz|virtual-wan-link"},{"id":"38","name":"Jumpbox_to_web","status":"enable","src_iface":"fctg_contractor","dst_iface":"virtual-wan-link","src_addr":["FCTGJUMP1","FCTGJUMP2"],"dst_addr":["all"],"services":["PING","TRACEROUTE","HTTP","HTTPS"],"action":"accept","nat":"enable","comments":"","svc_ports":{"PING":"protocol","TRACEROUTE":"UDP 33434-33535","HTTP":"TCP 80 8020 8080","HTTPS":"TCP 443 4433 8443 8383 10443 444 8060 8384 5222"},"flow":"fctg_contractor|virtual-wan-link"},{"id":"39","name":"Trusted_to_isolated","status":"disable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"dmz","src_addr":["FCTG-DC-domain-controllers"],"dst_addr":["FCTGJUMP1","FCTGJUMP2"],"services":["Windows AD"],"action":"accept","nat":"disable","comments":"","svc_ports":{"Windows AD":"protocol"},"flow":"FCTG_OpCo_ENS_IPsec|dmz"},{"id":"40","name":"SSLVPN_to_Jumpbox","status":"disable","src_iface":"ssl.root","dst_iface":"fctg_contractor","src_addr":["FCTG_SSLVPN_IP_RANGE"],"dst_addr":["FCTGJUMP1","FCTGJUMP2"],"services":["ALL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"ALL":"protocol"},"flow":"ssl.root|fctg_contractor"},{"id":"44","name":"DC_to_SSLVPN","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"FCT-SAML","src_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"dst_addr":["IPSEC-DIALUP-RANGE"],"services":["DCE-RPC","SMB","RPC-Dynamic","PING"],"action":"accept","nat":"disable","comments":"","svc_ports":{"DCE-RPC":"TCP 135, UDP 135","SMB":"TCP 445","RPC-Dynamic":"TCP 1024-65535, UDP 1024-65535","PING":"protocol"},"flow":"FCTG_DC_trusted_vlans|FCT-SAML"},{"id":"45","name":"FCTG-ALL_SSLVPN","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCT-SAML","src_addr":["Azure_subnet","OPCO_SUBNETS","FCTG-ON-Prem"],"dst_addr":["IPSEC-DIALUP-RANGE"],"services":["ALL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"ALL":"protocol"},"flow":"FCTG_OpCo_ENS_IPsec|FCT-SAML"},{"id":"46","name":"DC_to_ITEST","status":"disable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["FCTG_SvrPrt address"],"dst_addr":["ITEST"],"services":["ALL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"ALL":"protocol"},"flow":"FCTG_DC_trusted_vlans|FCTG_OpCo_ENS_IPsec"},{"id":"47","name":"Opus_to_azure","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"dst_addr":["Azure_subnet"],"services":["ALL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"ALL":"protocol"},"flow":"FCTG_DC_trusted_vlans|FCTG_OpCo_ENS_IPsec"},{"id":"48","name":"Azure_to_Opus","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["Azure_subnet"],"dst_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"services":["ALL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"ALL":"protocol"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans"},{"id":"49","name":"FCTGHQ-ALL-OPUS","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["FCTG-ON-Prem"],"dst_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"services":["ALL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"ALL":"protocol"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans"},{"id":"50","name":"OPUS-ALL-FCTGHQ","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"dst_addr":["FCTG-ON-Prem"],"services":["ALL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"ALL":"protocol"},"flow":"FCTG_DC_trusted_vlans|FCTG_OpCo_ENS_IPsec"},{"id":"52","name":"SSL_VPN_Contractors_to_AD","status":"enable","src_iface":"ssl.root","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["FCTG_SSLVPN_RANGE_CONTRACTORS"],"dst_addr":["FCTG-DC-domain-controllers"],"services":["Windows AD","DNS"],"action":"accept","nat":"disable","comments":"","svc_ports":{"Windows AD":"protocol","DNS":"TCP 53, UDP 53"},"flow":"ssl.root|FCTG_DC_trusted_vlans"},{"id":"53","name":"iSeries_to_NTP","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"virtual-wan-link","src_addr":["iSeries","iSeries too"],"dst_addr":["NTP-iSeries"],"services":["NTP"],"action":"accept","nat":"enable","comments":"","svc_ports":{"NTP":"TCP 123, UDP 123"},"flow":"FCTG_DC_trusted_vlans|virtual-wan-link"},{"id":"55","name":"IT_to_Jumpbox","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"fctg_contractor","src_addr":["FCTG_IT_WrkStn"],"dst_addr":["FCTGJUMP1","FCTGJUMP2"],"services":["ALL_ICMP","RDP"],"action":"accept","nat":"disable","comments":"","svc_ports":{"ALL_ICMP":"protocol","RDP":"TCP 3389"},"flow":"FCTG_DC_trusted_vlans|fctg_contractor"},{"id":"56","name":"Servers_to_Jumpbox","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"fctg_contractor","src_addr":["FCTG-DC-domain-controllers","FCTGNessus","James W. VM FCTGIS02359N"],"dst_addr":["FCTGJUMP1","FCTGJUMP2"],"services":["Windows AD","ALL_ICMP"],"action":"accept","nat":"disable","comments":"","svc_ports":{"Windows AD":"protocol","ALL_ICMP":"protocol"},"flow":"FCTG_DC_trusted_vlans|fctg_contractor"},{"id":"57","name":"Jumpbox_to_DataCenter","status":"enable","src_iface":"fctg_contractor","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["FCTGJUMP1","FCTGJUMP2"],"dst_addr":["FCTGFAX1"],"services":["PING"],"action":"accept","nat":"disable","comments":"","svc_ports":{"PING":"protocol"},"flow":"fctg_contractor|FCTG_DC_trusted_vlans"},{"id":"58","name":"IT_VPN_to_Jumpbox","status":"enable","src_iface":"ssl.root","dst_iface":"fctg_contractor","src_addr":["FCTG_SSLVPN_IP_RANGE"],"dst_addr":["FCTGJUMP1","FCTGJUMP2"],"services":["RDP","PING"],"action":"accept","nat":"disable","comments":"","svc_ports":{"RDP":"TCP 3389","PING":"protocol"},"flow":"ssl.root|fctg_contractor"},{"id":"59","name":"Jumpbox_to_Domain_Controller","status":"enable","src_iface":"fctg_contractor","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["FCTGJUMP1","FCTGJUMP2"],"dst_addr":["FCTG-DC-domain-controllers"],"services":["Windows AD"],"action":"accept","nat":"disable","comments":"","svc_ports":{"Windows AD":"protocol"},"flow":"fctg_contractor|FCTG_DC_trusted_vlans"},{"id":"60","name":"iSeries-OUT","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["iSeries"],"dst_addr":["OPCO_SUBNETS","OPCO_SSLVPN_IP_SUBNETS","FCTG-ON-Prem"],"services":["TELNET","AS400 Telnet Addtl Ports","PING","AS400-Additional-Ports"],"action":"accept","nat":"disable","comments":"","svc_ports":{"TELNET":"TCP 23","AS400 Telnet Addtl Ports":"TCP 449 8470-8476 2005 3001-3002 2300 2323 22 446, UDP 449 8470-8476 2005 3001-3002 2300 2323 22 446","PING":"protocol","AS400-Additional-Ports":"TCP 515"},"flow":"FCTG_DC_trusted_vlans|FCTG_OpCo_ENS_IPsec"},{"id":"61","name":"Contractor_to_Jumpbox","status":"enable","src_iface":"ssl.root","dst_iface":"fctg_contractor","src_addr":["FCTG_SSLVPN_RANGE_CONTRACTORS"],"dst_addr":["FCTGJUMP1","FCTGJUMP2"],"services":["RDP","PING"],"action":"accept","nat":"disable","comments":" (Copy of IT_VPN_to_Jumpbox) (Copy of )","svc_ports":{"RDP":"TCP 3389","PING":"protocol"},"flow":"ssl.root|fctg_contractor"},{"id":"62","name":"restricted_to_datacenter","status":"enable","src_iface":"fctg_contractor","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["FCTGJUMP1","FCTGJUMP2"],"dst_addr":["10.1.1.0_subnet"],"services":["ALL"],"action":"accept","nat":"disable","comments":" (Copy of restricted_to_Azure) (Copy of )","svc_ports":{"ALL":"protocol"},"flow":"fctg_contractor|FCTG_DC_trusted_vlans"},{"id":"63","name":"Internet Time","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"virtual-wan-link","src_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"dst_addr":["NTP-Internet"],"services":["NTP"],"action":"accept","nat":"enable","comments":"","svc_ports":{"NTP":"TCP 123, UDP 123"},"flow":"FCTG_DC_trusted_vlans|virtual-wan-link"},{"id":"64","name":"FCTGHQ-Vendor-Jumpbox","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"fctg_contractor","src_addr":["FCTGHQ-Vendor-SSLVPN"],"dst_addr":["FCTGJUMP1"],"services":["PING","RDP"],"action":"accept","nat":"disable","comments":"","svc_ports":{"PING":"protocol","RDP":"TCP 3389"},"flow":"FCTG_OpCo_ENS_IPsec|fctg_contractor"},{"id":"65","name":"FCTG-Security-TestGroup","status":"enable","src_iface":"ssl.root","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["SSLVPN-RANGE"],"dst_addr":["FCTG_SvrPrt address"],"services":["ALL"],"action":"accept","nat":"disable","comments":"Used for Joshua testing Conditional Access with his user.  ","svc_ports":{"ALL":"protocol"},"flow":"ssl.root|FCTG_DC_trusted_vlans"},{"id":"66","name":"SNMP_from_Lanswitches","status":"enable","src_iface":"fortilink","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["all"],"dst_addr":["FCTGDCLOGHOST"],"services":["SNMP","PING"],"action":"accept","nat":"disable","comments":"","svc_ports":{"SNMP":"TCP 161-162, UDP 161-162","PING":"protocol"},"flow":"fortilink|FCTG_DC_trusted_vlans"},{"id":"67","name":"SNMP_from_Dataswitches","status":"enable","src_iface":"Data-Storage","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["all"],"dst_addr":["FCTGDCLOGHOST"],"services":["SNMP","PING"],"action":"accept","nat":"disable","comments":"","svc_ports":{"SNMP":"TCP 161-162, UDP 161-162","PING":"protocol"},"flow":"Data-Storage|FCTG_DC_trusted_vlans"},{"id":"68","name":"SNMP_to_Dataswitches","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"Data-Storage","src_addr":["FCTGDCLOGHOST"],"dst_addr":["all"],"services":["SNMP","PING"],"action":"accept","nat":"disable","comments":"","svc_ports":{"SNMP":"TCP 161-162, UDP 161-162","PING":"protocol"},"flow":"FCTG_DC_trusted_vlans|Data-Storage"},{"id":"69","name":"SNMP_to_Lanswitches","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"fortilink","src_addr":["FCTGDCLOGHOST"],"dst_addr":["all"],"services":["SNMP","PING"],"action":"accept","nat":"disable","comments":"","svc_ports":{"SNMP":"TCP 161-162, UDP 161-162","PING":"protocol"},"flow":"FCTG_DC_trusted_vlans|fortilink"},{"id":"70","name":"Datadog-SNMP-traps","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["FCTG-ON-Prem","ALL-FCTG-ENS-interface-IPs","OpCo_Fortigate_Firewalls"],"dst_addr":["FCTGDCLOGHOST"],"services":["Datadog-snmp-traps"],"action":"accept","nat":"disable","comments":"","svc_ports":{"Datadog-snmp-traps":"TCP 9162, UDP 9162"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans"},{"id":"71","name":"Jumpbox_to_DEVSA","status":"enable","src_iface":"fctg_contractor","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["FCTGJUMP1","FCTGJUMP2"],"dst_addr":["FCTG_On-Prem_Svr"],"services":["HTTP","MS-SQL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"HTTP":"TCP 80 8020 8080","MS-SQL":"TCP 1433 1434"},"flow":"fctg_contractor|FCTG_OpCo_ENS_IPsec"},{"id":"72","name":"DNS","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"virtual-wan-link","src_addr":["FCTG-DC-domain-controllers"],"dst_addr":["all"],"services":["DNS"],"action":"accept","nat":"enable","comments":"","svc_ports":{"DNS":"TCP 53, UDP 53"},"flow":"FCTG_DC_trusted_vlans|virtual-wan-link"},{"id":"73","name":"OPUS to WEB internet service","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"virtual-wan-link","src_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"dst_addr":[],"services":[],"action":"accept","nat":"enable","comments":"","svc_ports":{},"flow":"FCTG_DC_trusted_vlans|virtual-wan-link"},{"id":"74","name":"OPUS to WEB fqdn","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"virtual-wan-link","src_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"dst_addr":["WEB fqdn"],"services":["Web Access","Synology"],"action":"accept","nat":"enable","comments":"","svc_ports":{"Web Access":"protocol","Synology":"TCP 5000-5001"},"flow":"FCTG_DC_trusted_vlans|virtual-wan-link"},{"id":"75","name":"Workstation and Terminal Servers","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"virtual-wan-link","src_addr":["Wrkst-TS-Web"],"dst_addr":["all"],"services":["Web Access","Synology"],"action":"accept","nat":"enable","comments":"","svc_ports":{"Web Access":"protocol","Synology":"TCP 5000-5001"},"flow":"FCTG_DC_trusted_vlans|virtual-wan-link"},{"id":"76","name":"SQL","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["RESSQL2","RESSQL3"],"dst_addr":["OPCO_SUBNETS"],"services":["MS-SQL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"MS-SQL":"TCP 1433 1434"},"flow":"FCTG_DC_trusted_vlans|FCTG_OpCo_ENS_IPsec"},{"id":"77","name":"NPS-RADIUS","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["FCTGHQ-Fortigate","SIFP Fortigate"],"dst_addr":["FCTGNPS1"],"services":["PING","RADIUS","RADIUS-OLD"],"action":"accept","nat":"disable","comments":"","svc_ports":{"PING":"protocol","RADIUS":"UDP 1812-1841","RADIUS-OLD":"UDP 1645 1646"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans"},{"id":"78","name":"OPUS-TO-FCTGHQ","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"dst_addr":["Azure_subnet","OPCO_SUBNETS","OPCO_SSLVPN_IP_SUBNETS","FCTG-ON-Prem"],"services":["HTTP","RPC-Dynamic","SMB","RADIUS","PING","FTP","HTTPS","DCE-RPC","AS400 Telnet Addtl Ports","Fortimanager","SNMP"],"action":"accept","nat":"disable","comments":"","svc_ports":{"HTTP":"TCP 80 8020 8080","RPC-Dynamic":"TCP 1024-65535, UDP 1024-65535","SMB":"TCP 445","RADIUS":"UDP 1812-1841","PING":"protocol","FTP":"TCP 21-22 821 990, UDP 821","HTTPS":"TCP 443 4433 8443 8383 10443 444 8060 8384 5222","DCE-RPC":"TCP 135, UDP 135","AS400 Telnet Addtl Ports":"TCP 449 8470-8476 2005 3001-3002 2300 2323 22 446, UDP 449 8470-8476 2005 3001-3002 2300 2323 22 446","Fortimanager":"TCP 541 443 1024-65535, UDP 1024-65535","SNMP":"TCP 161-162, UDP 161-162"},"flow":"FCTG_DC_trusted_vlans|FCTG_OpCo_ENS_IPsec"},{"id":"79","name":"OPUS-AZURE","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"dst_addr":["Azure_subnet"],"services":["DNS","HTTPS","PING","RPC-Dynamic","SMB","KERBEROS","Internet-Locator-Service","DCE-RPC","LDAP","LDAP_UDP","SNMP"],"action":"accept","nat":"disable","comments":" (Copy of Opus_to_azure) (Copy of )","svc_ports":{"DNS":"TCP 53, UDP 53","HTTPS":"TCP 443 4433 8443 8383 10443 444 8060 8384 5222","PING":"protocol","RPC-Dynamic":"TCP 1024-65535, UDP 1024-65535","SMB":"TCP 445","KERBEROS":"TCP 88 464, UDP 88 464","Internet-Locator-Service":"TCP 389","DCE-RPC":"TCP 135, UDP 135","LDAP":"TCP 389","LDAP_UDP":"UDP 389","SNMP":"TCP 161-162, UDP 161-162"},"flow":"FCTG_DC_trusted_vlans|FCTG_OpCo_ENS_IPsec"},{"id":"80","name":"AZURE-OPUS","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["Azure_subnet"],"dst_addr":["FCTG_SvrPrt address"],"services":["DNS","HTTPS","PING","RPC-Dynamic","SMB","KERBEROS","Internet-Locator-Service","DCE-RPC","LDAP","LDAP_UDP","SNMP"],"action":"accept","nat":"disable","comments":"","svc_ports":{"DNS":"TCP 53, UDP 53","HTTPS":"TCP 443 4433 8443 8383 10443 444 8060 8384 5222","PING":"protocol","RPC-Dynamic":"TCP 1024-65535, UDP 1024-65535","SMB":"TCP 445","KERBEROS":"TCP 88 464, UDP 88 464","Internet-Locator-Service":"TCP 389","DCE-RPC":"TCP 135, UDP 135","LDAP":"TCP 389","LDAP_UDP":"UDP 389","SNMP":"TCP 161-162, UDP 161-162"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans"},{"id":"81","name":"FCTGHQ-OPUS","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["OPCO_SUBNETS","OPCO_SSLVPN_IP_SUBNETS","FCTG-ON-Prem"],"dst_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"services":["DNS","KERBEROS","RPC-Dynamic","Internet-Locator-Service","DCE-RPC","Cloudli","SMB","HTTP"],"action":"accept","nat":"disable","comments":"","svc_ports":{"DNS":"TCP 53, UDP 53","KERBEROS":"TCP 88 464, UDP 88 464","RPC-Dynamic":"TCP 1024-65535, UDP 1024-65535","Internet-Locator-Service":"TCP 389","DCE-RPC":"TCP 135, UDP 135","Cloudli":"TCP 5060 5443 6443 5066 5566 5065, UDP 1-65535","SMB":"TCP 445","HTTP":"TCP 80 8020 8080"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans"},{"id":"82","name":"UAT_from_Opus","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"dst_addr":["Azure_UAT_Subnet"],"services":["ALL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"ALL":"protocol"},"flow":"FCTG_DC_trusted_vlans|FCTG_OpCo_ENS_IPsec"},{"id":"83","name":"UAT_to_Opus","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["Azure_UAT_Subnet"],"dst_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"services":["ALL"],"action":"accept","nat":"disable","comments":"UAT to Opus","svc_ports":{"ALL":"protocol"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans"},{"id":"84","name":"SSLVPN_Contractors_to_Azure","status":"enable","src_iface":"ssl.root","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["FCTG_SSLVPN_RANGE_CONTRACTORS"],"dst_addr":["Azure_subnet","FCTG_On-Prem_Svr"],"services":["MS-SQL","SMB","HTTP","HTTPS"],"action":"accept","nat":"disable","comments":"","svc_ports":{"MS-SQL":"TCP 1433 1434","SMB":"TCP 445","HTTP":"TCP 80 8020 8080","HTTPS":"TCP 443 4433 8443 8383 10443 444 8060 8384 5222"},"flow":"ssl.root|FCTG_OpCo_ENS_IPsec"},{"id":"85","name":"MIMECAST-TEST","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"virtual-wan-link","src_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"dst_addr":[],"services":[],"action":"accept","nat":"enable","comments":"","svc_ports":{},"flow":"FCTG_DC_trusted_vlans|virtual-wan-link"},{"id":"86","name":"Link-monitor","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["OpCo_Fortigate_Firewalls"],"dst_addr":["FCTGDC-Fortigate"],"services":["PING"],"action":"accept","nat":"disable","comments":"","svc_ports":{"PING":"protocol"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans"},{"id":"87","name":"IPSEC-Contractors-to-AD","status":"enable","src_iface":"FCT-SAML","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["IPSEC-DIALUP-RANGE"],"dst_addr":["FCTG-DC-domain-controllers"],"services":["Windows AD","DNS"],"action":"accept","nat":"disable","comments":"","svc_ports":{"Windows AD":"protocol","DNS":"TCP 53, UDP 53"},"flow":"FCT-SAML|FCTG_DC_trusted_vlans"},{"id":"88","name":"IPSEC-to-OPUS","status":"enable","src_iface":"FCT-SAML","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["IPSEC-DIALUP-RANGE"],"dst_addr":["FCTG_SvrPrt address","FCTG_DEV_SvrPrt address"],"services":["ALL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"ALL":"protocol"},"flow":"FCT-SAML|FCTG_DC_trusted_vlans"},{"id":"89","name":"IPSEC-FCTG-ALL","status":"enable","src_iface":"FCT-SAML","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["IPSEC-DIALUP-RANGE"],"dst_addr":["Azure_subnet","OPCO_SUBNETS","FCTG-ON-Prem","Azure_UAT_Subnet"],"services":["ALL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"ALL":"protocol"},"flow":"FCT-SAML|FCTG_OpCo_ENS_IPsec"},{"id":"90","name":"IPSEC-CONTRACTORS-TO-AZURE","status":"enable","src_iface":"FCT-SAML","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["IPSEC-DIALUP-RANGE"],"dst_addr":["FCTG_On-Prem_Svr","fctg-bidata-server.privatelink.database.windows.net","sql-datalz-prod-westus-001.privatelink.database.windows.net"],"services":["MS-SQL","SMB","HTTP","HTTPS"],"action":"accept","nat":"disable","comments":"","svc_ports":{"MS-SQL":"TCP 1433 1434","SMB":"TCP 445","HTTP":"TCP 80 8020 8080","HTTPS":"TCP 443 4433 8443 8383 10443 444 8060 8384 5222"},"flow":"FCT-SAML|FCTG_OpCo_ENS_IPsec"},{"id":"91","name":"CONVEY-RDP-JUMPBOX","status":"enable","src_iface":"CONVEY-TEMP","dst_iface":"FCTG_Convey","src_addr":["VENDOR-RESTRICTED-RANGE"],"dst_addr":["FCTGJUMPBOX1"],"services":["PING","RDP"],"action":"accept","nat":"disable","comments":"Policy to allow Convey/Bluesierra vm to rdp to a jumpbox","svc_ports":{"PING":"protocol","RDP":"TCP 3389"},"flow":"CONVEY-TEMP|FCTG_Convey"},{"id":"92","name":"CONVEY-DNS","status":"enable","src_iface":"CONVEY-TEMP","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["VENDOR-RESTRICTED-RANGE"],"dst_addr":["FCTGNETDC1","FCTGNETDC2"],"services":["PING","DNS"],"action":"accept","nat":"disable","comments":"Policy to allow Convey/Bluesierra vm to join the fctg.com domain (Copy of CONVEY-DOMAINJOIN) (Copy of )","svc_ports":{"PING":"protocol","DNS":"TCP 53, UDP 53"},"flow":"CONVEY-TEMP|FCTG_DC_trusted_vlans"},{"id":"93","name":"FCTGJUMPBOX1-WindowsAD","status":"enable","src_iface":"FCTG_Convey","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["FCTGJUMPBOX1"],"dst_addr":["FCTGNETDC1","FCTGNETDC2"],"services":["Windows AD","PING"],"action":"accept","nat":"disable","comments":"","svc_ports":{"Windows AD":"protocol","PING":"protocol"},"flow":"FCTG_Convey|FCTG_DC_trusted_vlans"},{"id":"94","name":"FCTGJUMPBOX1-MICROSOFT","status":"enable","src_iface":"FCTG_Convey","dst_iface":"virtual-wan-link","src_addr":["FCTGJUMPBOX1"],"dst_addr":[],"services":[],"action":"accept","nat":"enable","comments":"","svc_ports":{},"flow":"FCTG_Convey|virtual-wan-link"},{"id":"95","name":"FCTGJUMPBOX1-WEB","status":"enable","src_iface":"FCTG_Convey","dst_iface":"virtual-wan-link","src_addr":["FCTGJUMPBOX1"],"dst_addr":["all"],"services":["HTTP","HTTPS"],"action":"accept","nat":"enable","comments":"","svc_ports":{"HTTP":"TCP 80 8020 8080","HTTPS":"TCP 443 4433 8443 8383 10443 444 8060 8384 5222"},"flow":"FCTG_Convey|virtual-wan-link"},{"id":"96","name":"FCTGJUMPBOX1-FCTGPRDECDS1","status":"enable","src_iface":"FCTG_Convey","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["FCTGJUMPBOX1"],"dst_addr":["FCTGPRDECDS1"],"services":["PING","EndpointCentral Distribution Server"],"action":"accept","nat":"disable","comments":"","svc_ports":{"PING":"protocol","EndpointCentral Distribution Server":"TCP 8021 8384"},"flow":"FCTG_Convey|FCTG_DC_trusted_vlans"},{"id":"97","name":"FCTGPRDECDS1-FCTGJUMPBOX1","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"FCTG_Convey","src_addr":["FCTGPRDECDS1"],"dst_addr":["FCTGJUMPBOX1"],"services":["PING","EndpointCentral Distribution Server"],"action":"accept","nat":"disable","comments":"","svc_ports":{"PING":"protocol","EndpointCentral Distribution Server":"TCP 8021 8384"},"flow":"FCTG_DC_trusted_vlans|FCTG_Convey"},{"id":"98","name":"IPSEC-fCTGJUMPBOX1","status":"enable","src_iface":"FCT-SAML","dst_iface":"FCTG_Convey","src_addr":["IPSEC-DIALUP-RANGE"],"dst_addr":["FCTGJUMPBOX1"],"services":["RDP"],"action":"accept","nat":"disable","comments":"","svc_ports":{"RDP":"TCP 3389"},"flow":"FCT-SAML|FCTG_Convey"},{"id":"99","name":"WindowsAD-FCTGJUMPBOX1","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"FCTG_Convey","src_addr":["FCTGNETDC1","FCTGNETDC2"],"dst_addr":["FCTGJUMPBOX1"],"services":["Windows AD","PING"],"action":"accept","nat":"disable","comments":"","svc_ports":{"Windows AD":"protocol","PING":"protocol"},"flow":"FCTG_DC_trusted_vlans|FCTG_Convey"},{"id":"100","name":"FCTGJUMPBOX1-iSeries","status":"enable","src_iface":"FCTG_Convey","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["FCTGJUMPBOX1"],"dst_addr":["iSeries"],"services":["TELNET","AS400 Telnet Addtl Ports","PING"],"action":"accept","nat":"disable","comments":"","svc_ports":{"TELNET":"TCP 23","AS400 Telnet Addtl Ports":"TCP 449 8470-8476 2005 3001-3002 2300 2323 22 446, UDP 449 8470-8476 2005 3001-3002 2300 2323 22 446","PING":"protocol"},"flow":"FCTG_Convey|FCTG_DC_trusted_vlans"},{"id":"101","name":"FCTGJUMPBOX1_to_RESAPPS1","status":"enable","src_iface":"FCTG_Convey","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["FCTGJUMPBOX1"],"dst_addr":["RESAPPS1"],"services":["SMB"],"action":"accept","nat":"disable","comments":"Jumpbox access to RESAPPS1","svc_ports":{"SMB":"TCP 445"},"flow":"FCTG_Convey|FCTG_DC_trusted_vlans"},{"id":"102","name":"FCTGJUMPBOX1_to_iTest","status":"enable","src_iface":"FCTG_Convey","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["FCTGJUMPBOX1"],"dst_addr":["ITEST"],"services":["AS400 Telnet Addtl Ports","TELNET","HTTPS","PING"],"action":"accept","nat":"disable","comments":"FCTGJUMPBOX to iTest","svc_ports":{"AS400 Telnet Addtl Ports":"TCP 449 8470-8476 2005 3001-3002 2300 2323 22 446, UDP 449 8470-8476 2005 3001-3002 2300 2323 22 446","TELNET":"TCP 23","HTTPS":"TCP 443 4433 8443 8383 10443 444 8060 8384 5222","PING":"protocol"},"flow":"FCTG_Convey|FCTG_OpCo_ENS_IPsec"},{"id":"103","name":"FCTGJUMPBOX1_to_DEVSA2","status":"enable","src_iface":"FCTG_Convey","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["FCTGJUMPBOX1"],"dst_addr":["DEVSA2"],"services":["ALL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"ALL":"protocol"},"flow":"FCTG_Convey|FCTG_OpCo_ENS_IPsec"},{"id":"104","name":"IPSEC-CONTRACTORS-ITEST","status":"enable","src_iface":"FCT-SAML","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["IPSEC-DIALUP-RANGE"],"dst_addr":["ITEST"],"services":["TELNET","AS400 Telnet Addtl Ports","PING"],"action":"accept","nat":"disable","comments":"","svc_ports":{"TELNET":"TCP 23","AS400 Telnet Addtl Ports":"TCP 449 8470-8476 2005 3001-3002 2300 2323 22 446, UDP 449 8470-8476 2005 3001-3002 2300 2323 22 446","PING":"protocol"},"flow":"FCT-SAML|FCTG_OpCo_ENS_IPsec"},{"id":"105","name":"IPSEC-Contractors-iSeries","status":"enable","src_iface":"FCT-SAML","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["IPSEC-DIALUP-RANGE"],"dst_addr":["iSeries"],"services":["TELNET","AS400 Telnet Addtl Ports","PING"],"action":"accept","nat":"disable","comments":"","svc_ports":{"TELNET":"TCP 23","AS400 Telnet Addtl Ports":"TCP 449 8470-8476 2005 3001-3002 2300 2323 22 446, UDP 449 8470-8476 2005 3001-3002 2300 2323 22 446","PING":"protocol"},"flow":"FCT-SAML|FCTG_DC_trusted_vlans"},{"id":"106","name":"IPSEC-Contractors-RESAPPS1","status":"enable","src_iface":"FCT-SAML","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["IPSEC-DIALUP-RANGE"],"dst_addr":["RESAPPS1"],"services":["SMB","PING"],"action":"accept","nat":"disable","comments":"","svc_ports":{"SMB":"TCP 445","PING":"protocol"},"flow":"FCT-SAML|FCTG_DC_trusted_vlans"},{"id":"107","name":"DEVSA2_to_FCTGJUMPBOX1_SMB","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_Convey","src_addr":["DEVSA2"],"dst_addr":["FCTGJUMPBOX1"],"services":["SMB"],"action":"accept","nat":"disable","comments":" (Reverse of FCTGJUMPBOX1_to_DEVSA2)","svc_ports":{"SMB":"TCP 445"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_Convey"},{"id":"108","name":"FCTGJUMPBOX1-UAT","status":"enable","src_iface":"FCTG_Convey","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["FCTGJUMPBOX1"],"dst_addr":["snet-appvms-01","snet-dbvms-01"],"services":["HTTP","HTTPS","SMB","NetBIOS"],"action":"accept","nat":"disable","comments":"","svc_ports":{"HTTP":"TCP 80 8020 8080","HTTPS":"TCP 443 4433 8443 8383 10443 444 8060 8384 5222","SMB":"TCP 445","NetBIOS":"TCP 137 139, UDP 137 138"},"flow":"FCTG_Convey|FCTG_OpCo_ENS_IPsec"},{"id":"109","name":"UAT-FCTGJUMPBOX1","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_Convey","src_addr":["snet-appvms-01"],"dst_addr":["FCTGJUMPBOX1"],"services":["SMB","NetBIOS"],"action":"accept","nat":"disable","comments":" (Reverse of FCTGJUMPBOX1-snet-appvms-01)","svc_ports":{"SMB":"TCP 445","NetBIOS":"TCP 137 139, UDP 137 138"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_Convey"},{"id":"110","name":"Hybrid-Join-reconnect","status":"enable","src_iface":"HYBRID-JOIN","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["FCTG_SSLVPN_IP_RANGE"],"dst_addr":["FCTG-DC-domain-controllers"],"services":["Windows AD"],"action":"accept","nat":"disable","comments":"","svc_ports":{"Windows AD":"protocol"},"flow":"HYBRID-JOIN|FCTG_DC_trusted_vlans"},{"id":"111","name":"Cybermaxx Appliance","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["OPCO_SUBNETS","FCTG-ON-Prem","OpCo_Fortigate_Firewalls","Azure_subnet"],"dst_addr":["Cybermaxx Appliance"],"services":["SYSLOG"],"action":"accept","nat":"disable","comments":"","svc_ports":{"SYSLOG":"UDP 514"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans"},{"id":"112","name":"FCGTJUMPBOX1_to_BPC-TS","status":"enable","src_iface":"FCTG_Convey","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["FCTGJUMPBOX1"],"dst_addr":["BPC-TS"],"services":["RDP"],"action":"accept","nat":"disable","comments":"","svc_ports":{"RDP":"TCP 3389"},"flow":"FCTG_Convey|FCTG_OpCo_ENS_IPsec"},{"id":"113","name":"CONVEY-OpCo-TerminalServers","status":"enable","src_iface":"CONVEY-TEMP","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["VENDOR-RESTRICTED-RANGE"],"dst_addr":["OpCo Terminal Servers"],"services":["PING","RDP"],"action":"accept","nat":"disable","comments":"","svc_ports":{"PING":"protocol","RDP":"TCP 3389"},"flow":"CONVEY-TEMP|FCTG_OpCo_ENS_IPsec"},{"id":"114","name":"CONVEY-FCTGTS1","status":"enable","src_iface":"CONVEY-TEMP","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["VENDOR-RESTRICTED-RANGE"],"dst_addr":["FCTGTS1","ARTS1","PFPTS2"],"services":["PING","RDP"],"action":"accept","nat":"disable","comments":"Policy to allow Convey/Bluesierra vm to rdp to fctgts1 with ping","svc_ports":{"PING":"protocol","RDP":"TCP 3389"},"flow":"CONVEY-TEMP|FCTG_DC_trusted_vlans"},{"id":"115","name":"SFTP-IN","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["FCTG-ON-Prem","OpCo_Fortigate_Firewalls","OPCO_SUBNETS","Remote IPsec interface IP addresses"],"dst_addr":["FCTGDCLOGHOST"],"services":["SFTP","ALL_ICMP"],"action":"accept","nat":"disable","comments":"","svc_ports":{"SFTP":"TCP 22","ALL_ICMP":"protocol"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans"},{"id":"116","name":"SFTP-OUT","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["FCTGDCLOGHOST"],"dst_addr":["FCTG-ON-Prem","OpCo_Fortigate_Firewalls","OPCO_SUBNETS","10.254.100.1"],"services":["SFTP","ALL_ICMP"],"action":"accept","nat":"disable","comments":" (Reverse of SFTP-IN)","svc_ports":{"SFTP":"TCP 22","ALL_ICMP":"protocol"},"flow":"FCTG_DC_trusted_vlans|FCTG_OpCo_ENS_IPsec"},{"id":"117","name":"SvrPrt-to-DEV_SvrPrt","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["FCTG_SvrPrt address"],"dst_addr":["FCTG_DEV_SvrPrt address"],"services":["ALL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"ALL":"protocol"},"flow":"FCTG_DC_trusted_vlans|FCTG_DC_trusted_vlans"},{"id":"118","name":"DEV_SvrPrt-to-SvrPrt","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["FCTG_DEV_SvrPrt address"],"dst_addr":["FCTG_SvrPrt address"],"services":["ALL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"ALL":"protocol"},"flow":"FCTG_DC_trusted_vlans|FCTG_DC_trusted_vlans"},{"id":"119","name":"Datadog-SA-port monitor-out","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"FCTG_OpCo_ENS_IPsec","src_addr":["FCTG_SvrPrt address"],"dst_addr":["OpCo-SA-Servers"],"services":["HTTP","MS-SQL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"HTTP":"TCP 80 8020 8080","MS-SQL":"TCP 1433 1434"},"flow":"FCTG_DC_trusted_vlans|FCTG_OpCo_ENS_IPsec"},{"id":"120","name":"Datadog-SA-port monitor-in","status":"enable","src_iface":"FCTG_OpCo_ENS_IPsec","dst_iface":"FCTG_DC_trusted_vlans","src_addr":["OpCo-SA-Servers"],"dst_addr":["FCTG_SvrPrt address"],"services":["HTTP","MS-SQL"],"action":"accept","nat":"disable","comments":"","svc_ports":{"HTTP":"TCP 80 8020 8080","MS-SQL":"TCP 1433 1434"},"flow":"FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans"},{"id":"121","name":"RightFax-out-testing","status":"enable","src_iface":"FCTG_DC_trusted_vlans","dst_iface":"virtual-wan-link","src_addr":["FCTGFAX1","FCTGFAXTEST1"],"dst_addr":["all"],"services":["HTTPS","POP3","POP3S","HTTP","TCP 587"],"action":"accept","nat":"enable","comments":"","svc_ports":{"HTTPS":"TCP 443 4433 8443 8383 10443 444 8060 8384 5222","POP3":"TCP 110","POP3S":"TCP 995","HTTP":"TCP 80 8020 8080","TCP 587":"TCP 587"},"flow":"FCTG_DC_trusted_vlans|virtual-wan-link"}];
+
+const FLOW_META = {
+  'FCTG_DC_trusted_vlans|virtual-wan-link': {label:'DC Trusted → Internet', color:'#48c88c', desc:'FCTG servers/workstations outbound to internet via SD-WAN'},
+  'FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans': {label:'OpCo IPsec → DC Trusted', color:'#9aaeff', desc:'All OpCo sites (SIFP/AIFP/BP/OI/etc.) inbound to FCTG DC servers'},
+  'FCTG_DC_trusted_vlans|FCTG_OpCo_ENS_IPsec': {label:'DC Trusted → OpCo IPsec', color:'#7c8fff', desc:'FCTG DC servers outbound to OpCo sites via IPsec tunnels'},
+  'FCT-SAML|FCTG_DC_trusted_vlans': {label:'SAML IPSEC VPN → DC', color:'#ff6c6c', desc:'Remote IPSEC dialup clients connecting to FCTG DC trusted network'},
+  'FCTG_Convey|FCTG_DC_trusted_vlans': {label:'Convey → DC Trusted', color:'#3cc8dc', desc:'Convey vendor jumpbox to FCTG internal servers'},
+  'FCTG_Convey|FCTG_OpCo_ENS_IPsec': {label:'Convey → OpCo IPsec', color:'#3cc8dc', desc:'Convey vendor jumpbox to OpCo sites (iTest, DEVSA2, BPC-TS, UAT)'},
+  'ssl.root|FCTG_DC_trusted_vlans': {label:'SSL VPN → DC Trusted', color:'#ffaa40', desc:'SSL VPN clients connecting to FCTG DC trusted network'},
+  'ssl.root|fctg_contractor': {label:'SSL VPN → Contractor DMZ', color:'#ff8830', desc:'SSL VPN users to contractor jumpboxes FCTGJUMP1/2'},
+  'fctg_contractor|FCTG_DC_trusted_vlans': {label:'Contractor → DC Trusted', color:'#3cc8dc', desc:'Contractor jumpboxes to FCTG DC servers and domain controllers'},
+  'FCT-SAML|FCTG_OpCo_ENS_IPsec': {label:'SAML IPSEC VPN → OpCo', color:'#ff4c4c', desc:'Remote IPSEC clients accessing OpCo sites and Azure'},
+  'ssl.root|FCTG_OpCo_ENS_IPsec': {label:'SSL VPN → OpCo IPsec', color:'#ff9940', desc:'SSL VPN clients to OpCo and Azure resources'},
+  'fctg_contractor|FCTG_OpCo_ENS_IPsec': {label:'Contractor → OpCo', color:'#3ab8cc', desc:'Contractor jumpboxes to OpCo resources (DEVSA2, Azure)'},
+  'FCTG_DC_trusted_vlans|fctg_contractor': {label:'DC Trusted → Contractor', color:'#3cc8dc', desc:'DC trusted to contractor zone (IT management, server comms)'},
+  'CONVEY-TEMP|FCTG_DC_trusted_vlans': {label:'CONVEY-TEMP → DC Trusted', color:'#3cc8dc', desc:'Vendor temporary access to FCTG DC (DNS, RDP to TS)'},
+  'FCTG_Convey|virtual-wan-link': {label:'Convey → Internet', color:'#3ca8c0', desc:'Convey jumpbox internet access (web, Microsoft)'},
+  'FCTG_DC_trusted_vlans|FCTG_Convey': {label:'DC Trusted → Convey', color:'#3cc8dc', desc:'DC trusted comms to Convey zone (Windows AD, EndpointCentral)'},
+  'FCTG_OpCo_ENS_IPsec|FCTG_Convey': {label:'OpCo → Convey', color:'#9aaeff', desc:'OpCo sites to Convey zone (DEVSA2 SMB, UAT subnets)'},
+  'FCTG_DC_trusted_vlans|FCTG_DC_trusted_vlans': {label:'DC Internal Traffic', color:'#7060c0', desc:'Internal DC traffic: SvrPrt ↔ DEV_SvrPrt (ALL services)'},
+  'virtual-wan-link|FCTG_DC_trusted_vlans': {label:'Internet → DC (SD-WAN FTP)', color:'#48c88c', desc:'Inbound SD-WAN FTP traffic to DC trusted network'},
+  'FCT-SAML|FCTG_Convey': {label:'SAML VPN → Convey', color:'#ff6ca0', desc:'IPSEC VPN clients RDP to FCTGJUMPBOX1'},
+  'FCTG_DC_trusted_vlans|FCT-SAML': {label:'DC Trusted → FCT-SAML', color:'#ff9080', desc:'DC servers to IPSEC dialup range (DCE-RPC, SMB, RPC)'},
+  'FCTG_OpCo_ENS_IPsec|FCT-SAML': {label:'OpCo → FCT-SAML', color:'#ff8080', desc:'OpCo IPsec to IPSEC dialup (ALL services)'},
+  'FCTG_OpCo_ENS_IPsec|fctg_contractor': {label:'OpCo → Contractor', color:'#3cc8dc', desc:'FCTGHQ vendor SSLVPN to contractor jumpbox (PING, RDP)'},
+  'fortilink|FCTG_DC_trusted_vlans': {label:'FortiLink Switches → DC', color:'#f0c040', desc:'LAN switches SNMP traps to FCTGDCLOGHOST'},
+  'Data-Storage|FCTG_DC_trusted_vlans': {label:'Data Switches → DC', color:'#d8a830', desc:'Data storage switches SNMP to FCTGDCLOGHOST'},
+  'FCTG_DC_trusted_vlans|Data-Storage': {label:'DC → Data Switches', color:'#f0c040', desc:'DC SNMP polling to data storage switches'},
+  'FCTG_DC_trusted_vlans|fortilink': {label:'DC → FortiLink Switches', color:'#d8a030', desc:'DC SNMP polling to LAN switches'},
+  'CONVEY-TEMP|FCTG_Convey': {label:'CONVEY-TEMP → Convey', color:'#3cb0c0', desc:'Vendor temp access to Convey jumpbox (RDP)'},
+  'CONVEY-TEMP|FCTG_OpCo_ENS_IPsec': {label:'CONVEY-TEMP → OpCo', color:'#3ca8b8', desc:'Vendor temp access to OpCo terminal servers'},
+  'HYBRID-JOIN|FCTG_DC_trusted_vlans': {label:'Hybrid-Join → DC Trusted', color:'#d0a030', desc:'Hybrid domain join reconnect (Windows AD)'},
+  'fctg_contractor|virtual-wan-link': {label:'Contractor → Internet', color:'#2ca0b8', desc:'Contractor jumpbox internet access (PING/TRACEROUTE/HTTP/HTTPS)'},
+  'dmz|virtual-wan-link': {label:'DMZ → Internet (Disabled)', color:'#804040', desc:'DISABLED: Block-outbound deny policy for DMZ'},
+  'FCTG_OpCo_ENS_IPsec|dmz': {label:'OpCo → DMZ (Disabled)', color:'#804040', desc:'DISABLED: Trusted-to-isolated Windows AD to jumpbox'},
+  'FCTG_DC_trusted_vlans|FCTG_OpCo_ENS_IPsec-azure': {label:'DC → Azure (via OpCo iface)', color:'#c87cff', desc:'FCTG DC to Azure subnet via OpCo IPsec interface'},
+  'FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans-azure': {label:'Azure → DC Trusted', color:'#a840ff', desc:'Azure subnet back to FCTG DC servers'},
+};
+
+let activeFlow = null, filterMode = 'all';
+
+function loadFlow(flowKey) {
+  activeFlow = flowKey;
+  filterMode = 'all';
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('act'));
+  document.querySelector('.fbtn').classList.add('act');
+  renderPanel(flowKey);
+  document.querySelectorAll('.fl').forEach(el => {
+    el.style.opacity = el.dataset.flow === flowKey ? '1' : '0.15';
+    el.style.filter = el.dataset.flow === flowKey ? 'url(#glow2)' : '';
+  });
+}
+
+function renderPanel(flowKey) {
+  const meta = FLOW_META[flowKey] || {label:flowKey, color:'#9090cc', desc:''};
+  const ptitle = document.getElementById('ptitle');
+  ptitle.textContent = meta.label;
+  ptitle.style.color = meta.color;
+  document.getElementById('psub').textContent = meta.desc;
+  document.getElementById('fbar').style.display = 'flex';
+
+  // Normalize flow key for matching (handle azure suffix)
+  const normKey = flowKey.replace('-azure','');
+  const matching = POLICIES.filter(p => {
+    const si = p.src_iface.split(',')[0].trim();
+    const di = p.dst_iface.split(',')[0].trim();
+    const pflow = si+'|'+di;
+    if (pflow !== normKey) return false;
+    if (filterMode === 'all') return true;
+    if (filterMode === 'disable') return p.status === 'disable';
+    return p.action.toLowerCase() === filterMode && p.status !== 'disable';
+  });
+
+  let html = '';
+  const count = POLICIES.filter(p => {
+    const si = p.src_iface.split(',')[0].trim();
+    const di = p.dst_iface.split(',')[0].trim();
+    return (si+'|'+di) === normKey;
+  }).length;
+
+  if (!matching.length) {
+    html = '<div style="text-align:center;padding:30px;font-size:12px;color:#383870">No policies match this filter.</div>';
+  } else {
+    for (const p of matching) {
+      const bc = p.action==='accept' && p.status==='enable' ? '#3a8a5a' : p.action==='deny' ? '#8a3a3a' : '#5a5a3a';
+      const svcs = p.services.slice(0,6);
+      const chips = svcs.map(s => {
+        const pt = p.svc_ports[s]||'';
+        return `<span class="chip">${s}${pt?' · '+pt:''}</span>`;
+      }).join('');
+      const more = p.services.length > 6 ? `<span class="chip">+${p.services.length-6} more</span>` : '';
+      const disabled = p.status==='disable' ? ' <span style="color:#604040;font-size:9px">DISABLED</span>' : '';
+      html += `<div class="pc" style="border-left-color:${bc}" onclick="this.classList.toggle('hl')">
+        <div class="pid">Policy ID ${p.id} · ${p.action.toUpperCase()}${disabled}</div>
+        <div class="pn">${p.name}</div>
+        <div class="pr"><span class="l">Src</span><span class="v">${p.src_addr.join(', ')}</span></div>
+        <div class="pr"><span class="l">Dst</span><span class="v">${p.dst_addr.join(', ')}</span></div>
+        ${p.comments ? `<div class="pr"><span class="l">Note</span><span class="v">${p.comments}</span></div>` : ''}
+        <div class="chips">${chips}${more}</div>
+      </div>`;
+    }
+  }
+
+  document.getElementById('pbody').innerHTML =
+    `<div style="font-size:10px;color:#44447a;margin-bottom:9px;padding:0 2px">${count} polic${count===1?'y':'ies'} in this flow</div>` + html +
+    '<div style="margin-top:16px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#38387a;margin-bottom:10px">Quick Flow Index</div>' + buildIndex() + '</div>';
+}
+
+function buildIndex() {
+  const flows = [
+    ["FCTG_DC_trusted_vlans|virtual-wan-link","DC → Internet","19","#48c88c"],
+    ["FCTG_OpCo_ENS_IPsec|FCTG_DC_trusted_vlans","OpCo → DC","19","#9aaeff"],
+    ["FCTG_DC_trusted_vlans|FCTG_OpCo_ENS_IPsec","DC → OpCo","12","#7c8fff"],
+    ["FCT-SAML|FCTG_DC_trusted_vlans","SAML → DC","4","#ff6c6c"],
+    ["FCTG_Convey|FCTG_DC_trusted_vlans","Convey → DC","4","#3cc8dc"],
+    ["FCTG_Convey|FCTG_OpCo_ENS_IPsec","Convey → OpCo","4","#3cc8dc"],
+    ["ssl.root|FCTG_DC_trusted_vlans","SSL VPN → DC","3","#ffaa40"],
+    ["ssl.root|fctg_contractor","SSL VPN → Contractor","3","#ff8830"],
+    ["fctg_contractor|FCTG_DC_trusted_vlans","Contractor → DC","3","#3cc8dc"],
+    ["FCT-SAML|FCTG_OpCo_ENS_IPsec","SAML → OpCo","3","#ff4c4c"],
+    ["ssl.root|FCTG_OpCo_ENS_IPsec","SSL VPN → OpCo","2","#ff9940"],
+    ["fctg_contractor|FCTG_OpCo_ENS_IPsec","Contractor → OpCo","2","#3ab8cc"],
+    ["FCTG_DC_trusted_vlans|fctg_contractor","DC → Contractor","2","#3cc8dc"],
+    ["CONVEY-TEMP|FCTG_DC_trusted_vlans","CONVEY-TEMP → DC","2","#3cc8dc"],
+    ["FCTG_Convey|virtual-wan-link","Convey → WAN","2","#3ca8c0"],
+    ["FCTG_DC_trusted_vlans|FCTG_DC_trusted_vlans","DC Internal","2","#7060c0"],
+    ["virtual-wan-link|FCTG_DC_trusted_vlans","WAN → DC (FTP)","1","#48c88c"],
+    ["fortilink|FCTG_DC_trusted_vlans","FortiLink → DC","1","#f0c040"],
+    ["HYBRID-JOIN|FCTG_DC_trusted_vlans","Hybrid-Join → DC","1","#d0a030"],
+    ["dmz|virtual-wan-link","DMZ → WAN (Off)","1","#804040"],
+  ];
+  return flows.map(([k,l,c,col]) =>
+    `<div class="qi" onclick="loadFlow('${k}')"><span class="ql">${l}</span><span class="qc" style="color:${col}">${c}</span></div>`
+  ).join('');
+}
+
+function filterCards(mode, btn) {
+  filterMode = mode;
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('act'));
+  btn.classList.add('act');
+  if (activeFlow) renderPanel(activeFlow);
+}
+
+document.querySelectorAll('.fl').forEach(el => {
+  el.addEventListener('click', () => loadFlow(el.dataset.flow));
+  el.addEventListener('mouseenter', e => {
+    const meta = FLOW_META[el.dataset.flow] || {label:el.dataset.flow, color:'#9090cc', desc:''};
+    const normKey = el.dataset.flow.replace('-azure','');
+    const cnt = POLICIES.filter(p => {
+      const si = p.src_iface.split(',')[0].trim();
+      const di = p.dst_iface.split(',')[0].trim();
+      return (si+'|'+di) === normKey;
+    }).length;
+    document.getElementById('tt').textContent = meta.label;
+    document.getElementById('tt').style.color = meta.color;
+    document.getElementById('tr1').innerHTML = `<span>${meta.desc}</span>`;
+    document.getElementById('tr2').innerHTML = `<span style="color:#7c8fff;font-weight:700">${cnt} polic${cnt===1?'y':'ies'}</span>`;
+    document.getElementById('tip').classList.add('show');
+  });
+  el.addEventListener('mousemove', e => {
+    document.getElementById('tip').style.left=(e.clientX+14)+'px';
+    document.getElementById('tip').style.top=(e.clientY-8)+'px';
+  });
+  el.addEventListener('mouseleave', () => document.getElementById('tip').classList.remove('show'));
+});
+
+document.getElementById('svg').addEventListener('click', e => {
+  if (!e.target.classList.contains('fl') && e.target.tagName !== 'text') {
+    document.querySelectorAll('.fl').forEach(el => { el.style.opacity=null; el.style.filter=''; });
+    activeFlow = null;
+  }
+});
+</script>
+</body>
+</html>

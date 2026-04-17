@@ -1,0 +1,333 @@
+FCTG-FG-DC-1 $ get system interface
+== [ dmz ]
+name: dmz   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 10.111.111.1 255.255.255.0   status: down    netbios-forward: disable    type: physical   netflow-sam
+pler: disable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk:
+disable    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ mgmt ]
+name: mgmt   management-ip: 0.0.0.0 0.0.0.0   ip: 10.0.100.99 255.255.255.0   status: up    netbios-forward: disable    type: physical   netflow-sampler: disable    s
+flow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: d
+isable    drop-fragment: disable    mtu-override: disable
+== [ wan1 ]
+name: wan1   mode: dhcp    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: down    netbios-forward: disable    type: physical   netflow-sampler: disabl
+e    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    w
+ccp: disable    drop-fragment: disable    mtu-override: disable
+== [ wan2 ]
+name: wan2   mode: dhcp    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: physical   netflow-sampler: disable
+   sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wcc
+p: disable    drop-fragment: disable    mtu-override: disable
+== [ ha1 ]
+name: ha1   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: physical   netflow-sampler: disable
+    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wc
+cp: disable    drop-fragment: disable    mtu-override: disable
+== [ ha2 ]
+name: ha2   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: physical   netflow-sampler: disable
+    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wc
+cp: disable    drop-fragment: disable    mtu-override: disable
+== [ port1 ]
+name: port1   status: up    type: physical   trunk: disable
+== [ port2 ]
+name: port2   status: up    type: physical   trunk: disable
+== [ port3 ]
+name: port3   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 10.5.1.1 255.255.255.0   status: up    netbios-forward: disable    type: physical   netflow-sampler
+: disable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disa
+ble    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ port4 ]
+name: port4   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: physical   netflow-sampler: disab
+le    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable
+wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ port5 ]
+name: port5   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: physical   netflow-sampler: disab
+le    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable
+wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ port6 ]
+name: port6   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: physical   netflow-sampler: disab
+le    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable
+wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ port7 ]
+name: port7   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: physical   netflow-sampler: disab
+le    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable
+wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ port8 ]
+name: port8   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: physical   netflow-sampler: disab
+le    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable
+wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ port9 ]
+name: port9   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: physical   netflow-sampler: disab
+le    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable
+wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ port10 ]
+name: port10   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: physical   netflow-sampler: disa
+ble    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable
+ wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ port11 ]
+name: port11   status: up    type: physical   src-check: enable    trunk: disable    aggregate: Data-Storage
+== [ port12 ]
+name: port12   status: up    type: physical   src-check: enable    trunk: disable    aggregate: Data-Storage
+== [ x1 ]
+name: x1   status: up    type: physical   src-check: enable    trunk: disable    aggregate: fortilink
+== [ x2 ]
+name: x2   status: up    type: physical   src-check: enable    trunk: disable    aggregate: fortilink
+== [ port13 ]
+name: port13   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 50.145.215.34 255.255.255.248   status: up    netbios-forward: disable    type: physical   netflow
+-sampler: disable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    tru
+nk: disable    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ port14 ]
+name: port14   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 50.45.235.34 255.255.255.248   status: up    netbios-forward: disable    type: physical   netflow-
+sampler: disable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trun
+k: disable    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ port15 ]
+name: port15   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 50.45.237.33 255.255.255.248   status: down    netbios-forward: disable    type: physical   netflo
+w-sampler: disable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    tr
+unk: disable    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ port16 ]
+name: port16   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 192.168.0.1 255.255.0.0   status: down    netbios-forward: disable    type: physical   netflow-sam
+pler: disable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk:
+disable    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ port17 ]
+name: port17   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: physical   netflow-sampler: disa
+ble    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable
+ wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ port18 ]
+name: port18   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: physical   netflow-sampler: disa
+ble    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable
+ wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ port19 ]
+name: port19   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: physical   netflow-sampler: disa
+ble    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable
+ wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ port20 ]
+name: port20   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: physical   netflow-sampler: disa
+ble    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable
+ wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ modem ]
+name: modem   mode: pppoe    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: down    netbios-forward: disable    type: physical   netflow-sampler: disa
+ble    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable
+ wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ naf.root ]
+name: naf.root   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable    src-check: disab
+le    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable
+== [ l2t.root ]
+name: l2t.root   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable    src-check: enabl
+e    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable
+== [ ssl.root ]
+name: ssl.root   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable    src-check: enabl
+e    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override: disable
+== [ lan ]
+name: lan   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 10.1.191.111 255.255.255.0   status: up    netbios-forward: disable    type: hard-switch   netflow-sa
+mpler: disable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk:
+ disable    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ fortilink ]
+name: fortilink   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 10.255.1.1 255.255.255.0   status: up    netbios-forward: disable    type: aggregate   netflow-
+sampler: disable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trun
+k: disable    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ OPUS-FCTG ]
+name: OPUS-FCTG   ip: 10.254.100.5 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable    sr
+c-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override: dis
+able
+== [ OPUS-Azure ]
+name: OPUS-Azure   ip: 10.254.100.9 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable    s
+rc-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override: di
+sable
+== [ _default ]
+name: _default   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: vlan   netflow-sampler: disabl
+e    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    s
+witch-controller-feature: default-vlan    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ quarantine ]
+name: quarantine   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 10.255.11.1 255.255.255.0   status: up    netbios-forward: disable    type: vlan   netflow-sam
+pler: disable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk:
+disable    switch-controller-feature: quarantine    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ voice ]
+name: voice   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: vlan   netflow-sampler: disable
+  sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    swit
+ch-controller-feature: voice    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ video ]
+name: video   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: vlan   netflow-sampler: disable
+  sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    swit
+ch-controller-feature: video    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ rspan ]
+name: rspan   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 10.255.12.1 255.255.255.0   status: up    netbios-forward: disable    type: vlan   netflow-sampler:
+ disable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disab
+le    switch-controller-feature: rspan    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ onboarding ]
+name: onboarding   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: vlan   netflow-sampler: disa
+ble    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable
+ switch-controller-feature: nac    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ nac_segment ]
+name: nac_segment   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 10.255.13.1 255.255.255.0   status: up    netbios-forward: disable    type: vlan   netflow-sa
+mpler: disable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk:
+ disable    switch-controller-feature: nac-segment    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ OPUS_to_PFP_2nd ]
+name: OPUS_to_PFP_2nd   ip: 10.254.100.19 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disabl
+e    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-overri
+de: disable
+== [ OPUS_to_PFP ]
+name: OPUS_to_PFP   ip: 10.254.100.17 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+ src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override:
+disable
+== [ OPUS_to_AIFP ]
+name: OPUS_to_AIFP   ip: 10.254.100.25 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+  src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override:
+ disable
+== [ OPUS_to_AIFP_2 ]
+name: OPUS_to_AIFP_2   ip: 10.254.100.27 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-overrid
+e: disable
+== [ OPUS_to_AR ]
+name: OPUS_to_AR   ip: 10.254.100.29 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override: d
+isable
+== [ OPUS_to_AR_2 ]
+name: OPUS_to_AR_2   ip: 10.254.100.31 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+  src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override:
+ disable
+== [ OPUS_to_BIFP ]
+name: OPUS_to_BIFP   ip: 10.254.100.41 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+  src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override:
+ disable
+== [ OPUS_to_BIFP_2 ]
+name: OPUS_to_BIFP_2   ip: 10.254.100.43 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-overrid
+e: disable
+== [ OPUS_to_BP ]
+name: OPUS_to_BP   ip: 10.254.100.21 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override: d
+isable
+== [ OPUS_to_BP_2 ]
+name: OPUS_to_BP_2   ip: 10.254.100.23 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+  src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override:
+ disable
+== [ OPUS_to_OI ]
+name: OPUS_to_OI   ip: 10.254.100.49 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override: d
+isable
+== [ OPUS_to_OI_2 ]
+name: OPUS_to_OI_2   ip: 10.254.100.51 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+  src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override:
+ disable
+== [ OPUS_to_RIFP ]
+name: OPUS_to_RIFP   ip: 10.254.100.45 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+  src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override:
+ disable
+== [ OPUS_to_RIFP_2 ]
+name: OPUS_to_RIFP_2   ip: 10.254.100.47 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-overrid
+e: disable
+== [ OPUS_to_SIFP ]
+name: OPUS_to_SIFP   ip: 10.254.100.13 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+  src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override:
+ disable
+== [ OPUS_to_SIFP_2 ]
+name: OPUS_to_SIFP_2   ip: 10.254.100.15 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-overrid
+e: disable
+== [ OPUS_to_SMT ]
+name: OPUS_to_SMT   ip: 10.254.100.33 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+ src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override:
+disable
+== [ OPUS_to_SMT_2 ]
+name: OPUS_to_SMT_2   ip: 10.254.100.35 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+   src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override
+: disable
+== [ OPUS_to_TIFP ]
+name: OPUS_to_TIFP   ip: 10.254.100.53 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+  src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override:
+ disable
+== [ OPUS_to_TIFP_2 ]
+name: OPUS_to_TIFP_2   ip: 10.254.100.55 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-overrid
+e: disable
+== [ OPUS_to_VFP ]
+name: OPUS_to_VFP   ip: 10.254.100.37 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+ src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override:
+disable
+== [ OPUS_to_VFP_2 ]
+name: OPUS_to_VFP_2   ip: 10.254.100.39 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+   src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override
+: disable
+== [ OPUS_to_FC_East ]
+name: OPUS_to_FC_East   ip: 10.254.100.2 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-overrid
+e: disable
+== [ OPUS-FCTG_2 ]
+name: OPUS-FCTG_2   ip: 10.254.100.7 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override: d
+isable
+== [ OPUS-Azure_2 ]
+name: OPUS-Azure_2   ip: 10.254.100.11 255.255.255.255   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable
+  src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override:
+ disable
+== [ FCTG_SvrPrt ]
+name: FCTG_SvrPrt   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 10.1.1.1 255.255.255.0   status: up    netbios-forward: disable    type: vlan   netflow-sampl
+er: disable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: di
+sable    switch-controller-feature: none    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ COMCAST EDI ]
+name: COMCAST EDI   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: vlan   netflow-sampler: dis
+able    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable
+  switch-controller-feature: none    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ ZIPLY ]
+name: ZIPLY   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: vlan   netflow-sampler: disable
+  sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    swit
+ch-controller-feature: none    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ ENS ]
+name: ENS   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: vlan   netflow-sampler: disable
+sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    switch
+-controller-feature: none    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ fctg_contractor ]
+name: fctg_contractor   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 10.1.250.1 255.255.255.0   status: up    netbios-forward: disable    type: vlan   netflow
+-sampler: disable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    tru
+nk: disable    switch-controller-feature: none    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ Data-Storage ]
+name: Data-Storage   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 10.255.2.1 255.255.255.0   status: up    netbios-forward: disable    type: aggregate   netfl
+ow-sampler: disable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    t
+runk: disable    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ _default.75 ]
+name: _default.75   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: vlan   netflow-sampler: dis
+able    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable
+  switch-controller-feature: default-vlan    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ quarantine.75 ]
+name: quarantine.75   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 10.255.14.1 255.255.255.0   status: up    netbios-forward: disable    type: vlan   netflow-
+sampler: disable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trun
+k: disable    switch-controller-feature: quarantine    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ voice.75 ]
+name: voice.75   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: vlan   netflow-sampler: disabl
+e    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    s
+witch-controller-feature: voice    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ video.75 ]
+name: video.75   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: vlan   netflow-sampler: disabl
+e    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    s
+witch-controller-feature: video    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ rspan.75 ]
+name: rspan.75   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 10.255.15.1 255.255.255.0   status: up    netbios-forward: disable    type: vlan   netflow-sampl
+er: disable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: di
+sable    switch-controller-feature: rspan    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ onboarding.75 ]
+name: onboarding.75   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: vlan   netflow-sampler: d
+isable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable
+    switch-controller-feature: nac    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ nac_segment.75 ]
+name: nac_segment.75   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 10.255.16.1 255.255.255.0   status: up    netbios-forward: disable    type: vlan   netflow
+-sampler: disable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    tru
+nk: disable    switch-controller-feature: nac-segment    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ ISCSI-DATA ]
+name: ISCSI-DATA   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 10.1.99.1 255.255.255.0   status: up    netbios-forward: disable    type: vlan   netflow-sampl
+er: disable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: di
+sable    switch-controller-feature: none    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ FCT-SAML ]
+name: FCT-SAML   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable    src-check: enabl
+e    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override: disable
+== [ CONVEY-TEMP ]
+name: CONVEY-TEMP   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable    src-check: en
+able    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override: disable
+== [ FCTG_Convey ]
+name: FCTG_Convey   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 10.1.199.1 255.255.255.248   status: up    netbios-forward: disable    type: vlan   netflow-s
+ampler: disable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk
+: disable    switch-controller-feature: none    wccp: disable    drop-fragment: disable    mtu-override: disable
+== [ HYBRID-JOIN ]
+name: HYBRID-JOIN   ip: 0.0.0.0 0.0.0.0   status: up    netbios-forward: disable    type: tunnel   netflow-sampler: disable    sflow-sampler: disable    src-check: en
+able    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    trunk: disable    wccp: disable    mtu-override: disable
+== [ FCTG_DEV_SvrPrt ]
+name: FCTG_DEV_SvrPrt   mode: static    management-ip: 0.0.0.0 0.0.0.0   ip: 10.1.100.1 255.255.255.0   status: up    netbios-forward: disable    type: vlan   netflow
+-sampler: disable    sflow-sampler: disable    src-check: enable    explicit-web-proxy: disable    explicit-ftp-proxy: disable    proxy-captive-portal: disable    tru
+nk: disable    switch-controller-feature: none    wccp: disable    drop-fragment: disable    mtu-override: disable
+
+FCTG-FG-DC-1 $

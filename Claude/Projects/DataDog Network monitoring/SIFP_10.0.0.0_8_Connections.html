@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIFP Fortigate — All Internal (10.0.0.0/8) Connections</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;background:#090912;color:#e0e0f0;min-height:100vh;overflow-x:hidden}
+
+/* Header */
+.hdr{padding:28px 44px 18px;border-bottom:1px solid rgba(255,255,255,0.06);background:linear-gradient(180deg,rgba(16,16,38,0.95) 0%,transparent 100%)}
+.hdr h1{font-size:26px;font-weight:700;letter-spacing:-0.4px;color:#f0f0f8}.hdr h1 span{color:#7c8fff}
+.hdr p{margin-top:5px;font-size:13px;color:#6868a0}
+.badges{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.badge{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:3px 9px;border-radius:4px}
+.b-blue{background:rgba(124,143,255,0.15);color:#9aabff;border:1px solid rgba(124,143,255,0.3)}
+.b-green{background:rgba(72,200,140,0.12);color:#5dcc98;border:1px solid rgba(72,200,140,0.25)}
+.b-amber{background:rgba(255,185,60,0.12);color:#ffc870;border:1px solid rgba(255,185,60,0.25)}
+.b-red{background:rgba(255,90,80,0.12);color:#ff9080;border:1px solid rgba(255,90,80,0.25)}
+.b-purple{background:rgba(180,100,255,0.12);color:#cc88ff;border:1px solid rgba(180,100,255,0.25)}
+
+/* Stats */
+.stats{display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.stat{padding:12px 28px;border-right:1px solid rgba(255,255,255,0.05);text-align:center}
+.stat .num{font-size:24px;font-weight:700;color:#7c8fff}
+.stat .lbl{font-size:10px;color:#55558a;text-transform:uppercase;letter-spacing:.7px;margin-top:2px}
+
+/* Layout */
+.main{display:flex;height:calc(100vh - 148px)}
+
+/* Diagram */
+.diag{flex:1;position:relative;overflow:hidden;background:radial-gradient(ellipse at center,rgba(20,20,50,0.5) 0%,transparent 70%)}
+#svg{width:100%;height:100%}
+
+/* Side panel */
+.panel{width:380px;border-left:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;background:rgba(10,10,24,0.8)}
+.panel-hdr{padding:16px 18px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.panel-hdr h2{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7c8fff}
+.panel-hdr .sub{font-size:11px;color:#55558a;margin-top:3px}
+.panel-body{flex:1;overflow-y:auto;padding:12px}
+
+/* Filter bar */
+.filter-bar{display:flex;gap:6px;padding:10px 18px;border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap}
+.filter-btn{font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#8888bb;cursor:pointer;transition:.15s;letter-spacing:.4px;text-transform:uppercase}
+.filter-btn:hover,.filter-btn.active{border-color:rgba(124,143,255,0.5);background:rgba(124,143,255,0.12);color:#aab0ff}
+
+/* Policy cards */
+.pcard{background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.06);border-left:3px solid #333;border-radius:8px;padding:11px 13px;margin-bottom:7px;cursor:pointer;transition:.15s}
+.pcard:hover{background:rgba(255,255,255,0.05);transform:translateX(2px)}
+.pcard.hl{background:rgba(124,143,255,0.1);border-color:rgba(124,143,255,0.35)}
+.pcard.disabled{opacity:.3;pointer-events:none}
+.pcard .pid{font-size:9px;font-weight:700;letter-spacing:1px;color:#4040a0;text-transform:uppercase}
+.pcard .pname{font-size:13px;font-weight:600;color:#d8dcff;margin:3px 0 6px;line-height:1.3}
+.pcard .prow{font-size:10px;color:#7070a0;margin-bottom:2px;display:flex;gap:5px}
+.pcard .prow .lbl{color:#4a4a80;font-weight:700;text-transform:uppercase;font-size:9px;letter-spacing:.4px;min-width:26px}
+.pcard .prow .val{color:#9090c8;flex:1;line-height:1.4}
+.chips{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px}
+.chip{font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(124,143,255,0.1);color:#8888cc;border:1px solid rgba(124,143,255,0.18);font-weight:600}
+
+/* Tooltip */
+#tip{position:fixed;pointer-events:none;background:rgba(10,10,28,0.98);border:1px solid rgba(124,143,255,0.45);border-radius:10px;padding:12px 16px;font-size:12px;max-width:260px;z-index:9999;opacity:0;transition:.12s;box-shadow:0 10px 40px rgba(0,0,0,0.6)}
+#tip.show{opacity:1}
+#tip .tt{font-size:13px;font-weight:700;color:#c0caff;margin-bottom:6px}
+#tip .tr{color:#7070a0;margin-bottom:3px}
+#tip .tr span{color:#b0b4e0}
+
+/* Zone labels */
+.zone-lbl{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;font-weight:700}
+
+/* Legend */
+.legend{display:flex;gap:16px;padding:8px 44px;border-bottom:1px solid rgba(255,255,255,0.04);flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#6060a0}
+.leg-line{width:22px;height:3px;border-radius:2px}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>SIFP Fortigate — Connections Across <span>10.0.0.0/8</span></h1>
+  <p>SIFPFort2 · FortiGate-100F · FW 7.6.6-build3652 · All internal RFC-1918 (10.x.x.x) traffic flows</p>
+  <div class="badges">
+    <span class="badge b-blue">10.0.0.0/8 — All Internal</span>
+    <span class="badge b-green">110 Total Policies</span>
+    <span class="badge b-amber">FCTG/OPUS 10.0–10.1.x</span>
+    <span class="badge b-red">SIFP 10.30.x</span>
+    <span class="badge b-purple">Azure 10.2.x · BP 10.10.x</span>
+  </div>
+</div>
+<div class="stats">
+  <div class="stat"><div class="num">110</div><div class="lbl">Policies</div></div>
+  <div class="stat"><div class="num">23</div><div class="lbl">Flows</div></div>
+  <div class="stat"><div class="num">31</div><div class="lbl">SIFP→FCTG</div></div>
+  <div class="stat"><div class="num">21</div><div class="lbl">FCTG→SIFP</div></div>
+  <div class="stat"><div class="num">31</div><div class="lbl">SIFP→WAN</div></div>
+  <div class="stat"><div class="num">7</div><div class="lbl">Azure flows</div></div>
+</div>
+<div class="legend">
+  <div class="leg-item"><div class="leg-line" style="background:#7c8fff"></div>FCTG ↔ SIFP Internal</div>
+  <div class="leg-item"><div class="leg-line" style="background:#48c88c"></div>SIFP → Internet</div>
+  <div class="leg-item"><div class="leg-line" style="background:#c87cff"></div>Azure</div>
+  <div class="leg-item"><div class="leg-line" style="background:#ff7c7c"></div>IPSEC/SAML VPN</div>
+  <div class="leg-item"><div class="leg-line" style="background:#ffcc55"></div>BP/BuckEye · BIFP</div>
+  <div class="leg-item"><div class="leg-line" style="background:#78c8f0"></div>Internal Zones</div>
+</div>
+
+<div class="main">
+<div class="diag">
+<svg id="svg" viewBox="0 0 1060 640" preserveAspectRatio="xMidYMid meet">
+<defs>
+  <marker id="ag" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#7c8fff"/></marker>
+  <marker id="ag2" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#5aba8c"/></marker>
+  <marker id="ag3" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#c87cff"/></marker>
+  <marker id="ag4" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#ff6c6c"/></marker>
+  <marker id="ag5" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#f0c040"/></marker>
+  <marker id="ag6" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#78c8f0"/></marker>
+  <filter id="glow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="glow2"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <radialGradient id="fw-grad" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="rgba(255,80,80,0.25)"/>
+    <stop offset="100%" stop-color="rgba(255,80,80,0.05)"/>
+  </radialGradient>
+</defs>
+
+<!-- Background zone glows -->
+<ellipse cx="170" cy="320" rx="145" ry="190" fill="rgba(124,143,255,0.04)"/>
+<ellipse cx="740" cy="320" rx="160" ry="210" fill="rgba(72,200,140,0.04)"/>
+<ellipse cx="530" cy="80" rx="110" ry="65" fill="rgba(72,200,140,0.03)"/>
+<ellipse cx="880" cy="120" rx="100" ry="60" fill="rgba(200,124,255,0.04)"/>
+<ellipse cx="530" cy="580" rx="140" ry="50" fill="rgba(255,100,100,0.03)"/>
+
+<!-- ═══════════════════════════════════════
+     NODES
+═══════════════════════════════════════ -->
+
+<!-- FCTG/OPUS Zone (left) -->
+<rect x="30" y="180" width="210" height="110" rx="12" fill="rgba(124,143,255,0.08)" stroke="rgba(124,143,255,0.35)" stroke-width="1.5"/>
+<text x="135" y="208" text-anchor="middle" class="zone-lbl" font-size="13" fill="#9aaeff">FCTG HQ</text>
+<text x="135" y="224" text-anchor="middle" font-family="monospace" font-size="10" fill="#6060a8">10.0.0.0/16  ·  10.1.0.0/16</text>
+<line x1="50" y1="234" x2="220" y2="234" stroke="rgba(124,143,255,0.15)" stroke-width="1"/>
+<text x="135" y="250" text-anchor="middle" font-size="10" fill="#7878a8">FCTGWANConnection iface</text>
+<text x="135" y="265" text-anchor="middle" font-size="9" fill="#505088">21 inbound · 31 outbound</text>
+<text x="135" y="278" text-anchor="middle" font-size="9" fill="#505088">+ SAML/IPSEC · SSL VPN</text>
+
+<!-- OPUS SSL VPN sub-note -->
+<rect x="30" y="305" width="210" height="44" rx="8" fill="rgba(124,143,255,0.04)" stroke="rgba(124,143,255,0.2)" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="135" y="323" text-anchor="middle" font-size="10" fill="#7070b8">OPUS SSL VPN</text>
+<text x="135" y="337" text-anchor="middle" font-family="monospace" font-size="9" fill="#4a4a88">10.102.0.0/24</text>
+
+<!-- BP/BuckEye (lower-left) -->
+<rect x="30" y="420" width="155" height="65" rx="10" fill="rgba(240,192,64,0.07)" stroke="rgba(240,192,64,0.28)" stroke-width="1.2"/>
+<text x="108" y="445" text-anchor="middle" class="zone-lbl" font-size="12" fill="#f0c878">BP / BuckEye</text>
+<text x="108" y="460" text-anchor="middle" font-family="monospace" font-size="9" fill="#907838">10.10.0.0/16</text>
+<text x="108" y="474" text-anchor="middle" font-size="9" fill="#705830">2 policies (RDP · PING · HTTPS)</text>
+
+<!-- BIFP (left, below) -->
+<rect x="205" y="430" width="110" height="50" rx="8" fill="rgba(240,192,64,0.05)" stroke="rgba(240,192,64,0.2)" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="260" y="452" text-anchor="middle" font-size="11" fill="#c8a858">BIFP</text>
+<text x="260" y="467" text-anchor="middle" font-size="9" fill="#706030">1 policy (RightFax)</text>
+
+<!-- ─── CENTER: FortiGate ─── -->
+<rect x="410" y="240" width="200" height="155" rx="14" fill="url(#fw-grad)" stroke="rgba(255,100,100,0.45)" stroke-width="2" filter="url(#glow)"/>
+<text x="510" y="272" text-anchor="middle" class="zone-lbl" font-size="14" fill="#ff9090">SIFPFort2</text>
+<text x="510" y="289" text-anchor="middle" font-size="10" fill="#a06060">FortiGate-100F · FW 7.6.6</text>
+<line x1="428" y1="300" x2="592" y2="300" stroke="rgba(255,100,100,0.2)" stroke-width="1"/>
+<text x="510" y="315" text-anchor="middle" font-size="9" fill="#906060">INTERFACES</text>
+<text x="510" y="330" text-anchor="middle" font-size="9" fill="#806060">FCTGWANConnection · SIFPInternal</text>
+<text x="510" y="344" text-anchor="middle" font-size="9" fill="#806060">virtual-wan-link · FCT_SAML</text>
+<text x="510" y="358" text-anchor="middle" font-size="9" fill="#806060">Azure · BP · BIFP · fortilink</text>
+<text x="510" y="372" text-anchor="middle" font-size="9" fill="#806060">SIFP-Guest · SIFPAV · SIFPTest3</text>
+
+<!-- Internet/WAN (top center) -->
+<rect x="400" y="30" width="220" height="70" rx="12" fill="rgba(72,200,140,0.07)" stroke="rgba(72,200,140,0.3)" stroke-width="1.5"/>
+<text x="510" y="57" text-anchor="middle" class="zone-lbl" font-size="13" fill="#6fd9a8">Internet / WAN</text>
+<text x="510" y="73" text-anchor="middle" font-size="10" fill="#4a9a78">virtual-wan-link · SD-WAN</text>
+<text x="510" y="87" text-anchor="middle" font-size="9" fill="#3a7858">FirstLight 100M · Comcast 500M</text>
+
+<!-- Azure (top right) -->
+<rect x="780" y="30" width="200" height="80" rx="12" fill="rgba(200,124,255,0.07)" stroke="rgba(200,124,255,0.3)" stroke-width="1.5"/>
+<text x="880" y="58" text-anchor="middle" class="zone-lbl" font-size="13" fill="#cc88ff">Azure</text>
+<text x="880" y="74" text-anchor="middle" font-family="monospace" font-size="9" fill="#9060cc">10.2.0.0/15</text>
+<text x="880" y="89" text-anchor="middle" font-size="9" fill="#7050aa">4 in · 3 out · 7 policies total</text>
+
+<!-- SIFP Internal (right, large) -->
+<rect x="660" y="200" width="230" height="165" rx="13" fill="rgba(72,200,140,0.07)" stroke="rgba(72,200,140,0.32)" stroke-width="1.5"/>
+<text x="775" y="227" text-anchor="middle" class="zone-lbl" font-size="13" fill="#70d8a0">SIFP Internal</text>
+<text x="775" y="243" text-anchor="middle" font-family="monospace" font-size="9" fill="#409860">10.30.0.0/16</text>
+<line x1="675" y1="253" x2="875" y2="253" stroke="rgba(72,200,140,0.15)" stroke-width="1"/>
+<text x="775" y="268" text-anchor="middle" font-size="9" fill="#508868">SIFPSA3: 10.30.1.242</text>
+<text x="775" y="281" text-anchor="middle" font-size="9" fill="#508868">SIFPTS01: 10.30.1.244</text>
+<text x="775" y="294" text-anchor="middle" font-size="9" fill="#508868">SIFPAZUREDF1: 10.30.1.243</text>
+<text x="775" y="307" text-anchor="middle" font-size="9" fill="#508868">SIFPFS01: 10.30.1.245</text>
+<text x="775" y="320" text-anchor="middle" font-size="9" fill="#508868">SIFPBACKUP01: 10.30.1.241</text>
+<text x="775" y="333" text-anchor="middle" font-size="9" fill="#508868">Vcenter: 10.30.1.9</text>
+<text x="775" y="346" text-anchor="middle" font-size="9" fill="#508868">SIFP Subnet / Servers / WS</text>
+
+<!-- Internal sub-zones (right lower) -->
+<rect x="660" y="385" width="100" height="48" rx="8" fill="rgba(120,200,240,0.06)" stroke="rgba(120,200,240,0.22)" stroke-width="1"/>
+<text x="710" y="406" text-anchor="middle" font-size="10" fill="#80c8f0">SIFP Guest</text>
+<text x="710" y="420" text-anchor="middle" font-size="9" fill="#4080a0">3 policies</text>
+
+<rect x="772" y="385" width="118" height="48" rx="8" fill="rgba(120,200,240,0.06)" stroke="rgba(120,200,240,0.22)" stroke-width="1"/>
+<text x="831" y="406" text-anchor="middle" font-size="10" fill="#80c8f0">HyperV / Test / AV</text>
+<text x="831" y="420" text-anchor="middle" font-size="9" fill="#4080a0">4 policies</text>
+
+<!-- IPSEC/SAML VPN (bottom center) -->
+<rect x="380" y="530" width="260" height="66" rx="10" fill="rgba(255,108,108,0.07)" stroke="rgba(255,108,108,0.28)" stroke-width="1.5"/>
+<text x="510" y="556" text-anchor="middle" class="zone-lbl" font-size="12" fill="#ff8888">IPSEC / SAML VPN</text>
+<text x="510" y="572" text-anchor="middle" font-family="monospace" font-size="9" fill="#c06060">FCT_SAML iface · SIFPSSOVPN: 10.30.100.100-200</text>
+<text x="510" y="585" text-anchor="middle" font-size="9" fill="#905050">4 policies → SIFP · FCTG · Azure · WAN</text>
+
+<!-- Fortilink/Switches (bottom right) -->
+<rect x="870" y="360" width="140" height="50" rx="8" fill="rgba(120,200,240,0.05)" stroke="rgba(120,200,240,0.18)" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="940" y="381" text-anchor="middle" font-size="10" fill="#78b8d8">FortiSwitches</text>
+<text x="940" y="395" text-anchor="middle" font-family="monospace" font-size="9" fill="#406080">10.33.0.0/16</text>
+<text x="940" y="408" text-anchor="middle" font-size="9" fill="#305060">2 policies (SNMP)</text>
+
+<!-- ═══════════════════════════════════════
+     FLOW LINES
+═══════════════════════════════════════ -->
+
+<!-- FCTG → SIFPInternal (21 policies) upper line -->
+<path id="f-fctg-si" d="M 240 250 Q 340 210 410 280"
+  stroke="#7c8fff" stroke-width="4" fill="none" opacity="0.75"
+  marker-end="url(#ag)" class="flow-line" data-flow="FCTGWANConnection|SIFPInternal" cursor="pointer"/>
+<rect x="286" y="218" width="78" height="18" rx="4" fill="rgba(10,10,30,0.8)"/>
+<text x="325" y="231" text-anchor="middle" font-size="10" fill="#9aaeff" font-weight="700" class="flow-line" data-flow="FCTGWANConnection|SIFPInternal" cursor="pointer">21 policies</text>
+
+<!-- SIFPInternal → FCTG (31 policies) lower line -->
+<path id="f-si-fctg" d="M 410 310 Q 340 350 240 290"
+  stroke="#9aaeff" stroke-width="5" fill="none" opacity="0.7"
+  marker-end="url(#ag)" class="flow-line" data-flow="SIFPInternal|FCTGWANConnection" cursor="pointer"/>
+<rect x="282" y="336" width="78" height="18" rx="4" fill="rgba(10,10,30,0.8)"/>
+<text x="321" y="349" text-anchor="middle" font-size="10" fill="#b0baff" font-weight="700" class="flow-line" data-flow="SIFPInternal|FCTGWANConnection" cursor="pointer">31 policies</text>
+
+<!-- SIFP Internal ↔ FortiGate (implied, just show the zone connection) -->
+<line x1="610" y1="290" x2="660" y2="290" stroke="rgba(72,200,140,0.4)" stroke-width="2.5"/>
+<line x1="610" y1="305" x2="660" y2="305" stroke="rgba(72,200,140,0.4)" stroke-width="2.5"/>
+
+<!-- SIFPInternal → Internet (31 policies) -->
+<path id="f-si-wan" d="M 490 240 C 490 200 500 140 500 100"
+  stroke="#48c88c" stroke-width="4.5" fill="none" opacity="0.75"
+  marker-end="url(#ag2)" class="flow-line" data-flow="SIFPInternal|virtual-wan-link" cursor="pointer"/>
+<rect x="504" y="155" width="78" height="18" rx="4" fill="rgba(10,10,30,0.8)"/>
+<text x="543" y="168" text-anchor="middle" font-size="10" fill="#6fd9a8" font-weight="700" class="flow-line" data-flow="SIFPInternal|virtual-wan-link" cursor="pointer">31 policies</text>
+
+<!-- Guest → Internet (3 policies) -->
+<path id="f-guest-wan" d="M 710 385 C 680 300 620 200 560 100"
+  stroke="#78c8f0" stroke-width="2" fill="none" opacity="0.55" stroke-dasharray="5,3"
+  marker-end="url(#ag6)" class="flow-line" data-flow="SIFP-Guest|virtual-wan-link" cursor="pointer"/>
+
+<!-- SIFPInternal → Azure (4 policies) -->
+<path id="f-si-az" d="M 610 255 C 680 180 740 120 780 90"
+  stroke="#c87cff" stroke-width="2.8" fill="none" opacity="0.7"
+  marker-end="url(#ag3)" class="flow-line" data-flow="SIFPInternal|Azure" cursor="pointer"/>
+<rect x="672" y="155" width="58" height="16" rx="3" fill="rgba(10,10,30,0.8)"/>
+<text x="701" y="167" text-anchor="middle" font-size="9" fill="#cc88ff" font-weight="700" class="flow-line" data-flow="SIFPInternal|Azure" cursor="pointer">4 policies</text>
+
+<!-- Azure → SIFPInternal (3 policies) -->
+<path id="f-az-si" d="M 820 110 C 820 150 810 180 760 220"
+  stroke="#a840ff" stroke-width="2.2" fill="none" opacity="0.6"
+  marker-end="url(#ag3)" class="flow-line" data-flow="Azure|SIFPInternal" cursor="pointer"/>
+<rect x="824" y="148" width="56" height="16" rx="3" fill="rgba(10,10,30,0.8)"/>
+<text x="852" y="160" text-anchor="middle" font-size="9" fill="#b870ff" font-weight="700" class="flow-line" data-flow="Azure|SIFPInternal" cursor="pointer">3 policies</text>
+
+<!-- IPSEC/SAML → SIFPInternal (1) -->
+<path id="f-saml-si" d="M 510 530 C 510 490 580 420 660 340"
+  stroke="#ff6c6c" stroke-width="2.2" fill="none" opacity="0.7" stroke-dasharray="6,3"
+  marker-end="url(#ag4)" class="flow-line" data-flow="FCT_SAML|SIFPInternal" cursor="pointer"/>
+
+<!-- IPSEC/SAML → FCTG (1) -->
+<path id="f-saml-fctg" d="M 440 530 C 380 490 280 420 200 350"
+  stroke="#ff4c4c" stroke-width="2" fill="none" opacity="0.65" stroke-dasharray="6,3"
+  marker-end="url(#ag4)" class="flow-line" data-flow="FCT_SAML|FCTGWANConnection" cursor="pointer"/>
+
+<!-- IPSEC/SAML → Azure (1) -->
+<path id="f-saml-az" d="M 620 545 C 700 500 800 350 870 130"
+  stroke="#ff5ccc" stroke-width="1.8" fill="none" opacity="0.55" stroke-dasharray="5,3"
+  marker-end="url(#ag4)" class="flow-line" data-flow="FCT_SAML|Azure" cursor="pointer"/>
+
+<!-- IPSEC/SAML → WAN (1) -->
+<path id="f-saml-wan" d="M 480 530 C 480 500 490 200 500 100"
+  stroke="#ff8c8c" stroke-width="1.6" fill="none" opacity="0.45" stroke-dasharray="4,4"
+  marker-end="url(#ag4)" class="flow-line" data-flow="FCT_SAML|virtual-wan-link" cursor="pointer"/>
+
+<!-- BP → SIFPInternal (1) -->
+<path id="f-bp-si" d="M 185 440 C 300 430 500 380 660 320"
+  stroke="#f0c040" stroke-width="1.8" fill="none" opacity="0.65"
+  marker-end="url(#ag5)" class="flow-line" data-flow="BP|SIFPInternal" cursor="pointer"/>
+
+<!-- SIFPInternal → BP (1) -->
+<path id="f-si-bp" d="M 660 340 C 480 400 300 450 185 460"
+  stroke="#d0a030" stroke-width="1.8" fill="none" opacity="0.6"
+  marker-end="url(#ag5)" class="flow-line" data-flow="SIFPInternal|BP" cursor="pointer"/>
+<rect x="368" y="408" width="56" height="16" rx="3" fill="rgba(10,10,30,0.8)"/>
+<text x="396" y="420" text-anchor="middle" font-size="9" fill="#f0c878" font-weight="700">BP flows</text>
+
+<!-- FCTGWANConnection → SIFPInternal (BuckEye/Convey/others via FCTG WAN) - already covered above -->
+
+<!-- SIFPInternal → BIFP (1) -->
+<path id="f-si-bifp" d="M 610 360 C 520 410 380 440 315 450"
+  stroke="#d0a030" stroke-width="1.5" fill="none" opacity="0.5" stroke-dasharray="4,3"
+  marker-end="url(#ag5)" class="flow-line" data-flow="SIFPInternal|BIFP" cursor="pointer"/>
+
+<!-- SIFPInternal → FortiSwitches (fortilink, 1) -->
+<path id="f-si-fl" d="M 890 340 C 900 350 920 360 940 360"
+  stroke="#78c8f0" stroke-width="1.8" fill="none" opacity="0.6"
+  marker-end="url(#ag6)" class="flow-line" data-flow="SIFPInternal|fortilink" cursor="pointer"/>
+<path id="f-fl-si" d="M 940 370 C 920 380 890 365 890 350"
+  stroke="#78c8f0" stroke-width="1.5" fill="none" opacity="0.5"
+  marker-end="url(#ag6)" class="flow-line" data-flow="fortilink|SIFPInternal" cursor="pointer"/>
+
+<!-- Sub-zones connection lines -->
+<line x1="710" y1="365" x2="720" y2="385" stroke="rgba(120,200,240,0.3)" stroke-width="1.5"/>
+<line x1="810" y1="365" x2="820" y2="385" stroke="rgba(120,200,240,0.3)" stroke-width="1.5"/>
+
+<!-- SAML label -->
+<rect x="390" y="490" width="60" height="15" rx="3" fill="rgba(10,10,30,0.8)"/>
+<text x="420" y="501" text-anchor="middle" font-size="8" fill="#ff8888" font-weight="700">4 VPN flows</text>
+
+</svg>
+</div>
+
+<!-- Side Panel -->
+<div class="panel">
+  <div class="panel-hdr">
+    <h2 id="panel-title">Select a Flow</h2>
+    <div class="sub" id="panel-sub">Click any arrow or label on the diagram to explore policies</div>
+  </div>
+  <div class="filter-bar" id="filter-bar" style="display:none">
+    <button class="filter-btn active" onclick="filterCards('all')">All</button>
+    <button class="filter-btn" onclick="filterCards('accept')">Accept</button>
+    <button class="filter-btn" onclick="filterCards('deny')">Deny</button>
+  </div>
+  <div class="panel-body" id="panel-body">
+    <div style="text-align:center;padding:60px 20px">
+      <div style="font-size:36px;opacity:.15">⟵</div>
+      <div style="font-size:12px;color:#44448a;margin-top:12px">Click any flow arrow or policy count label in the diagram to see the matching firewall policies</div>
+    </div>
+    <!-- Quick flow index -->
+    <div style="margin-top:20px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#44448a;margin-bottom:10px">Quick Access — Flow Index</div>
+      <div onclick="loadFlow('FCTGWANConnection|SIFPInternal')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">FCTG → SIFP Internal</span>
+        <span style="font-size:11px;font-weight:700;color:#7c8fff;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">21</span>
+      </div>
+      <div onclick="loadFlow('SIFPInternal|FCTGWANConnection')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">SIFP Internal → FCTG</span>
+        <span style="font-size:11px;font-weight:700;color:#9aaeff;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">31</span>
+      </div>
+      <div onclick="loadFlow('SIFPInternal|virtual-wan-link')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">SIFP Internal → Internet</span>
+        <span style="font-size:11px;font-weight:700;color:#48c88c;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">31</span>
+      </div>
+      <div onclick="loadFlow('SIFPInternal|Azure')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">SIFP Internal → Azure</span>
+        <span style="font-size:11px;font-weight:700;color:#c87cff;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">4</span>
+      </div>
+      <div onclick="loadFlow('Azure|SIFPInternal')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">Azure → SIFP Internal</span>
+        <span style="font-size:11px;font-weight:700;color:#a840ff;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">3</span>
+      </div>
+      <div onclick="loadFlow('FCT_SAML|SIFPInternal')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">SAML VPN → SIFP Internal</span>
+        <span style="font-size:11px;font-weight:700;color:#ff6c6c;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">1</span>
+      </div>
+      <div onclick="loadFlow('FCT_SAML|FCTGWANConnection')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">SAML VPN → FCTG</span>
+        <span style="font-size:11px;font-weight:700;color:#ff4c4c;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">1</span>
+      </div>
+      <div onclick="loadFlow('FCT_SAML|Azure')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">SAML VPN → Azure</span>
+        <span style="font-size:11px;font-weight:700;color:#ff5ccc;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">1</span>
+      </div>
+      <div onclick="loadFlow('FCT_SAML|virtual-wan-link')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">SAML VPN → Internet</span>
+        <span style="font-size:11px;font-weight:700;color:#ff8c8c;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">1</span>
+      </div>
+      <div onclick="loadFlow('BP|SIFPInternal')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">BP → SIFP Internal</span>
+        <span style="font-size:11px;font-weight:700;color:#f0c040;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">1</span>
+      </div>
+      <div onclick="loadFlow('SIFPInternal|BP')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">SIFP Internal → BP</span>
+        <span style="font-size:11px;font-weight:700;color:#d0a030;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">1</span>
+      </div>
+      <div onclick="loadFlow('SIFPInternal|BIFP')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">SIFP Internal → BIFP</span>
+        <span style="font-size:11px;font-weight:700;color:#c09020;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">1</span>
+      </div>
+      <div onclick="loadFlow('SIFP-Guest|virtual-wan-link')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">Guest → Internet</span>
+        <span style="font-size:11px;font-weight:700;color:#78c8f0;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">3</span>
+      </div>
+      <div onclick="loadFlow('SIFPInternal|fortilink')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">SIFP Internal → FortiLink</span>
+        <span style="font-size:11px;font-weight:700;color:#78c8f0;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">1</span>
+      </div>
+      <div onclick="loadFlow('fortilink|SIFPInternal')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">FortiLink → SIFP Internal</span>
+        <span style="font-size:11px;font-weight:700;color:#60b0d8;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">1</span>
+      </div>
+      <div onclick="loadFlow('SIFP-HyperV|SIFPInternal')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">HyperV → SIFP Internal</span>
+        <span style="font-size:11px;font-weight:700;color:#78c8f0;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">1</span>
+      </div>
+      <div onclick="loadFlow('SIFPInternal|SIFP-HyperV')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">SIFP Internal → HyperV</span>
+        <span style="font-size:11px;font-weight:700;color:#78c8f0;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">1</span>
+      </div>
+      <div onclick="loadFlow('SIFP-Guest|SIFPInternal')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">Guest → SIFP Internal</span>
+        <span style="font-size:11px;font-weight:700;color:#78c8f0;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">1</span>
+      </div>
+      <div onclick="loadFlow('SIFPAV|virtual-wan-link')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">SIFP AV → Internet</span>
+        <span style="font-size:11px;font-weight:700;color:#78c8f0;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">1</span>
+      </div>
+      <div onclick="loadFlow('SIFPTest3|virtual-wan-link')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">SIFPTest3 → Internet</span>
+        <span style="font-size:11px;font-weight:700;color:#78c8f0;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">1</span>
+      </div>
+      <div onclick="loadFlow('SIFP-Guest|SIFPTest3')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">Guest → SIFPTest3</span>
+        <span style="font-size:11px;font-weight:700;color:#78c8f0;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">1</span>
+      </div>
+      <div onclick="loadFlow('SIFPInternal|SIFPTest3')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">SIFP Internal → SIFPTest3</span>
+        <span style="font-size:11px;font-weight:700;color:#78c8f0;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">1</span>
+      </div>
+      <div onclick="loadFlow('SIFP-HyperV|virtual-wan-link')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-bottom:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+        <span style="font-size:11px;color:#8888cc">HyperV → Internet</span>
+        <span style="font-size:11px;font-weight:700;color:#78c8f0;background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:3px">1</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div id="tip">
+  <div class="tt" id="tt"></div>
+  <div class="tr" id="tr1"></div>
+  <div class="tr" id="tr2"></div>
+  <div class="tr" id="tr3"></div>
+</div>
+
+<script>
+const POLICIES = [{"id":"2","name":"FCTGDCs to SIFPDCs","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["FCTGDCs","FCTG_SSL_VPN"],"dst_addr":["SIFPDCs"],"services":["PING","Windows AD","Global Catalog"],"action":"accept","nat":"nan","comments":"nan","src_ips":["","10.101.1.0 255.255.255.0"],"dst_ips":[""],"svc_ports":{"PING":"protocol","Windows AD":"protocol","Global Catalog":"TCP 3268"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"4","name":"FCTG RDP/SQL to SA3","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["FCTG_SSL_VPN","FCTG IT Workstation Subnet"],"dst_addr":["SIFPSA3"],"services":["MS-SQL","RDP","SMB"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.101.1.0 255.255.255.0","10.0.127.0 255.255.255.0"],"dst_ips":["10.30.1.242 255.255.255.255"],"svc_ports":{"MS-SQL":"TCP 1433 1434","RDP":"TCP 3389","SMB":"TCP 445"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"5","name":"ICMP TEST FROM FCTG","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["FCTG_10.1.0.0/16","FCTG_10.0.0.0-16"],"dst_addr":["SIFP_Subnet_10.30.0.0"],"services":["ALL_ICMP"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.1.0.0 255.255.0.0","10.0.0.0 255.255.0.0"],"dst_ips":["10.30.0.0 255.255.0.0"],"svc_ports":{"ALL_ICMP":"protocol"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"6","name":"FCTG-Reports to SIFPFS01","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["FCTG-AS400","RESSAHQ2"],"dst_addr":["SIFPFS01"],"services":["SMB"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.1.1.5 255.255.255.255","10.1.1.106 255.255.255.255"],"dst_ips":["10.30.1.245 255.255.255.255"],"svc_ports":{"SMB":"TCP 445"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"7","name":"RESSAHQ2 to SIFPSA3","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["FCTGTS1","RESSAHQ2"],"dst_addr":["SIFPSA3"],"services":["HTTP","MS-SQL","SMB"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.1.1.61 255.255.255.255","10.1.1.106 255.255.255.255"],"dst_ips":["10.30.1.242 255.255.255.255"],"svc_ports":{"HTTP":"TCP 80","MS-SQL":"TCP 1433 1434","SMB":"TCP 445"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"8","name":"FCTG-GP to CheckPrinter","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["RESTSGP","FCTGTS2"],"dst_addr":["Check_Printers","SIFP-FCTG_local_subnet_1"],"services":["GP_Check_Printing","ALL_ICMP","SNMP","HTTP","SMB"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.1.1.163 255.255.255.255","10.1.1.67 255.255.255.255"],"dst_ips":["","10.30.0.0 255.255.0.0"],"svc_ports":{"GP_Check_Printing":"TCP 9100 161-162 80, UDP 161-162","ALL_ICMP":"protocol","SNMP":"TCP 161-162, UDP 161-162","HTTP":"TCP 80","SMB":"TCP 445"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"10","name":"FCTG Infrastructure Support","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["FCTG_SSL_VPN","FCTG IT Workstation Subnet","FCTG_10.0.0.0-16","FCTG03025","FCTG_10.1.0.0/16"],"dst_addr":["SIFP_Subnet_10.30.0.0"],"services":["HTTP","HTTPS","RDP","SMB","SSH","Vcenter Admin"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.101.1.0 255.255.255.0","10.0.127.0 255.255.255.0","10.0.0.0 255.255.0.0","10.1.1.165 255.255.255.255","10.1.0.0 255.255.0.0"],"dst_ips":["10.30.0.0 255.255.0.0"],"svc_ports":{"HTTP":"TCP 80","HTTPS":"TCP 443","RDP":"TCP 3389","SMB":"TCP 445","SSH":"TCP 22","Vcenter Admin":"TCP 5480"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"11","name":"Cognos IN","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["Cognos_Servers"],"dst_addr":["SIFP_Subnet_10.30.0.0"],"services":["COGNOS-9300","HTTP"],"action":"accept","nat":"nan","comments":"nan","src_ips":[""],"dst_ips":["10.30.0.0 255.255.0.0"],"svc_ports":{"COGNOS-9300":"TCP 9300","HTTP":"TCP 80"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"12","name":"RESSQL2 to SA3","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["RESSQL2","FCTGPRDPBIGW1"],"dst_addr":["SIFPSA3"],"services":["MS-SQL"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.1.1.45 255.255.255.255","10.1.1.129 255.255.255.255"],"dst_ips":["10.30.1.242 255.255.255.255"],"svc_ports":{"MS-SQL":"TCP 1433 1434"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"13","name":"FCTG SSL VPN to SIFP","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["FCTG_SSL_VPN"],"dst_addr":["SIFP_Subnet_10.30.0.0"],"services":["HTTP","HTTPS","RDP","Windows AD","MS-SQL","SMB"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.101.1.0 255.255.255.0"],"dst_ips":["10.30.0.0 255.255.0.0"],"svc_ports":{"HTTP":"TCP 80","HTTPS":"TCP 443","RDP":"TCP 3389","Windows AD":"protocol","MS-SQL":"TCP 1433 1434","SMB":"TCP 445"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"14","name":"ICMP to FCTG","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["FCTG_10.1.0.0/16","FCTG_10.0.0.0-16"],"services":["ALL_ICMP"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.1.0.0 255.255.0.0","10.0.0.0 255.255.0.0"],"svc_ports":{"ALL_ICMP":"protocol"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"15","name":"DNS to FCTG","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["FCTGDCs"],"services":["DNS"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":[""],"svc_ports":{"DNS":"TCP 53, UDP 53"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"16","name":"SIFP to ENS ADSync","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["FCTGDCs"],"services":["PING","Windows AD","Global Catalog","NTP"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":[""],"svc_ports":{"PING":"protocol","Windows AD":"protocol","Global Catalog":"TCP 3268","NTP":"TCP 123, UDP 123"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"17","name":"SIFP to ServiceDesk","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["RESSupport2"],"services":["Desktop_Central_MSP_Application","HTTP","HTTPS","PING","SAMBA","SMB"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.1.1.109 255.255.255.255"],"svc_ports":{"Desktop_Central_MSP_Application":"TCP 8057-8058 8047-8048 8053-8054 135 8044-8045 8040-8041 8027 8443-8444 8031-8032 8020 8080 4443 8383-8384 8047 8443 4433","HTTP":"TCP 80","HTTPS":"TCP 443","PING":"protocol","SAMBA":"TCP 139","SMB":"TCP 445"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"18","name":"AS400_Allow telnet to FCTG","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["FCTG-AS400"],"services":["AS400AddtlPorts","TELNET","HTTPS"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.1.1.5 255.255.255.255"],"svc_ports":{"AS400AddtlPorts":"TCP 449 8470-8476, UDP 449 8470-8476","TELNET":"TCP 23","HTTPS":"TCP 443"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"19","name":"FCTGWorkstations at SIFP","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["FCTGDCs"],"services":["DCE-RPC","DHCP","DNS","KERBEROS","LDAP","LDAP_UDP","SAMBA","SMB"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":[""],"svc_ports":{"DCE-RPC":"TCP 135, UDP 135","DHCP":"UDP 67-68","DNS":"TCP 53, UDP 53","KERBEROS":"TCP 88 464, UDP 88 464","LDAP":"TCP 389","LDAP_UDP":"UDP 389","SAMBA":"TCP 139","SMB":"TCP 445"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"20","name":"SIFP to RESSAHQ2 for TruckerSearch","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["RESSAHQ2"],"services":["GP-40000","HTTP","HTTPS","SMB"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.1.1.106 255.255.255.255"],"svc_ports":{"GP-40000":"TCP 40000","HTTP":"TCP 80","HTTPS":"TCP 443","SMB":"TCP 445"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"21","name":"SIFP to GP","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["RESTSGP","FCTGTS2"],"services":["HTTPS"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.1.1.163 255.255.255.255","10.1.1.67 255.255.255.255"],"svc_ports":{"HTTPS":"TCP 443"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"22","name":"SIFPSA to FCTG Righfax","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFPSA3"],"dst_addr":["FCTGFAX2","FCTGFAX1"],"services":["SMB"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.1.242 255.255.255.255"],"dst_ips":["10.8.1.108 255.255.255.255","10.1.1.215 255.255.255.255"],"svc_ports":{"SMB":"TCP 445"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"23","name":"SIFPNET to AS400-IBMWebquery","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["FCTG-AS400"],"services":["IBM-WebQuery"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.1.1.5 255.255.255.255"],"svc_ports":{"IBM-WebQuery":"TCP 12331"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"25","name":"SIFP to FCTGNET-cr.desk &reload mgr","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["FCTGDCs"],"services":["DNS","KERBEROS","LDAP","RPC-Upper","SMB"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":[""],"svc_ports":{"DNS":"TCP 53, UDP 53","KERBEROS":"TCP 88 464, UDP 88 464","LDAP":"TCP 389","RPC-Upper":"TCP 49152-65535, UDP 49152-65535","SMB":"TCP 445"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"26","name":"SIFP to FCTG File Servers","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["RESFS1","fctgfs"],"services":["SMB"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.1.1.34 255.255.255.255","10.1.1.36 255.255.255.255"],"svc_ports":{"SMB":"TCP 445"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"27","name":"Cognos OUT","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["Cognos_Servers"],"services":["COGNOS-9300","HTTP"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":[""],"svc_ports":{"COGNOS-9300":"TCP 9300","HTTP":"TCP 80"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"28","name":"Access to FCTG home","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["FCTG_Homepage"],"services":["HTTP"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.1.1.206 255.255.255.255"],"svc_ports":{"HTTP":"TCP 80"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"29","name":"RightFAx to FCTG","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection, BIFP","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["FCTGFAX2","FCTGFAX1"],"services":["RightFax clients","PING"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.8.1.108 255.255.255.255","10.1.1.215 255.255.255.255"],"svc_ports":{"RightFax clients":"TCP 10520-10521 80 443 445","PING":"protocol"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"30","name":"SIFP to RESApps1","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["RESApps1"],"services":["HTTP","HTTPS","SMB"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.1.1.33 255.255.255.255"],"svc_ports":{"HTTP":"TCP 80","HTTPS":"TCP 443","SMB":"TCP 445"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"31","name":"SMTP to Mimecast","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["Sharp_Printer","SIFPSA3","SIFPBACKUP01","Allowed_SMTP","SIFPFS01","Synology","ControllerPrinter3","Yvette New Printer","SIFP_Subnet_10.30.0.0"],"dst_addr":["Mimecast"],"services":["SMTP"],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.7.19 255.255.255.255","10.30.1.242 255.255.255.255","10.30.1.241 255.255.255.255","","10.30.1.245 255.255.255.255","10.30.1.33 255.255.255.255","10.30.7.201 255.255.255.255","10.30.7.203 255.255.255.255","10.30.0.0 255.255.0.0"],"dst_ips":["170.10.132.243 255.255.255.255"],"svc_ports":{"SMTP":"TCP 25"},"flow":"SIFPInternal|virtual-wan-link"},{"id":"32","name":"WindowsUpdate","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":[],"services":[],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":[],"svc_ports":{},"flow":"SIFPInternal|virtual-wan-link"},{"id":"35","name":"Workstation_Internet_Access","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["Postal_Machine","SIFP_WorkStations","SIFPBACKUP01","SIFPTest3 address","SIFP address","SIFPWorkstation address","SIFP-Internal address","SIFPVoice address","Reception Display","Nessus_Scanner"],"dst_addr":["all"],"services":["HTTP","HTTPS"],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.7.200 255.255.255.255","10.30.3.1 \u2013 10.30.4.254","10.30.1.241 255.255.255.255","nan","nan","nan","nan","nan","10.30.1.225 255.255.255.255","10.30.1.227 255.255.255.255"],"dst_ips":["nan"],"svc_ports":{"HTTP":"TCP 80","HTTPS":"TCP 443"},"flow":"SIFPInternal|virtual-wan-link"},{"id":"36","name":"Allow Ping","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["all"],"services":["PING"],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["nan"],"svc_ports":{"PING":"protocol"},"flow":"SIFPInternal|virtual-wan-link"},{"id":"37","name":"Allow DNS","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["SIFP_Servers_Subnet"],"dst_addr":["all"],"services":["DNS"],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.1.0 255.255.255.0"],"dst_ips":["nan"],"svc_ports":{"DNS":"TCP 53, UDP 53"},"flow":"SIFPInternal|virtual-wan-link"},{"id":"38","name":"Allow NTP","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["NTP_Servers"],"services":["NTP"],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":[""],"svc_ports":{"NTP":"TCP 123, UDP 123"},"flow":"SIFPInternal|virtual-wan-link"},{"id":"39","name":"SA3 to Approved_Public","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["SIFPSA3"],"dst_addr":["Steelroads","auth.buymetrics.net","offers.fctg.com","services.railinc.com","steelroads.railinc.com"],"services":["HTTP","HTTPS"],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.1.242 255.255.255.255"],"dst_ips":["198.49.241.240 255.255.255.255","auth.buymetrics.net","offers.fctg.com","services.railinc.com","steelroads.railinc.com"],"svc_ports":{"HTTP":"TCP 80","HTTPS":"TCP 443"},"flow":"SIFPInternal|virtual-wan-link"},{"id":"40","name":"Kitchen_Kiosk _Out","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["Kitchen_Kiosk"],"dst_addr":["Kitchen_Kiosk_Public_IPs"],"services":["Kitchen_Kiosk_Terminal"],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.1.76 255.255.255.255"],"dst_ips":[""],"svc_ports":{"Kitchen_Kiosk_Terminal":"TCP 80 443 9443 5938"},"flow":"SIFPInternal|virtual-wan-link"},{"id":"41","name":"Kitchen_Kiosk_Teamviewer","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["Kitchen_Kiosk"],"dst_addr":[],"services":[],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.1.76 255.255.255.255"],"dst_ips":[],"svc_ports":{},"flow":"SIFPInternal|virtual-wan-link"},{"id":"43","name":"NBIa-MANDIANT","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["all"],"dst_addr":["Blocked_IP_and_URLs"],"services":["ALL"],"action":"nan","nat":"nan","comments":"nan","src_ips":["nan"],"dst_ips":[""],"svc_ports":{"ALL":"protocol"},"flow":"SIFPInternal|virtual-wan-link"},{"id":"78","name":"QST_Out","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["QST_Public"],"services":["QST"],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":[""],"svc_ports":{"QST":"TCP 443 80 8966 6912, UDP 6912"},"flow":"SIFPInternal|virtual-wan-link"},{"id":"80","name":"Postal_Out_web","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["Postal_Machine"],"dst_addr":["Postal_Public"],"services":["HTTP","HTTPS"],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.7.200 255.255.255.255"],"dst_ips":[""],"svc_ports":{"HTTP":"TCP 80","HTTPS":"TCP 443"},"flow":"SIFPInternal|virtual-wan-link"},{"id":"83","name":"SIFPTS01_Office_Activation","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["SIFPTS01"],"dst_addr":[],"services":[],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.1.244 255.255.255.255"],"dst_ips":[],"svc_ports":{},"flow":"SIFPInternal|virtual-wan-link"},{"id":"84","name":"SIFPTS01_FCTGTS1_Licensing","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFPTS01"],"dst_addr":["FCTGTS1","FCTGTS2"],"services":["DCE-RPC","SMB","SIFPTS01_Terminal_Service","WinRM 5985-5986","LDAP","HTTPS"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.1.244 255.255.255.255"],"dst_ips":["10.1.1.61 255.255.255.255","10.1.1.67 255.255.255.255"],"svc_ports":{"DCE-RPC":"TCP 135, UDP 135","SMB":"TCP 445","SIFPTS01_Terminal_Service":"TCP 49152-65535","WinRM 5985-5986":"TCP 5985-5986","LDAP":"TCP 389","HTTPS":"TCP 443"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"86","name":"BackUpServer_Approved_Public","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["SIFPBACKUP01"],"dst_addr":["vbr.butler.veeam.com","s3.wasabisys.com"],"services":["HTTP","HTTPS"],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.1.241 255.255.255.255"],"dst_ips":["vbr.butler.veeam.com","s3.wasabisys.com"],"svc_ports":{"HTTP":"TCP 80","HTTPS":"TCP 443"},"flow":"SIFPInternal|virtual-wan-link"},{"id":"87","name":"Nessus_Out","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":[],"services":[],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":[],"svc_ports":{},"flow":"SIFPInternal|virtual-wan-link"},{"id":"88","name":"FCTGTS1_to_SIFPTS01","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["FCTGTS1"],"dst_addr":["SIFPTS01"],"services":["WinRM 5985-5986","DCE-RPC"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.1.1.61 255.255.255.255"],"dst_ips":["10.30.1.244 255.255.255.255"],"svc_ports":{"WinRM 5985-5986":"TCP 5985-5986","DCE-RPC":"TCP 135, UDP 135"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"89","name":"RDP_to_SIFPTS01","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["FCTG_10.1.0.0/16","Buckeye_Rail_Workstations","FCTG_10.0.0.0-16"],"dst_addr":["SIFPTS01","SIFPAZUREDF1"],"services":["RDP"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.1.0.0 255.255.0.0","","10.0.0.0 255.255.0.0"],"dst_ips":["10.30.1.244 255.255.255.255","10.30.1.243 255.255.255.255"],"svc_ports":{"RDP":"TCP 3389"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"90","name":"FCTG_HTTP_To_SIFPSA3","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["FCTG IT Workstation Subnet"],"dst_addr":["SIFPSA3"],"services":["HTTP","HTTPS"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.0.127.0 255.255.255.0"],"dst_ips":["10.30.1.242 255.255.255.255"],"svc_ports":{"HTTP":"TCP 80","HTTPS":"TCP 443"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"91","name":"FortimangerOut","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["Fortimanager"],"services":["ALL"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.1.1.70 255.255.255.255"],"svc_ports":{"ALL":"protocol"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"92","name":"Fortimanger-In","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["Fortimanager"],"dst_addr":["SIFP_Subnet_10.30.0.0"],"services":["ALL"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.1.1.70 255.255.255.255"],"dst_ips":["10.30.0.0 255.255.0.0"],"svc_ports":{"ALL":"protocol"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"97","name":"SIFPTS01_To_Internet","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["SIFPTS01"],"dst_addr":["all"],"services":["HTTP","HTTPS"],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.1.244 255.255.255.255"],"dst_ips":["nan"],"svc_ports":{"HTTP":"TCP 80","HTTPS":"TCP 443"},"flow":"SIFPInternal|virtual-wan-link"},{"id":"98","name":"Vcenter_Update","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["Vcenter"],"dst_addr":[],"services":[],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.1.9 255.255.255.255"],"dst_ips":[],"svc_ports":{},"flow":"SIFPInternal|virtual-wan-link"},{"id":"99","name":"Cert_Enrollment","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["FCTGCERTAURTH1"],"services":["DCE-RPC","HTTPS","LDAP","LDAPS","lower RCP","Upper RPC"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.1.1.185 255.255.255.255"],"svc_ports":{"DCE-RPC":"TCP 135, UDP 135","HTTPS":"TCP 443","LDAP":"TCP 389","LDAPS":"TCP 636","lower RCP":"TCP 1024-5000","Upper RPC":"TCP 49152-65535, UDP 49152-65535"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"100","name":"Radius_to_FCTG","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["FCTGNETDC2","FCTGNPS1"],"services":["RADIUS"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.1.1.173 255.255.255.255","10.1.1.225 255.255.255.255"],"svc_ports":{"RADIUS":"UDP 1824 1812 1813 1825"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"102","name":"SMB Out Deny","status":"enable","src_iface":"SIFP-Guest, SIFPInternal, SIFPAV, FCT_SAML, SIFPTest3","dst_iface":"virtual-wan-link","src_addr":["all"],"dst_addr":["all"],"services":["SMB"],"action":"nan","nat":"nan","comments":"nan","src_ips":["nan"],"dst_ips":["nan"],"svc_ports":{"SMB":"TCP 445"},"flow":"SIFP-Guest|virtual-wan-link"},{"id":"103","name":"ParkPlace Appliance Out","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["ParkPlace Appliance"],"dst_addr":["eca.parkplacetechnologies.com"],"services":["HTTPS"],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.1.45 255.255.255.255"],"dst_ips":["eca.parkplacetechnologies.com"],"svc_ports":{"HTTPS":"TCP 443"},"flow":"SIFPInternal|virtual-wan-link"},{"id":"104","name":"Servers Internet Access","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["SIFP_Servers_Subnet"],"dst_addr":[],"services":[],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.1.0 255.255.255.0"],"dst_ips":[],"svc_ports":{},"flow":"SIFPInternal|virtual-wan-link"},{"id":"105","name":"IP Phone to Yealink Updates","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["SIFPVoice address"],"dst_addr":["Allowed_URL_dgi4bmtd6a7lf.cloudfront.net"],"services":["HTTPS"],"action":"accept","nat":"enable","comments":"nan","src_ips":["nan"],"dst_ips":["dgi4bmtd6a7lf.cloudfront.net"],"svc_ports":{"HTTPS":"TCP 443"},"flow":"SIFPInternal|virtual-wan-link"},{"id":"106","name":"Synology_To_Internet","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["Synology"],"dst_addr":["all"],"services":["HTTPS","HTTP"],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.1.33 255.255.255.255"],"dst_ips":["nan"],"svc_ports":{"HTTPS":"TCP 443","HTTP":"TCP 80"},"flow":"SIFPInternal|virtual-wan-link"},{"id":"107","name":"SIFP_To_Azure_All","status":"enable","src_iface":"SIFPInternal","dst_iface":"Azure","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["Azure_Subnet"],"services":["ALL"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.2.0.0 255.254.0.0"],"svc_ports":{"ALL":"protocol"},"flow":"SIFPInternal|Azure"},{"id":"108","name":"SIFPAVtoInternet","status":"enable","src_iface":"SIFPAV","dst_iface":"virtual-wan-link","src_addr":["SIFPAV address"],"dst_addr":["all"],"services":["HTTP","HTTPS"],"action":"accept","nat":"enable","comments":"nan","src_ips":["nan"],"dst_ips":["nan"],"svc_ports":{"HTTP":"TCP 80","HTTPS":"TCP 443"},"flow":"SIFPAV|virtual-wan-link"},{"id":"109","name":"Trade_Central_In","status":"enable","src_iface":"Azure","dst_iface":"SIFPInternal","src_addr":["10.3.202.0/24","10.2.200.0/24"],"dst_addr":["SIFPSA3"],"services":["HTTP","HTTPS","PING"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.3.202.0 255.255.255.0","10.2.200.0 255.255.255.0"],"dst_ips":["10.30.1.242 255.255.255.255"],"svc_ports":{"HTTP":"TCP 80","HTTPS":"TCP 443","PING":"protocol"},"flow":"Azure|SIFPInternal"},{"id":"110","name":"Convey","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["Convey-VPNRnage"],"dst_addr":["SIFPTS01"],"services":["RDP","PING"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.102.2.128 \u2013 10.102.2.138"],"dst_ips":["10.30.1.244 255.255.255.255"],"svc_ports":{"RDP":"TCP 3389","PING":"protocol"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"111","name":"IPSEC_VPN_to_SIFP_Servers","status":"enable","src_iface":"FCT_SAML","dst_iface":"SIFPInternal","src_addr":["SIFPSSOVPN"],"dst_addr":["SIFP_Servers_Subnet","Reception Display","SIFPWorkstation address"],"services":["ALL"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.100.100 \u2013 10.30.100.200"],"dst_ips":["10.30.1.0 255.255.255.0","10.30.1.225 255.255.255.255","nan"],"svc_ports":{"ALL":"protocol"},"flow":"FCT_SAML|SIFPInternal"},{"id":"112","name":"IPSEC_VPN_to_FCTG","status":"enable","src_iface":"FCT_SAML","dst_iface":"FCTGWANConnection","src_addr":["SIFPSSOVPN"],"dst_addr":["FCTG_10.1.0.0/16","FCTG_10.0.0.0-16"],"services":["ALL"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.100.100 \u2013 10.30.100.200"],"dst_ips":["10.1.0.0 255.255.0.0","10.0.0.0 255.255.0.0"],"svc_ports":{"ALL":"protocol"},"flow":"FCT_SAML|FCTGWANConnection"},{"id":"113","name":"Azure_MI_to_SA","status":"enable","src_iface":"Azure","dst_iface":"SIFPInternal","src_addr":["AZure_SQL_MI"],"dst_addr":["SIFPSA3"],"services":["Azure_SQL_MI"],"action":"accept","nat":"nan","comments":"nan","src_ips":[""],"dst_ips":["10.30.1.242 255.255.255.255"],"svc_ports":{"Azure_SQL_MI":"TCP 1433 5022 11000-11999"},"flow":"Azure|SIFPInternal"},{"id":"114","name":"IPSEC_VPN_to_Azure","status":"enable","src_iface":"FCT_SAML","dst_iface":"Azure","src_addr":["SIFPSSOVPN"],"dst_addr":["Azure_Subnet"],"services":["ALL"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.100.100 \u2013 10.30.100.200"],"dst_ips":["10.2.0.0 255.254.0.0"],"svc_ports":{"ALL":"protocol"},"flow":"FCT_SAML|Azure"},{"id":"115","name":"Door Security","status":"enable","src_iface":"SIFPTest3","dst_iface":"virtual-wan-link","src_addr":["all"],"dst_addr":["all"],"services":["DNS","NTP","HTTP","HTTPS","SMTP","SMTPS"],"action":"accept","nat":"enable","comments":"nan","src_ips":["nan"],"dst_ips":["nan"],"svc_ports":{"DNS":"TCP 53, UDP 53","NTP":"TCP 123, UDP 123","HTTP":"TCP 80","HTTPS":"TCP 443","SMTP":"TCP 25","SMTPS":"TCP 465"},"flow":"SIFPTest3|virtual-wan-link"},{"id":"116","name":"Guest to door","status":"disable","src_iface":"SIFP-Guest","dst_iface":"SIFPTest3","src_addr":["SIFP-Guest address"],"dst_addr":["all"],"services":["HTTP","HTTPS"],"action":"accept","nat":"nan","comments":"nan","src_ips":["nan"],"dst_ips":["nan"],"svc_ports":{"HTTP":"TCP 80","HTTPS":"TCP 443"},"flow":"SIFP-Guest|SIFPTest3"},{"id":"117","name":"Internal to Door System","status":"enable","src_iface":"SIFPInternal","dst_iface":"SIFPTest3","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["Paxton Door Security"],"services":["HTTP","HTTPS"],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.30.128.3 255.255.255.255"],"svc_ports":{"HTTP":"TCP 80","HTTPS":"TCP 443"},"flow":"SIFPInternal|SIFPTest3"},{"id":"118","name":"SIFPSubnet_FCTGDC","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["FCTGDCs"],"services":["WinRM 5985-5986","Windows AD"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":[""],"svc_ports":{"WinRM 5985-5986":"TCP 5985-5986","Windows AD":"protocol"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"119","name":"FCTG_to_SIFPSubnet_AD_Sync","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["FCTGDCs"],"dst_addr":["SIFP_Subnet_10.30.0.0"],"services":["WinRM 5985-5986","Windows AD"],"action":"accept","nat":"nan","comments":"nan","src_ips":[""],"dst_ips":["10.30.0.0 255.255.0.0"],"svc_ports":{"WinRM 5985-5986":"TCP 5985-5986","Windows AD":"protocol"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"120","name":"SIFP_To_RingCentral","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":[],"services":[],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":[],"svc_ports":{},"flow":"SIFPInternal|virtual-wan-link"},{"id":"121","name":"SA_to_Azure_SQL_MI","status":"enable","src_iface":"SIFPInternal","dst_iface":"Azure","src_addr":["SIFPSA3"],"dst_addr":["AZure_SQL_MI"],"services":["Azure_SQL_MI"],"action":"accept","nat":"nan","comments":" (Reverse of Azure_MI_to_SA)","src_ips":["10.30.1.242 255.255.255.255"],"dst_ips":[""],"svc_ports":{"Azure_SQL_MI":"TCP 1433 5022 11000-11999"},"flow":"SIFPInternal|Azure"},{"id":"122","name":"Chuck Laptop to FCTG","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["Chuck_SIFPLAPTOP150"],"dst_addr":["FCTG_Subnets"],"services":["ALL"],"action":"accept","nat":"nan","comments":"nan","src_ips":["nan"],"dst_ips":[""],"svc_ports":{"ALL":"protocol"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"123","name":"Ping From BuckEye","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["BP Fortinet","BuckEye"],"dst_addr":["SIFPTS01","FortiGate_Internal_Interface"],"services":["PING"],"action":"accept","nat":"nan","comments":"added","src_ips":["10.10.1.111 255.255.255.255","10.10.0.0 255.255.0.0"],"dst_ips":["10.30.1.244 255.255.255.255","10.30.1.1 255.255.255.255"],"svc_ports":{"PING":"protocol"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"124","name":"RailTraffic_From_BP","status":"enable","src_iface":"BP","dst_iface":"SIFPInternal","src_addr":["Buckeye_Rail_Workstations","BuckEye"],"dst_addr":["SIFPTS01"],"services":["RDP","PING","HTTPS"],"action":"accept","nat":"nan","comments":"nan","src_ips":["","10.10.0.0 255.255.0.0"],"dst_ips":["10.30.1.244 255.255.255.255"],"svc_ports":{"RDP":"TCP 3389","PING":"protocol","HTTPS":"TCP 443"},"flow":"BP|SIFPInternal"},{"id":"125","name":"Ping to Buckeye","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFPTS01","FortiGate_Internal_Interface"],"dst_addr":["BuckEye","BP Fortinet"],"services":["PING","ALL_ICMP"],"action":"accept","nat":"nan","comments":" (Copy of Ping From BuckEye) (Reverse of Ping From BuckEye)","src_ips":["10.30.1.244 255.255.255.255","10.30.1.1 255.255.255.255"],"dst_ips":["10.10.0.0 255.255.0.0","10.10.1.111 255.255.255.255"],"svc_ports":{"PING":"protocol","ALL_ICMP":"protocol"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"126","name":"SIFP to FCTGSSL","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["FCTG_SSL_VPN"],"services":["HTTP","HTTPS","RDP","Windows AD","MS-SQL","SMB"],"action":"accept","nat":"nan","comments":" (Copy of FCTG SSL VPN to SIFP) (Reverse of FCTG SSL VPN to SIFP)","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.101.1.0 255.255.255.0"],"svc_ports":{"HTTP":"TCP 80","HTTPS":"TCP 443","RDP":"TCP 3389","Windows AD":"protocol","MS-SQL":"TCP 1433 1434","SMB":"TCP 445"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"127","name":"SIFPGuest_to_Internet","status":"enable","src_iface":"SIFP-Guest","dst_iface":"virtual-wan-link","src_addr":["SIFP-Guest address"],"dst_addr":["all"],"services":["ALL"],"action":"accept","nat":"enable","comments":"nan","src_ips":["nan"],"dst_ips":["nan"],"svc_ports":{"ALL":"protocol"},"flow":"SIFP-Guest|virtual-wan-link"},{"id":"128","name":"SIFPGuest-DNS","status":"enable","src_iface":"SIFP-Guest","dst_iface":"virtual-wan-link","src_addr":["SIFP-Guest address"],"dst_addr":["Google_DNS"],"services":["DNS"],"action":"accept","nat":"enable","comments":"nan","src_ips":["nan"],"dst_ips":["8.8.8.8 255.255.255.255"],"svc_ports":{"DNS":"TCP 53, UDP 53"},"flow":"SIFP-Guest|virtual-wan-link"},{"id":"129","name":"nan","status":"enable","src_iface":"SIFPInternal","dst_iface":"BP","src_addr":["SIFPTS01"],"dst_addr":["Buckeye_Rail_Workstations","BuckEye"],"services":["RDP","PING","HTTPS"],"action":"accept","nat":"nan","comments":" (Reverse of RailTraffic_From_BP)","src_ips":["10.30.1.244 255.255.255.255"],"dst_ips":["","10.10.0.0 255.255.0.0"],"svc_ports":{"RDP":"TCP 3389","PING":"protocol","HTTPS":"TCP 443"},"flow":"SIFPInternal|BP"},{"id":"130","name":"Internal_to_Hyperv","status":"enable","src_iface":"SIFPInternal","dst_iface":"SIFP-HyperV","src_addr":["Chuck_SIFPLAPTOP150"],"dst_addr":["Temp_Synology","Temp_HyperV_Idrac","TempHyperVServer"],"services":["ALL"],"action":"accept","nat":"nan","comments":"nan","src_ips":["nan"],"dst_ips":["10.30.192.99 255.255.255.255","10.30.192.101 255.255.255.255","10.30.192.102 255.255.255.255"],"svc_ports":{"ALL":"protocol"},"flow":"SIFPInternal|SIFP-HyperV"},{"id":"131","name":"Allow IPSEC Remote Access VPN Http","status":"enable","src_iface":"FCT_SAML","dst_iface":"virtual-wan-link","src_addr":["SIFPSSOVPN"],"dst_addr":["all"],"services":["HTTP","HTTPS","PING"],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.100.100 \u2013 10.30.100.200"],"dst_ips":["nan"],"svc_ports":{"HTTP":"TCP 80","HTTPS":"TCP 443","PING":"protocol"},"flow":"FCT_SAML|virtual-wan-link"},{"id":"132","name":"HyperV_to_Internal","status":"enable","src_iface":"SIFP-HyperV","dst_iface":"SIFPInternal","src_addr":["TempHyperVServer"],"dst_addr":["all"],"services":["ALL"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.192.102 255.255.255.255"],"dst_ips":["nan"],"svc_ports":{"ALL":"protocol"},"flow":"SIFP-HyperV|SIFPInternal"},{"id":"133","name":"MSSQL to SIFPSA3","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["FCTG-AS400","FCTGDCLOGHOST"],"dst_addr":["SIFPSA3"],"services":["MS-SQL"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.1.1.5 255.255.255.255","10.1.1.172 255.255.255.255"],"dst_ips":["10.30.1.242 255.255.255.255"],"svc_ports":{"MS-SQL":"TCP 1433 1434"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"134","name":"Datadog Out","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["SIFP_Servers_Subnet"],"dst_addr":[],"services":[],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.1.0 255.255.255.0"],"dst_ips":[],"svc_ports":{},"flow":"SIFPInternal|virtual-wan-link"},{"id":"135","name":"SIFPSA3_RESSQL2_SQL","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFPSA3"],"dst_addr":["RESSQL2"],"services":["MS-SQL"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.1.242 255.255.255.255"],"dst_ips":["10.1.1.45 255.255.255.255"],"svc_ports":{"MS-SQL":"TCP 1433 1434"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"136","name":"PowerBI","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["Azure_Subnet"],"services":["ALL"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.2.0.0 255.254.0.0"],"svc_ports":{"ALL":"protocol"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"137","name":"Allow_Presentation","status":"enable","src_iface":"SIFP-Guest","dst_iface":"SIFPInternal","src_addr":["SIFP-Guest address"],"dst_addr":["CR_Screen"],"services":["HTTP","HTTPS"],"action":"accept","nat":"nan","comments":"nan","src_ips":["nan"],"dst_ips":["10.30.5.18 255.255.255.255"],"svc_ports":{"HTTP":"TCP 80","HTTPS":"TCP 443"},"flow":"SIFP-Guest|SIFPInternal"},{"id":"138","name":"Server Internet","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["SIFP_Servers_Subnet"],"dst_addr":["all"],"services":["HTTPS","HTTP"],"action":"accept","nat":"enable","comments":"Manage Engine DS out","src_ips":["10.30.1.0 255.255.255.0"],"dst_ips":["nan"],"svc_ports":{"HTTPS":"TCP 443","HTTP":"TCP 80"},"flow":"SIFPInternal|virtual-wan-link"},{"id":"139","name":"Servers Out to Zoho","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["SIFP_Servers_Subnet"],"dst_addr":[],"services":[],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.1.0 255.255.255.0"],"dst_ips":[],"svc_ports":{},"flow":"SIFPInternal|virtual-wan-link"},{"id":"140","name":"AccessfromDeliniaServers","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["DeliniaDistServer1","DeliniaDistServer2"],"dst_addr":["FortiGate_Internal_Interface","SIFP_Subnet_10.30.0.0"],"services":["SSH","RDP","RPC-Upper","SMB","DCE-RPC","Delinea","HTTPS"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.1.1.167 255.255.255.255","10.1.1.169 255.255.255.255"],"dst_ips":["10.30.1.1 255.255.255.255","10.30.0.0 255.255.0.0"],"svc_ports":{"SSH":"TCP 22","RDP":"TCP 3389","RPC-Upper":"TCP 49152-65535, UDP 49152-65535","SMB":"TCP 445","DCE-RPC":"TCP 135, UDP 135","Delinea":"TCP 22 445 3389 49152-65535 135 5985-5986, UDP 22 445 3389 135","HTTPS":"TCP 443"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"141","name":"SIFP_To_Delinia","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["FortiGate_Internal_Interface","SIFP_Subnet_10.30.0.0"],"dst_addr":["DeliniaDistServer1","DeliniaDistServer2"],"services":["SSH"],"action":"accept","nat":"nan","comments":" (Copy of SSHfromDelinia) (Reverse of SSHfromDelinia)","src_ips":["10.30.1.1 255.255.255.255","10.30.0.0 255.255.0.0"],"dst_ips":["10.1.1.167 255.255.255.255","10.1.1.169 255.255.255.255"],"svc_ports":{"SSH":"TCP 22"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"142","name":"SIFP_To_Azure","status":"enable","src_iface":"SIFPInternal","dst_iface":"Azure","src_addr":["SIFP address","SIFP_Subnet_10.30.0.0"],"dst_addr":["Azure_Subnet"],"services":["DNS","HTTP","HTTPS","MS-SQL","PING","RDP"],"action":"accept","nat":"nan","comments":"nan","src_ips":["nan","10.30.0.0 255.255.0.0"],"dst_ips":["10.2.0.0 255.254.0.0"],"svc_ports":{"DNS":"TCP 53, UDP 53","HTTP":"TCP 80","HTTPS":"TCP 443","MS-SQL":"TCP 1433 1434","PING":"protocol","RDP":"TCP 3389"},"flow":"SIFPInternal|Azure"},{"id":"143","name":"Hyperv_to_Internet","status":"enable","src_iface":"SIFP-HyperV","dst_iface":"virtual-wan-link","src_addr":["Temp_Synology","TempHyperVServer"],"dst_addr":["all"],"services":["HTTP","HTTPS","NTP","DNS"],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.192.99 255.255.255.255","10.30.192.102 255.255.255.255"],"dst_ips":["nan"],"svc_ports":{"HTTP":"TCP 80","HTTPS":"TCP 443","NTP":"TCP 123, UDP 123","DNS":"TCP 53, UDP 53"},"flow":"SIFP-HyperV|virtual-wan-link"},{"id":"144","name":"Allow_HTTP_To_fortimanager","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["Fortimanager"],"services":["HTTP","HTTPS"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.1.1.70 255.255.255.255"],"svc_ports":{"HTTP":"TCP 80","HTTPS":"TCP 443"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"145","name":"Phones_Out","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["SIFPVoice address"],"dst_addr":["all"],"services":["ALL"],"action":"accept","nat":"enable","comments":"nan","src_ips":["nan"],"dst_ips":["nan"],"svc_ports":{"ALL":"protocol"},"flow":"SIFPInternal|virtual-wan-link"},{"id":"147","name":"Netwrix_Audit","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["FCTGNETAUDIT1"],"dst_addr":["SIFP_Subnet_10.30.0.0"],"services":["Netwrix"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.1.1.18 255.255.255.255"],"dst_ips":["10.30.0.0 255.255.0.0"],"svc_ports":{"Netwrix":"TCP 88-89 135 389 445 3268-3269 1024-65535, UDP 88-89 137-139"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"148","name":"SIFP_BIFP_RightFax","status":"enable","src_iface":"SIFPInternal","dst_iface":"BIFP","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["FCTGFAX2"],"services":["RightFax clients"],"action":"accept","nat":"nan","comments":"Added lan to right fax","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.8.1.108 255.255.255.255"],"svc_ports":{"RightFax clients":"TCP 10520-10521 80 443 445"},"flow":"SIFPInternal|BIFP"},{"id":"149","name":"Nessus","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["Nessus_Scanner"],"dst_addr":["all"],"services":["HTTP","HTTPS"],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.1.227 255.255.255.255"],"dst_ips":["nan"],"svc_ports":{"HTTP":"TCP 80","HTTPS":"TCP 443"},"flow":"SIFPInternal|virtual-wan-link"},{"id":"150","name":"Syslog To FCTG","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["FCTGNETAUDIT1","CyberMaxx Syslog"],"services":["SYSLOG"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.1.1.18 255.255.255.255","10.1.1.141 255.255.255.255"],"svc_ports":{"SYSLOG":"UDP 514"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"154","name":"HTTP_HTTPS_to_RESSQL2","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["RESSQL2"],"services":["HTTP","HTTPS"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.1.1.45 255.255.255.255"],"svc_ports":{"HTTP":"TCP 80","HTTPS":"TCP 443"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"155","name":"SNMP_To_FortiSwitches","status":"enable","src_iface":"SIFPInternal","dst_iface":"fortilink","src_addr":["SIFPFS01","Chuck_SIFPLAPTOP150"],"dst_addr":["Switch_Subnet"],"services":["SNMP","ALL_ICMP"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.1.245 255.255.255.255","nan"],"dst_ips":["10.33.0.0 255.255.0.0"],"svc_ports":{"SNMP":"TCP 161-162, UDP 161-162","ALL_ICMP":"protocol"},"flow":"SIFPInternal|fortilink"},{"id":"156","name":"SNMP_From_Fortiswitches","status":"enable","src_iface":"fortilink","dst_iface":"SIFPInternal","src_addr":["Switch_Subnet"],"dst_addr":["SIFPFS01","FCTG_10.1.0.0/16"],"services":["SNMP","ALL_ICMP"],"action":"accept","nat":"nan","comments":" (Copy of SNMP_To_FortiSwitches) (Reverse of SNMP_To_FortiSwitches)","src_ips":["10.33.0.0 255.255.0.0"],"dst_ips":["10.30.1.245 255.255.255.255","10.1.0.0 255.255.0.0"],"svc_ports":{"SNMP":"TCP 161-162, UDP 161-162","ALL_ICMP":"protocol"},"flow":"fortilink|SIFPInternal"},{"id":"158","name":"Azure Domain Controller","status":"enable","src_iface":"SIFPInternal","dst_iface":"Azure","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":["FCTGNETDC3z"],"services":["Global Catalog","NTP","PING","Windows AD"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":["10.2.151.68 255.255.255.255"],"svc_ports":{"Global Catalog":"TCP 3268","NTP":"TCP 123, UDP 123","PING":"protocol","Windows AD":"protocol"},"flow":"SIFPInternal|Azure"},{"id":"160","name":"Azure Domain Controller In","status":"enable","src_iface":"Azure","dst_iface":"SIFPInternal","src_addr":["FCTGNETDC3z"],"dst_addr":["SIFP_Subnet_10.30.0.0"],"services":["Global Catalog","NTP","PING","Windows AD"],"action":"accept","nat":"nan","comments":" (Copy of Azure Domain Controller) (Reverse of Azure Domain Controller)","src_ips":["10.2.151.68 255.255.255.255"],"dst_ips":["10.30.0.0 255.255.0.0"],"svc_ports":{"Global Catalog":"TCP 3268","NTP":"TCP 123, UDP 123","PING":"protocol","Windows AD":"protocol"},"flow":"Azure|SIFPInternal"},{"id":"161","name":"Chuck Laptop to Internet","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["Chuck_SIFPLAPTOP150","SIFPVoice address"],"dst_addr":["all"],"services":["ALL"],"action":"accept","nat":"enable","comments":"nan","src_ips":["nan","nan"],"dst_ips":["nan"],"svc_ports":{"ALL":"protocol"},"flow":"SIFPInternal|virtual-wan-link"},{"id":"163","name":"Server to SentinelOne","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["SIFPServers address"],"dst_addr":[],"services":[],"action":"accept","nat":"enable","comments":"nan","src_ips":["nan"],"dst_ips":[],"svc_ports":{},"flow":"SIFPInternal|virtual-wan-link"},{"id":"165","name":"OPUS SSL VPN TO SIFP","status":"enable","src_iface":"FCTGWANConnection","dst_iface":"SIFPInternal","src_addr":["OPUS SSL VPN"],"dst_addr":["SIFPServers address"],"services":["ALL"],"action":"accept","nat":"nan","comments":"nan","src_ips":["10.102.0.0 255.255.255.0"],"dst_ips":["nan"],"svc_ports":{"ALL":"protocol"},"flow":"FCTGWANConnection|SIFPInternal"},{"id":"166","name":"SIFP to OPUS SSL","status":"enable","src_iface":"SIFPInternal","dst_iface":"FCTGWANConnection","src_addr":["SIFPServers address"],"dst_addr":["OPUS SSL VPN"],"services":["ALL"],"action":"accept","nat":"nan","comments":" (Reverse of OPUS SSL VPN TO SIFP)","src_ips":["nan"],"dst_ips":["10.102.0.0 255.255.255.0"],"svc_ports":{"ALL":"protocol"},"flow":"SIFPInternal|FCTGWANConnection"},{"id":"167","name":"Allow SentinelOne Out","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["SIFP_Subnet_10.30.0.0"],"dst_addr":[],"services":[],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.0.0 255.255.0.0"],"dst_ips":[],"svc_ports":{},"flow":"SIFPInternal|virtual-wan-link"},{"id":"170","name":"Allow Vcenter NTP out","status":"enable","src_iface":"SIFPInternal","dst_iface":"virtual-wan-link","src_addr":["Vcenter","10.30.1.10"],"dst_addr":["all"],"services":["NTP"],"action":"accept","nat":"enable","comments":"nan","src_ips":["10.30.1.9 255.255.255.255","10.30.1.1 255.255.255.255"],"dst_ips":["nan"],"svc_ports":{"NTP":"TCP 123, UDP 123"},"flow":"SIFPInternal|virtual-wan-link"}];
+
+const FLOW_META = {
+  'FCTGWANConnection|SIFPInternal': {label:'FCTG → SIFP Internal', color:'#7c8fff', desc:'Traffic from FCTG HQ / OPUS (10.0.x, 10.1.x) into SIFP internal network'},
+  'SIFPInternal|FCTGWANConnection': {label:'SIFP Internal → FCTG', color:'#9aaeff', desc:'Traffic from SIFP (10.30.x) outbound to FCTG HQ / OPUS'},
+  'SIFPInternal|virtual-wan-link':  {label:'SIFP Internal → Internet', color:'#48c88c', desc:'SIFP outbound internet traffic via SD-WAN (FirstLight/Comcast)'},
+  'SIFPInternal|Azure':             {label:'SIFP Internal → Azure', color:'#c87cff', desc:'SIFP to Azure VPN (10.2.0.0/15)'},
+  'Azure|SIFPInternal':             {label:'Azure → SIFP Internal', color:'#a840ff', desc:'Azure inbound to SIFP servers'},
+  'FCT_SAML|SIFPInternal':          {label:'SAML VPN → SIFP Internal', color:'#ff6c6c', desc:'IPSEC/SAML VPN clients (10.30.100.x) to SIFP servers'},
+  'FCT_SAML|FCTGWANConnection':     {label:'SAML VPN → FCTG', color:'#ff4c4c', desc:'IPSEC/SAML VPN clients tunneling to FCTG HQ/OPUS'},
+  'FCT_SAML|Azure':                 {label:'SAML VPN → Azure', color:'#ff5ccc', desc:'IPSEC/SAML VPN clients accessing Azure'},
+  'FCT_SAML|virtual-wan-link':      {label:'SAML VPN → Internet', color:'#ff8c8c', desc:'IPSEC/SAML VPN split tunnel internet access'},
+  'BP|SIFPInternal':                {label:'BP / BuckEye → SIFP', color:'#f0c040', desc:'BuckEye Rail (10.10.0.0/16) inbound to SIFP'},
+  'SIFPInternal|BP':                {label:'SIFP → BP / BuckEye', color:'#d0a030', desc:'SIFP outbound to BuckEye Rail'},
+  'SIFPInternal|BIFP':              {label:'SIFP Internal → BIFP', color:'#c09020', desc:'SIFP to BIFP (RightFax)'},
+  'SIFP-Guest|virtual-wan-link':    {label:'Guest → Internet', color:'#78c8f0', desc:'Guest network internet access'},
+  'SIFPInternal|fortilink':         {label:'SIFP → FortiLink', color:'#78c8f0', desc:'SNMP management to FortiSwitches (10.33.0.0/16)'},
+  'fortilink|SIFPInternal':         {label:'FortiLink → SIFP', color:'#60b0d8', desc:'FortiSwitch SNMP back to SIFP'},
+  'SIFP-HyperV|SIFPInternal':       {label:'HyperV → SIFP Internal', color:'#78c8f0', desc:'HyperV zone to SIFP internal'},
+  'SIFPInternal|SIFP-HyperV':       {label:'SIFP → HyperV', color:'#78c8f0', desc:'SIFP internal to HyperV management'},
+  'SIFP-Guest|SIFPInternal':        {label:'Guest → SIFP Internal', color:'#78c8f0', desc:'Guest network to SIFP internal (Presentation/CR screen)'},
+  'SIFPAV|virtual-wan-link':        {label:'SIFP AV → Internet', color:'#78c8f0', desc:'AV zone internet traffic'},
+  'SIFPTest3|virtual-wan-link':     {label:'SIFPTest3 → Internet', color:'#78c8f0', desc:'Test/IoT (Door Security) zone internet'},
+  'SIFP-Guest|SIFPTest3':           {label:'Guest → SIFPTest3', color:'#78c8f0', desc:'Guest to door security system'},
+  'SIFPInternal|SIFPTest3':         {label:'SIFP → SIFPTest3', color:'#78c8f0', desc:'SIFP internal to door security zone'},
+  'SIFP-HyperV|virtual-wan-link':   {label:'HyperV → Internet', color:'#78c8f0', desc:'HyperV zone internet access'},
+};
+
+// Normalize flow key (handle multi-interface src)
+function getFlow(p) {
+  const si = p.src_iface.split(',')[0].trim();
+  const di = p.dst_iface.split(',')[0].trim();
+  return si+'|'+di;
+}
+
+let activeFlow = null;
+let filterMode = 'all';
+
+function loadFlow(flowKey) {
+  activeFlow = flowKey;
+  filterMode = 'all';
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.filter-btn').classList.add('active');
+  renderPanel(flowKey);
+  // Highlight SVG line
+  document.querySelectorAll('.flow-line').forEach(el => {
+    const f = el.dataset.flow;
+    if(f === flowKey) {
+      el.style.opacity = '1';
+      el.style.filter = 'url(#glow2)';
+    } else {
+      el.style.opacity = '0.2';
+      el.style.filter = '';
+    }
+  });
+}
+
+function renderPanel(flowKey) {
+  const meta = FLOW_META[flowKey] || {label: flowKey, color:'#9090cc', desc:''};
+  document.getElementById('panel-title').textContent = meta.label;
+  document.getElementById('panel-title').style.color = meta.color;
+  document.getElementById('panel-sub').textContent = meta.desc;
+
+  const matching = POLICIES.filter(p => {
+    const si = p.src_iface.split(',')[0].trim();
+    const di = p.dst_iface.split(',')[0].trim();
+    return (si+'|'+di) === flowKey;
+  });
+
+  document.getElementById('filter-bar').style.display = 'flex';
+
+  let html = '';
+  for (const p of matching) {
+    if (filterMode !== 'all' && p.action.toLowerCase() !== filterMode) continue;
+    const borderColor = p.action === 'accept' ? '#3a8a5a' : '#8a3a3a';
+    const svcs = p.services.slice(0,6);
+    const chips = svcs.map(s => {
+      const port = p.svc_ports[s] || '';
+      return `<span class="chip">${s}${port?'·'+port:''}</span>`;
+    }).join('');
+    const moreCount = p.services.length - 6;
+    const moreChip = moreCount > 0 ? `<span class="chip">+${moreCount} more</span>` : '';
+
+    const srcIps = p.src_ips.filter(x => x && x !== 'nan').join(', ') || '(resolved at runtime)';
+    const dstIps = p.dst_ips.filter(x => x && x !== 'nan').join(', ') || '(resolved at runtime)';
+
+    html += `<div class="pcard" style="border-left-color:${borderColor}" onclick="highlightCard(this)">
+      <div class="pid">Policy ID ${p.id} · ${p.status === 'enable' ? '✓ Enabled' : '✗ Disabled'} · ${p.action.toUpperCase()}</div>
+      <div class="pname">${p.name === 'nan' ? '(Unnamed Policy)' : p.name}</div>
+      <div class="prow"><span class="lbl">Src</span><span class="val">${p.src_addr.join(', ')}</span></div>
+      <div class="prow"><span class="lbl">IPs</span><span class="val" style="font-family:monospace;font-size:9px">${srcIps.substring(0,80)}</span></div>
+      <div class="prow"><span class="lbl">Dst</span><span class="val">${p.dst_addr.join(', ')}</span></div>
+      <div class="prow"><span class="lbl">IPs</span><span class="val" style="font-family:monospace;font-size:9px">${dstIps.substring(0,80)}</span></div>
+      ${p.comments !== 'nan' && p.comments ? `<div class="prow"><span class="lbl">Note</span><span class="val">${p.comments}</span></div>` : ''}
+      <div class="chips">${chips}${moreChip}</div>
+    </div>`;
+  }
+
+  if (!html) html = `<div style="text-align:center;padding:40px;font-size:12px;color:#44448a">No policies match this filter.</div>`;
+
+  const countLabel = `${matching.length} polic${matching.length===1?'y':'ies'} in this flow`;
+  document.getElementById('panel-body').innerHTML = `<div style="font-size:10px;color:#55558a;margin-bottom:10px;padding:0 2px">${countLabel}</div>` + html;
+}
+
+function filterCards(mode) {
+  filterMode = mode;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  if (activeFlow) renderPanel(activeFlow);
+}
+
+function highlightCard(el) {
+  document.querySelectorAll('.pcard').forEach(c => c.classList.remove('hl'));
+  el.classList.add('hl');
+}
+
+// Click handler on SVG lines
+document.querySelectorAll('.flow-line').forEach(el => {
+  el.addEventListener('click', () => loadFlow(el.dataset.flow));
+  el.addEventListener('mouseenter', (e) => {
+    const flow = el.dataset.flow;
+    const meta = FLOW_META[flow] || {label:flow, color:'#9090cc', desc:''};
+    const count = POLICIES.filter(p => {
+      const si = p.src_iface.split(',')[0].trim();
+      const di = p.dst_iface.split(',')[0].trim();
+      return (si+'|'+di) === flow;
+    }).length;
+    document.getElementById('tt').textContent = meta.label;
+    document.getElementById('tt').style.color = meta.color;
+    document.getElementById('tr1').innerHTML = `<span>${meta.desc}</span>`;
+    document.getElementById('tr2').innerHTML = `<span style="color:#7c8fff;font-weight:700">${count} polic${count===1?'y':'ies'}</span>`;
+    document.getElementById('tr3').innerHTML = '';
+    document.getElementById('tip').classList.add('show');
+  });
+  el.addEventListener('mousemove', (e) => {
+    document.getElementById('tip').style.left=(e.clientX+14)+'px';
+    document.getElementById('tip').style.top=(e.clientY-8)+'px';
+  });
+  el.addEventListener('mouseleave', () => document.getElementById('tip').classList.remove('show'));
+});
+
+// Click elsewhere resets
+document.getElementById('svg').addEventListener('click', (e) => {
+  if (!e.target.classList.contains('flow-line') && e.target.tagName !== 'text') {
+    document.querySelectorAll('.flow-line').forEach(el => {
+      el.style.opacity = null;
+      el.style.filter = '';
+    });
+    activeFlow = null;
+  }
+});
+</script>
+</body>
+</html>

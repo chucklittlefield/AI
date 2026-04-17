@@ -1,0 +1,2012 @@
+init_config:
+    loader: core
+    use_device_id_as_hostname: true
+    ping:
+        enabled: true
+        count: 2
+        timeout: 3000
+        interval: 20
+    mibs_folder: 'C:\ProgramData\Datadog\conf.d\snmp.d'
+instances:
+  - ip_address: '10.1.1.1'
+    community_string: 'FCTGDC-RO'
+    interface_configs:
+    - match_field: name
+      match_value: port14
+      in_speed: 0
+      out_speed: 0
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:SDWAN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+    - match_field: name
+      match_value: port13
+      in_speed: 0
+      out_speed: 0
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:SDWAN
+      - InterfaceRank:Secondary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Comcast
+    - match_field: name
+      match_value: port16
+      in_speed: 100000000
+      out_speed: 100000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:ENS
+      - InterfaceRank:Tertiary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Comcast
+    - match_field: index
+      match_value: '35'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+      - FriendlyName:OPUS-FCTG
+      - VPNDestination:FCTG
+    - match_field: index
+      match_value: '59'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:True
+      - Provider:Ziply
+      - FriendlyName:OPUS_to_SIFP
+      - VPNDestination:SIFP
+    - match_field: index
+      match_value: '51'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:True
+      - Provider:Ziply
+      - FriendlyName:OPUS_to_BIFP
+      - VPNDestination:BIFP
+    - match_field: index
+      match_value: '63'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:True
+      - Provider:Ziply
+      - FriendlyName:OPUS_to_TIFP
+      - VPNDestination:TIFP
+    - match_field: index
+      match_value: '47'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:True
+      - Provider:Ziply
+      - FriendlyName:OPUS_to_AIFP
+      - VPNDestination:AIFP
+    - match_field: index
+      match_value: '65'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:True
+      - Provider:Ziply
+      - FriendlyName:OPUS_to_VFP
+      - VPNDestination:VFP
+    - match_field: index
+      match_value: '45'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:True
+      - Provider:Ziply
+      - FriendlyName:OPUS_to_PFP_2nd
+      - VPNDestination:PFP
+    - match_field: index
+      match_value: '53'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:True
+      - Provider:Ziply
+      - FriendlyName:OPUS_to_BP
+      - VPNDestination:BP
+    - match_field: index
+      match_value: '55'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:True
+      - Provider:Ziply
+      - FriendlyName:OPUS_to_OI
+      - VPNDestination:OI
+    - match_field: index
+      match_value: '57'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:True
+      - Provider:Ziply
+      - FriendlyName:OPUS_to_RIFP
+      - VPNDestination:RIFP
+    - match_field: index
+      match_value: '61'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:True
+      - Provider:Ziply
+      - FriendlyName:OPUS_to_SMT
+      - VPNDestination:SMT
+    - match_field: index
+      match_value: '49'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:True
+      - Provider:Ziply
+      - FriendlyName:OPUS_to_AR
+      - VPNDestination:AR
+    - match_field: index
+      match_value: '36'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:True
+      - Provider:Ziply
+      - FriendlyName:OPUS-Azure
+      - VPNDestination:Azure
+    - match_field: index
+      match_value: '68'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Comcast
+      - FriendlyName:OPUS_to_FC_East
+      - VPNDestination:FCTG_EAST
+    - match_field: index
+      match_value: '60'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:True
+      - Provider:Comcast
+      - FriendlyName:OPUS_to_SIFP_2
+      - VPNDestination:SIFP
+    - match_field: index
+      match_value: '52'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:True
+      - Provider:Comcast
+      - FriendlyName:OPUS_to_BIFP_2
+      - VPNDestination:BIFP
+    - match_field: index
+      match_value: '64'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:True
+      - Provider:Comcast
+      - FriendlyName:OPUS_to_TIFP_2
+      - VPNDestination:TIFP
+    - match_field: index
+      match_value: '48'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:True
+      - Provider:Comcast
+      - FriendlyName:OPUS_to_AIFP_2
+      - VPNDestination:AIFP
+    - match_field: index
+      match_value: '66'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:True
+      - Provider:Comcast
+      - FriendlyName:OPUS_to_VFP_2
+      - VPNDestination:VFP
+    - match_field: index
+      match_value: '46'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:True
+      - Provider:Comcast
+      - FriendlyName:OPUS_to_PFP
+      - VPNDestination:PFP
+    - match_field: index
+      match_value: '54'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:True
+      - Provider:Comcast
+      - FriendlyName:OPUS_to_BP_2
+      - VPNDestination:BP
+    - match_field: index
+      match_value: '56'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:True
+      - Provider:Comcast
+      - FriendlyName:OPUS_to_OI_2
+      - VPNDestination:OI
+    - match_field: index
+      match_value: '58'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:True
+      - Provider:Comcast
+      - FriendlyName:OPUS_to_RIFP_2
+      - VPNDestination:RIFP
+    - match_field: index
+      match_value: '62'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:True
+      - Provider:Comcast
+      - FriendlyName:OPUS_to_SMT_2
+      - VPNDestination:SMT
+    - match_field: index
+      match_value: '50'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:True
+      - Provider:Comcast
+      - FriendlyName:OPUS_to_AR_2
+      - VPNDestination:AR
+    - match_field: index
+      match_value: '69'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:True
+      - Provider:Comcast
+      - FriendlyName:OPUS-FCTG_2
+      - VPNDestination:FCTG
+  - ip_address: '10.0.1.1'
+    community_string: 'FCTGHQ-RO'
+    interface_configs:
+    - match_field: name
+      match_value: wan1
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:SDWAN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Allstream
+    - match_field: name
+      match_value: wan2
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:SDWAN
+      - InterfaceRank:Secondary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Comcast
+    - match_field: name
+      match_value: port2
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:ENS
+      - InterfaceRank:Tertiary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Comcast
+  - ip_address: '10.4.1.1'
+    snmp_version: 3
+    loader: core
+    use_device_id_as_hostname: true
+    user: DataDog
+    interface_configs:
+    - match_field: name
+      match_value: port3
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+    - match_field: name
+      match_value: port2
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Comcast
+    - match_field: index
+      match_value: '52'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+      - FriendlyName:AIFP_FCTG_OPUS1
+      - VPNDestination:Opus
+    - match_field: index
+      match_value: '53'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Comcast
+      - FriendlyName:AIFP_FCTG_OPUS2
+      - VPNDestination:Opus
+    - match_field: index
+      match_value: '34'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+      - FriendlyName:AIFP_to_Azure
+      - VPNDestination:Azure
+    - match_field: index
+      match_value: '45'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Comcast
+      - FriendlyName:AIFP_to_Azure_2
+      - VPNDestination:Azure
+    - match_field: index
+      match_value: '140'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+      - FriendlyName:BP-AIFP
+      - VPNDestination:BP
+    - match_field: index
+      match_value: '56'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Comcast
+      - FriendlyName:BP-AIFP2
+      - VPNDestination:BP
+    - match_field: index
+      match_value: '54'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+      - FriendlyName:AIFP_to_ARL
+      - VPNDestination:AR
+    - match_field: index
+      match_value: '55'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Comcast
+      - FriendlyName:AIFP_To_ARL2
+      - VPNDestination:AR
+  - ip_address: '10.75.7.254'
+    snmp_version: 3
+    loader: core
+    use_device_id_as_hostname: true
+    user: DataDog
+    interface_configs:
+    - match_field: name
+      match_value: wan2
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+    - match_field: name
+      match_value: wan1
+      in_speed: 200000000
+      out_speed: 200000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Comcast
+    - match_field: index
+      match_value: '53'
+      in_speed: 200000000
+      out_speed: 200000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Comcast
+      - FriendlyName:ARL_To_Aifp_2
+      - VPNDestination:AIFP
+    - match_field: index
+      match_value: '52'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+      - FriendlyName:BP-AIFP
+      - VPNDestination:AIFP
+    - match_field: index
+      match_value: '51'
+      in_speed: 200000000
+      out_speed: 200000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Comcast
+      - FriendlyName:AR_To_Opus_2
+      - VPNDestination:Opus
+    - match_field: index
+      match_value: '50'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+      - FriendlyName:AR_To_Opus
+      - VPNDestination:Opus
+    - match_field: index
+      match_value: '47'
+      in_speed: 200000000
+      out_speed: 200000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Comcast
+      - FriendlyName:Ar_To_FCTG_2
+      - VPNDestination:FCTG
+    - match_field: index
+      match_value: '46'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+      - FriendlyName:AR_to_FCTG
+      - VPNDestination:FCTG
+  - ip_address: '10.8.1.1'
+    snmp_version: 3
+    loader: core
+    use_device_id_as_hostname: true
+    user: DataDog
+    interface_configs:
+    - match_field: name
+      match_value: port6
+      in_speed: 1000000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+    - match_field: name
+      match_value: port2
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:AllStream
+    - match_field: name
+      match_value: port3
+      in_speed: 50000000
+      out_speed: 50000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Tertiary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Spectrum_Cable
+    - match_field: index
+      match_value: '34'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:ATT
+      - FriendlyName:BIFP_to_Azure
+      - VPNDestination:Azure
+    - match_field: index
+      match_value: '148'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Spectrum
+      - FriendlyName:BIFP_to_Azure_2
+      - VPNDestination:Azure
+    - match_field: index
+      match_value: '62'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:ATT
+      - FriendlyName:BIFP_to_Opus
+      - VPNDestination:Opus
+    - match_field: index
+      match_value: '63'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Spectrum
+      - FriendlyName:BIFP_to_Opus2
+      - VPNDestination:Opus
+    - match_field: index
+      match_value: '153'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:ATT
+      - FriendlyName:BIFP_to_RIFP
+      - VPNDestination:RIFP
+    - match_field: index
+      match_value: '149'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:ATT
+      - FriendlyName:BIFP_to_SIFP
+      - VPNDestination:SIFP
+    - match_field: index
+      match_value: '150'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:ATT
+      - FriendlyName:BIFP_to_SMT
+      - VPNDestination:SMT
+    - match_field: index
+      match_value: '72'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Spectrum
+      - FriendlyName:BIFP_to_SMT2
+      - VPNDestination:SMT
+    - match_field: index
+      match_value: '151'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:ATT
+      - FriendlyName:BIFP_to_TIFP
+      - VPNDestination:TIFP
+    - match_field: index
+      match_value: '70'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Spectrum
+      - FriendlyName:BIFP_to_TIFP2
+      - VPNDestination:TIFP
+    - match_field: index
+      match_value: '152'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:ATT
+      - FriendlyName:BIFP_to_VFP
+      - VPNDestination:VFP
+    - match_field: index
+      match_value: '43'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Spectrum
+      - FriendlyName:BIFP_to_VFP_2
+      - VPNDestination:VFP
+    - match_field: index
+      match_value: '146'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:ATT
+      - FriendlyName:BIFP_to_BP
+      - VPNDestination:BP
+    - match_field: index
+      match_value: '59'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Spectrum
+      - FriendlyName:BIFP_to_BP2
+      - VPNDestination:BP
+    - match_field: index
+      match_value: '12'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:ATT
+      - FriendlyName:BIFP_to_FCTG
+      - VPNDestination:FCTG
+    - match_field: index
+      match_value: '53'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Spectrum
+      - FriendlyName:BIFP_to_FCTG2
+      - VPNDestination:FCTG
+    - match_field: index
+      match_value: '71'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Spectrum
+      - FriendlyName:BIFP_to_RIFP2
+      - VPNDestination:RIFP
+    - match_field: index
+      match_value: '68'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Spectrum
+      - FriendlyName:BIFP_to_SIFP_2
+      - VPNDestination:SIFP
+  - ip_address: '10.10.1.111'
+    snmp_version: 3
+    loader: core
+    use_device_id_as_hostname: true
+    user: DataDog
+    interface_configs:
+    - match_field: name
+      match_value: wan1
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+    - match_field: name
+      match_value: wan2
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Unknown
+    - match_field: index
+      match_value: '42'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Unknown
+      - FriendlyName:BP_to_VFP2
+      - VPNDestination:VFP
+    - match_field: index
+      match_value: '40'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+      - FriendlyName:BP_to_Azure
+      - VPNDestination:Azure
+    - match_field: index
+      match_value: '41'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Unknown
+      - FriendlyName:BP_to_Azure_2
+      - VPNDestination:Azure
+    - match_field: index
+      match_value: '46'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Unknown
+      - FriendlyName:BP_to_Opus2
+      - VPNDestination:Opus
+    - match_field: index
+      match_value: '147'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+      - FriendlyName:BP-AIFP
+      - VPNDestination:AIFP
+    - match_field: index
+      match_value: '50'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Unknown
+      - FriendlyName:BP-AIFP2
+      - VPNDestination:AIFP
+    - match_field: index
+      match_value: '142'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+      - FriendlyName:BP-BIFP
+      - VPNDestination:BIFP
+    - match_field: index
+      match_value: '43'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Unknown
+      - FriendlyName:BP-BIFP-2
+      - VPNDestination:BIFP
+    - match_field: index
+      match_value: '36'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+      - FriendlyName:BP-FCTG
+      - VPNDestination:FCTG
+    - match_field: index
+      match_value: '44'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Unknown
+      - FriendlyName:BP-FCTG2
+      - VPNDestination:FCTG
+    - match_field: index
+      match_value: '149'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+      - FriendlyName:BP-OI
+      - VPNDestination:OI
+    - match_field: index
+      match_value: '52'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Unknown
+      - FriendlyName:BP-OI2
+      - VPNDestination:OI
+    - match_field: index
+      match_value: '148'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+      - FriendlyName:BP-RIFP
+      - VPNDestination:RIFP
+    - match_field: index
+      match_value: '48'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Unknown
+      - FriendlyName:BP-RIFP2
+      - VPNDestination:RIFP
+    - match_field: index
+      match_value: '143'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+      - FriendlyName:BP-SIFP
+      - VPNDestination:SIFP
+    - match_field: index
+      match_value: '51'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Unknown
+      - FriendlyName:BP-SIFP2
+      - VPNDestination:SIFP
+    - match_field: index
+      match_value: '144'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+      - FriendlyName:BP-SMT
+      - VPNDestination:SMT
+    - match_field: index
+      match_value: '49'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Unknown
+      - FriendlyName:BP-SMT2
+      - VPNDestination:SMT
+    - match_field: index
+      match_value: '146'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+      - FriendlyName:BP-TIFP
+      - VPNDestination:TIFP
+    - match_field: index
+      match_value: '47'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Unknown
+      - FriendlyName:BP-TIFP-2
+      - VPNDestination:TIFP
+    - match_field: index
+      match_value: '145'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Ziply
+      - FriendlyName:BP-VFP
+      - VPNDestination:VFP
+  - ip_address: '10.18.1.254'
+    snmp_version: 3
+    loader: core
+    use_device_id_as_hostname: true
+    user: DataDog
+    interface_configs:
+    - match_field: name
+      match_value: wan1
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Shaw
+    - match_field: name
+      match_value: wan2
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Telus
+    - match_field: index
+      match_value: '45'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Shaw
+      - FriendlyName:BP_to_OI_Ipsec2
+      - VPNDestination:BP
+    - match_field: index
+      match_value: '58'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Telus
+      - FriendlyName:Opus_to_OI
+      - VPNDestination:Opus
+    - match_field: index
+      match_value: '59'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Shaw
+      - FriendlyName:Opus_to_OI_2
+      - VPNDestination:Opus
+    - match_field: index
+      match_value: '57'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Shaw
+      - FriendlyName:OIToAzure2
+      - VPNDestination:Azure
+    - match_field: index
+      match_value: '137'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Telus
+      - FriendlyName:BP_to_OI_Ipsec
+      - VPNDestination:BP
+    - match_field: index
+      match_value: '138'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Telus
+      - FriendlyName:OI_2_Azure
+      - VPNDestination:Azure
+  - ip_address: '10.26.1.1'
+    snmp_version: 3
+    loader: core
+    use_device_id_as_hostname: true
+    user: DataDog
+    interface_configs:
+    - match_field: name
+      match_value: wan1
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Comcast
+    - match_field: name
+      match_value: wan2
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Allstream
+    - match_field: index
+      match_value: '49'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Allstream
+      - FriendlyName:VFP2_t0_Azure
+      - VPNDestination:Azure
+    - match_field: index
+      match_value: '50'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Allstream
+      - FriendlyName:BIFP-VFP2
+      - VPNDestination:BIFP
+    - match_field: index
+      match_value: '51'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Allstream
+      - FriendlyName:FTCG-VFP2
+      - VPNDestination:FCTG
+    - match_field: index
+      match_value: '52'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Allstream
+      - FriendlyName:BP-VFP2
+      - VPNDestination:BP
+    - match_field: index
+      match_value: '53'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Comcast
+      - FriendlyName:OPUS-VFP
+      - VPNDestination:Opus
+    - match_field: index
+      match_value: '54'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Allstream
+      - FriendlyName:OPUS-VFP2
+      - VPNDestination:Opus
+    - match_field: index
+      match_value: '137'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Allstream
+      - FriendlyName:BP-VFP
+      - VPNDestination:BP
+  - ip_address: '10.28.1.111'
+    snmp_version: 3
+    loader: core
+    use_device_id_as_hostname: true
+    user: DataDog
+    interface_configs:
+    - match_field: name
+      match_value: wan2
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Comcast
+    - match_field: name
+      match_value: port2
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Verizon
+    - match_field: index
+      match_value: '35'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Comcast
+      - FriendlyName:FCTG-RIFP
+      - VPNDestination:FCTG
+    - match_field: index
+      match_value: '36'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Comcast
+      - FriendlyName:RIFP_to_Azure
+      - VPNDestination:Azure
+    - match_field: index
+      match_value: '37'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Verizon
+      - FriendlyName:RIFP_to_Azure_2
+      - VPNDestination:Azure
+    - match_field: index
+      match_value: '38'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Comcast
+      - FriendlyName:RIFP-BIFP_fax
+      - VPNDestination:BIFP
+    - match_field: index
+      match_value: '39'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Verizon
+      - FriendlyName:FCTG-RIFP_2
+      - VPNDestination:FCTG
+    - match_field: index
+      match_value: '40'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Comcast
+      - FriendlyName:OPUS_to_RIFP
+      - VPNDestination:Opus
+    - match_field: index
+      match_value: '41'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Verizon
+      - FriendlyName:Opus_to_RIFP_2
+      - VPNDestination:OPUS
+    - match_field: index
+      match_value: '137'
+      in_speed: 500000000
+      out_speed: 500000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Comcast
+      - FriendlyName:BP-RIFP
+      - VPNDestination:BP
+  - ip_address: '10.14.1.2'
+    snmp_version: 3
+    loader: core
+    use_device_id_as_hostname: true
+    user: DataDog
+    interface_configs:
+    - match_field: name
+      match_value: wan2
+      in_speed: 100000000
+      out_speed: 100000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Unknown
+    - match_field: name
+      match_value: wan1
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Unknown
+    - match_field: index
+      match_value: '41'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Unknown
+      - FriendlyName:Opus_to_SMT
+      - VPNDestination:Opus
+    - match_field: index
+      match_value: '42'
+      in_speed: 100000000
+      out_speed: 100000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Unknown
+      - FriendlyName:Opus_to_SMT_2
+      - VPNDestination:Opus
+    - match_field: index
+      match_value: '60'
+      in_speed: 100000000
+      out_speed: 100000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Unknown
+      - FriendlyName:SMT_to_BI2
+      - VPNDestination:BIFP
+    - match_field: index
+      match_value: '39'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Unknown
+      - FriendlyName:SMT_to_BIFP
+      - VPNDestination:BIFP
+    - match_field: index
+      match_value: '139'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Unknown
+      - FriendlyName:BP-OpCo
+      - VPNDestination:BP
+    - match_field: index
+      match_value: '51'
+      in_speed: 100000000
+      out_speed: 100000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Unknown
+      - FriendlyName:BP-Opco2
+      - VPNDestination:BP
+    - match_field: index
+      match_value: '35'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Unknown
+      - FriendlyName:SMT-Azure
+      - VPNDestination:Azure
+    - match_field: index
+      match_value: '37'
+      in_speed: 100000000
+      out_speed: 100000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Unknown
+      - FriendlyName:Azure2
+      - VPNDestination:Azure
+  - ip_address: '10.20.1.18'
+    snmp_version: 3
+    loader: core
+    use_device_id_as_hostname: true
+    user: DataDog
+    interface_configs:
+    - match_field: name
+      match_value: wan1
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:FIOS
+    - match_field: name
+      match_value: wan2
+      in_speed: 100000000
+      out_speed: 100000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Lumen
+    - match_field: index
+      match_value: '35'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Fios
+      - FriendlyName:TIFP-FCTG
+      - VPNDestination:FCTG
+    - match_field: index
+      match_value: '36'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Fios
+      - FriendlyName:TIFP-AZURE
+      - VPNDestination:AZURE
+    - match_field: index
+      match_value: '37'
+      in_speed: 100000000
+      out_speed: 100000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Lumen
+      - FriendlyName:TIFP-Azure_FO
+      - VPNDestination:Azure
+    - match_field: index
+      match_value: '38'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Fios
+      - FriendlyName:TIFP-BIFP
+      - VPNDestination:BIFP
+    - match_field: index
+      match_value: '39'
+      in_speed: 100000000
+      out_speed: 100000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Lumen
+      - FriendlyName:TIFP-FCTG-FO
+      - VPNDestination:FCTG
+    - match_field: index
+      match_value: '40'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Fios
+      - FriendlyName:TIFP-OPUS
+      - VPNDestination:Opus
+    - match_field: index
+      match_value: '41'
+      in_speed: 100000000
+      out_speed: 100000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Lumen
+      - FriendlyName:TIFP-OPUS_2
+      - VPNDestination:Opus
+    - match_field: index
+      match_value: '42'
+      in_speed: 100000000
+      out_speed: 100000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Lumen
+      - FriendlyName:TIFP-BP-FO
+      - VPNDestination:BP
+    - match_field: index
+      match_value: '43'
+      in_speed: 100000000
+      out_speed: 100000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Lumen
+      - FriendlyName:TIFP-BIFP-FO
+      - VPNDestination:BIFP
+    - match_field: index
+      match_value: '137'
+      in_speed: 1000000000
+      out_speed: 1000000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Fios
+      - FriendlyName:TIFP-BP
+      - VPNDestination:BP
+  - ip_address: '10.24.10.1'
+    snmp_version: 3
+    loader: core
+    use_device_id_as_hostname: true
+    user: DataDog
+    interface_configs:
+    - match_field: name
+      match_value: wan1
+      in_speed: 100000000
+      out_speed: 100000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Allstream
+    - match_field: name
+      match_value: wan2
+      in_speed: 100000000
+      out_speed: 100000000
+      tags:
+      - InterfaceZone:WAN
+      - InterfaceFunction:Internet
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Century_Link
+    - match_field: index
+      match_value: '40'
+      in_speed: 100000000
+      out_speed: 100000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Century_Link
+      - FriendlyName:OPUS_ZIPLY_2nd
+      - VPNDestination:Opus
+    - match_field: index
+      match_value: '41'
+      in_speed: 100000000
+      out_speed: 100000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Allstream
+      - FriendlyName:Opus_EDI_1st
+      - VPNDestination:Opus
+    - match_field: index
+      match_value: '36'
+      in_speed: 100000000
+      out_speed: 100000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Century_link
+      - FriendlyName:FCTG_VPN_CL2nd
+      - VPNDestination:FCTGHQ
+    - match_field: index
+      match_value: '37'
+      in_speed: 100000000
+      out_speed: 100000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:Allstream
+      - FriendlyName:FCTG_VPN_AS_1st
+      - VPNDestination:FCTGHQ
+    - match_field: index
+      match_value: '38'
+      in_speed: 100000000
+      out_speed: 100000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Secondary
+      - Criticality:Non-Critical
+      - Trusted:False
+      - Provider:Century_link
+      - FriendlyName:Azure_VPN_CL2nd
+      - VPNDestination:Azure
+    - match_field: index
+      match_value: '39'
+      in_speed: 100000000
+      out_speed: 100000000
+      tags:
+      - InterfaceZone:VPN
+      - InterfaceFunction:IPSECVPN
+      - InterfaceRank:Primary
+      - Criticality:Critical
+      - Trusted:False
+      - Provider:AllStream
+      - FriendlyName:Azure_VPN_AS1st
+      - VPNDestination:Azure
+  - ip_address: '10.100.1.111'
+    community_string: 'FCTGEAST-RO'
+  - ip_address: '10.2.0.4'
+    community_string: 'FCTGAZURE-RO'
+  - ip_address: '10.255.1.2'
+    community_string: 'FCTGDC-RO'
+  - ip_address: '10.255.1.3'
+    community_string: 'FCTGDC-RO'
+  - ip_address: '10.255.2.2'
+    community_string: 'FCTGDC-RO'
+  - ip_address: '10.255.2.3'
+    community_string: 'FCTGDC-RO'
+  - ip_address: '10.255.0.2'
+    community_string: 'FCTGHQ-RO'
+  - ip_address: '10.255.0.3'
+    community_string: 'FCTGHQ-RO'
+  - ip_address: '10.255.0.4'
+    community_string: 'FCTGHQ-RO'
+  - ip_address: '10.255.0.5'
+    community_string: 'FCTGHQ-RO'
+  - ip_address: '10.255.0.6'
+    community_string: 'FCTGHQ-RO'
+  - ip_address: '10.255.0.7'
+    community_string: 'FCTGHQ-RO'
+    loader: core
+    use_device_id_as_hostname: true
+    profile: fortinet-fortigate
