@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Restricted Groups Audit – 3 GPO(s)</title>
+<style>
+:root {
+  --bg:#0f1117; --surface:#1a1d27; --surface2:#22263a; --border:#2e3350;
+  --accent:#4f6ef7; --accent2:#7c3aed; --green:#22c55e; --red:#ef4444;
+  --yellow:#f59e0b; --text:#e2e8f0; --muted:#8892a4;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;padding:2rem;line-height:1.5;}
+
+/* Header */
+.header{background:linear-gradient(135deg,#1a1d27,#22263a);border:1px solid var(--border);border-radius:12px;padding:2rem 2.5rem;margin-bottom:2rem;position:relative;overflow:hidden;}
+.header::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));}
+.header-title{font-size:1.7rem;font-weight:700;background:linear-gradient(135deg,#e2e8f0,#94a3b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.header-sub{color:var(--muted);font-size:.9rem;margin-top:.3rem;}
+.meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);}
+.meta-item label{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:.2rem;}
+.meta-item value{font-size:.88rem;font-weight:500;font-family:'Consolas',monospace;}
+
+/* Stats */
+.summary-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:2rem;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.2rem 1.5rem;text-align:center;}
+.stat-card .num{font-size:2.2rem;font-weight:800;line-height:1;margin-bottom:.25rem;}
+.stat-card .lbl{color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;}
+.c-blue{color:var(--accent)} .c-purple{color:#a78bfa} .c-green{color:var(--green)} .c-orange{color:#fb923c} .c-red{color:var(--red)}
+
+/* Section title */
+.section-title{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:1.5rem 0 .75rem;display:flex;align-items:center;gap:.5rem;}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* Search */
+.search-bar{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem .7rem 2.5rem;color:var(--text);font-size:.9rem;margin-bottom:1.25rem;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238892a4' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:.8rem center;}
+.search-bar:focus{border-color:var(--accent);}
+
+/* Accordion */
+.gpo-accordion{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:1rem;overflow:hidden;}
+.gpo-acc-header{padding:1.2rem 1.5rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;user-select:none;transition:background .15s;}
+.gpo-acc-header:hover{background:var(--surface2);}
+.gpo-acc-left{display:flex;align-items:center;gap:.9rem;}
+.acc-arrow{font-size:.8rem;color:var(--muted);transition:transform .2s;display:inline-block;}
+.acc-arrow.open{transform:rotate(90deg);}
+.gpo-acc-title{font-weight:600;font-size:1rem;font-family:'Consolas',monospace;}
+.gpo-acc-sub{font-size:.72rem;color:var(--muted);margin-top:.2rem;}
+.gpo-acc-badges{display:flex;gap:.5rem;flex-wrap:wrap;}
+.acc-badge{font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;}
+.acc-badge-blue{background:rgba(79,110,247,.2);color:#7c9ffe;}
+.acc-badge-green{background:rgba(34,197,94,.15);color:var(--green);}
+.acc-badge-red{background:rgba(239,68,68,.15);color:var(--red);}
+.gpo-acc-body{padding:1.5rem;border-top:1px solid var(--border);}
+
+/* Scope links */
+.scope-section{margin-bottom:1.5rem;}
+.scope-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.6rem;}
+.link-pills{display:flex;flex-wrap:wrap;gap:.5rem;}
+.link-pill{padding:.4rem .8rem;border-radius:6px;font-size:.78rem;line-height:1.4;}
+.link-pill small{font-family:'Consolas',monospace;font-size:.68rem;opacity:.7;}
+.link-pill-on{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:#86efac;}
+.link-pill-off{background:rgba(75,85,99,.2);border:1px solid rgba(75,85,99,.4);color:#6b7280;}
+.tag-enforced{background:rgba(245,158,11,.2);color:#fbbf24;font-size:.65rem;padding:.1rem .35rem;border-radius:3px;margin-left:.3rem;font-weight:700;}
+
+/* Restricted group block */
+.rg-block{margin-bottom:1.5rem;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.rg-header{background:var(--surface2);padding:1rem 1.25rem;display:flex;align-items:center;gap:.9rem;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.rg-icon{width:36px;height:36px;border-radius:7px;background:linear-gradient(135deg,#4f6ef7,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.rg-name{font-weight:600;font-family:'Consolas',monospace;font-size:.95rem;}
+.rg-sid{font-size:.7rem;color:var(--muted);font-family:'Consolas',monospace;margin-top:.1rem;}
+.rg-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:.72rem;font-weight:700;padding:.2rem .65rem;border-radius:999px;}
+
+/* Table */
+.members-table{width:100%;border-collapse:collapse;}
+.members-table th{padding:.65rem 1rem;text-align:left;font-size:.67rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);background:rgba(255,255,255,.02);border-bottom:1px solid var(--border);white-space:nowrap;}
+.members-table td{padding:.8rem 1rem;border-bottom:1px solid rgba(46,51,80,.4);vertical-align:middle;}
+.members-table tr:last-child td{border-bottom:none;}
+.members-table tr:hover td{background:rgba(79,110,247,.05);}
+.row-group td{background:rgba(79,110,247,.04);}
+.num-col{color:var(--muted);font-size:.78rem;text-align:center;width:36px;}
+.mono{font-family:'Consolas',monospace;font-size:.85rem;}
+.small-text{font-size:.8rem;color:var(--muted);}
+.sid-cell{font-family:'Consolas',monospace;font-size:.68rem;color:var(--muted);max-width:230px;word-break:break-all;}
+.path-cell{font-size:.72rem;color:var(--muted);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default;}
+.nested-group{color:#a78bfa;font-weight:700;}
+
+/* Tags & badges */
+.tag{display:inline-flex;align-items:center;gap:.25rem;padding:.18rem .55rem;border-radius:4px;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
+.tag-user{background:#1e3a5f;color:#60a5fa;}
+.tag-group{background:#2d1b69;color:#a78bfa;}
+.tag-svc{background:#1a3a2a;color:#4ade80;}
+.tag-local{background:#3b2200;color:#fb923c;}
+.tag-comp{background:#1a2a3b;color:#38bdf8;}
+.badge{display:inline-block;padding:.15rem .5rem;border-radius:3px;font-size:.7rem;font-weight:700;text-transform:uppercase;}
+.badge-on{background:rgba(34,197,94,.15);color:var(--green);}
+.badge-off{background:rgba(239,68,68,.15);color:var(--red);}
+.badge-na{background:rgba(139,146,164,.1);color:var(--muted);}
+
+/* Analysis cards */
+.analysis-card{border-radius:10px;margin-bottom:1rem;overflow:hidden;border:1px solid;}
+.analysis-title{padding:.85rem 1.25rem;font-size:.82rem;font-weight:600;}
+.analysis-card.warn{border-color:rgba(245,158,11,.3);}.analysis-card.warn .analysis-title{background:rgba(245,158,11,.1);color:#fbbf24;}
+.analysis-card.danger{border-color:rgba(239,68,68,.3);}.analysis-card.danger .analysis-title{background:rgba(239,68,68,.1);color:#f87171;}
+.analysis-card.info{border-color:rgba(79,110,247,.3);}.analysis-card.info .analysis-title{background:rgba(79,110,247,.1);color:#7c9ffe;}
+.analysis-card.ok{border-color:rgba(34,197,94,.25);}.analysis-card.ok .analysis-title{background:rgba(34,197,94,.08);color:var(--green);}
+.analysis-card .members-table td,.analysis-card .members-table th{padding:.6rem 1rem;}
+
+/* GPO chips */
+.gpo-chip{display:inline-block;background:rgba(79,110,247,.15);border:1px solid rgba(79,110,247,.3);color:#7c9ffe;padding:.1rem .45rem;border-radius:4px;font-size:.72rem;margin:.1rem;}
+
+/* Legend */
+.legend{display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1rem;}
+
+/* Tab nav */
+.tab-nav{display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap;}
+.tab-btn{padding:.5rem 1.1rem;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;font-size:.82rem;font-weight:600;transition:all .15s;}
+.tab-btn:hover{border-color:var(--accent);color:var(--text);}
+.tab-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.tab-panel{display:none;} .tab-panel.active{display:block;}
+
+.footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border);text-align:center;color:var(--muted);font-size:.75rem;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-title">&#128737;&#65039; Restricted Groups Audit</div>
+  <div class="header-sub">Recursive Active Directory Membership Expansion &mdash; 3 GPO(s)</div>
+  <div class="meta-grid">
+    <div class="meta-item"><label>Domain</label><value>FCTG.NET</value></div>
+    <div class="meta-item"><label>GPOs Processed</label><value>3</value></div>
+    <div class="meta-item"><label>Name Filter</label><value>*Delegated*</value></div>
+    <div class="meta-item"><label>Report Generated</label><value>2026-04-20 16:15</value></div>
+  </div>
+</div>
+
+<!-- SUMMARY STATS -->
+<div class="summary-row">
+  <div class="stat-card"><div class="num c-blue">3</div><div class="lbl">GPOs</div></div>
+  <div class="stat-card"><div class="num c-purple">51</div><div class="lbl">Leaf Accounts</div></div>
+  <div class="stat-card"><div class="num c-green">6</div><div class="lbl">Service Accounts</div></div>
+  <div class="stat-card"><div class="num c-orange">13</div><div class="lbl">Cross-GPO Accounts</div></div>
+  <div class="stat-card"><div class="num c-red">0</div><div class="lbl">Disabled Accounts</div></div>
+</div>
+
+<!-- TABS -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('tab-gpos',this)">&#128230; GPO Memberships</button>
+  <button class="tab-btn" onclick="switchTab('tab-analysis',this)">&#128202; Analysis</button>
+</div>
+
+<!-- TAB: GPO Memberships -->
+<div id="tab-gpos" class="tab-panel active">
+  <div class="legend">
+    <span class="tag tag-group">&#127991; Domain Group</span>
+    <span class="tag tag-user">&#128100; User Account</span>
+    <span class="tag tag-svc">&#9881; Service Account</span>
+    <span class="tag tag-local">&#127968; Local Account</span>
+    <span class="tag tag-comp">&#128187; Computer</span>
+  </div>
+  <input class="search-bar" type="text" id="searchBox" placeholder="Filter by name, SID, email, path, GPO..." oninput="filterAll()">
+  <div id="gpo-list">
+    <div class="gpo-accordion" id="gpo_1">
+  <div class="gpo-acc-header" onclick="toggleAccordion('gpo_1')">
+    <div class="gpo-acc-left">
+      <span class="acc-arrow" id="arrow_gpo_1">&#9654;</span>
+      <div>
+        <div class="gpo-acc-title">DelegatedAdmin - RIFP</div>
+        <div class="gpo-acc-sub">{072322f5-3db9-486d-863c-24c94a87848a} &nbsp;|&nbsp; Domain: System.Xml.XmlElement &nbsp;|&nbsp; Modified: 2023-12-15T17:06:24</div>
+      </div>
+    </div>
+    <div class="gpo-acc-badges">
+      <span class="acc-badge acc-badge-blue">1 restricted groups</span>
+      <span class="acc-badge acc-badge-green">17 accounts</span>
+      
+    </div>
+  </div>
+  <div class="gpo-acc-body" id="body_gpo_1" style="display:none;">
+
+    <div class="scope-section">
+      <div class="scope-label">&#128205; GPO Scope (OU Links)</div>
+      <div class="link-pills"><span class='link-pill link-pill-off'>&#9675; Servers<br><small>FCTG.NET/Richmond/Servers</small></span> <span class='link-pill link-pill-off'>&#9675; Workstations<br><small>FCTG.NET/Richmond/Workstations</small></span> <span class='link-pill link-pill-on'>&#9679; Tag Boards<br><small>FCTG.NET/Richmond/Workstations/Tag Boards</small></span> </div>
+    </div>
+
+    <div class='rg-block'><div class='rg-header'><span class='rg-icon'>&#128273;</span><div><div class='rg-name'>BUILTIN\Administrators</div><div class='rg-sid'>SID: S-1-5-32-544</div></div><span class='rg-badge'>19 entries &bull; 17 leaf accounts</span></div><div style="overflow-x:auto;"><table class="members-table"><thead><tr><th>#</th><th>sAMAccountName</th><th>Display Name</th><th>Type</th><th>Status</th><th>Email</th><th>Last Logon</th><th>SID</th><th>Resolution Path</th></tr></thead><tbody><tr><td class='num-col'>1</td><td class='mono'><span style='padding-left:0px'>Veeambr28</span></td><td>—</td><td><span class="tag tag-svc">&#9881; Service Account</span></td><td><span class="badge badge-na">N/A</span></td><td class='small-text'>—</td><td class='small-text'>—</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24802</td><td class='path-cell' title='BUILTIN\Administrators'>BUILTIN\Administrators</td></tr><tr class="row-group"><td class='num-col'>2</td><td class='mono'><span class='nested-group' style='padding-left:0px'>&#9654; r_Richmond_Site_Admin</span></td><td>—</td><td><span class="tag tag-group">&#127991; Domain Group</span></td><td><span class="badge badge-na">N/A</span></td><td class='small-text'>—</td><td class='small-text'>—</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-20511</td><td class='path-cell' title='BUILTIN\Administrators'>BUILTIN\Administrators</td></tr><tr><td class='num-col'>3</td><td class='mono'><span style='padding-left:20px'>rifpadmin2</span></td><td>RIFPAdmin2</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-19</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24346</td><td class='path-cell' title='BUILTIN\Administrators → r_Richmond_Site_Admin'>BUILTIN\Administrators → r_Richmond_Site_Admin</td></tr><tr><td class='num-col'>4</td><td class='mono'><span style='padding-left:20px'>rifpadmin1</span></td><td>RIFPAdmin1</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-12</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24345</td><td class='path-cell' title='BUILTIN\Administrators → r_Richmond_Site_Admin'>BUILTIN\Administrators → r_Richmond_Site_Admin</td></tr><tr><td class='num-col'>5</td><td class='mono'><span style='padding-left:0px'>order00</span></td><td>—</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-na">N/A</span></td><td class='small-text'>—</td><td class='small-text'>—</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-3603</td><td class='path-cell' title='BUILTIN\Administrators'>BUILTIN\Administrators</td></tr><tr class="row-group"><td class='num-col'>6</td><td class='mono'><span class='nested-group' style='padding-left:0px'>&#9654; Domain Admins</span></td><td>—</td><td><span class="tag tag-group">&#127991; Domain Group</span></td><td><span class="badge badge-na">N/A</span></td><td class='small-text'>—</td><td class='small-text'>—</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-512</td><td class='path-cell' title='BUILTIN\Administrators'>BUILTIN\Administrators</td></tr><tr><td class='num-col'>7</td><td class='mono'><span style='padding-left:20px'>Administrator</span></td><td>Administrator</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>Administrator1@fctg.com</td><td class='small-text'>2026-04-11</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-500</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>8</td><td class='mono'><span style='padding-left:20px'>adsync.delinea</span></td><td>ADSync_Delinea</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-15</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24118</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>9</td><td class='mono'><span style='padding-left:20px'>Delinea.RPC</span></td><td>RPC_Delinea</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-18</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24119</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>10</td><td class='mono'><span style='padding-left:20px'>Delinea.Discovery</span></td><td>Discovery_Delinea</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-17</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24120</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>11</td><td class='mono'><span style='padding-left:20px'>netwrix.auditor</span></td><td>Netwrix_Auditor</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-13</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24667</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>12</td><td class='mono'><span style='padding-left:20px'>fctg_eptcntsvc</span></td><td>FCTG_EndpointCentral_Svc</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-20</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24751</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>13</td><td class='mono'><span style='padding-left:20px'>nagmsa$</span></td><td>—</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-na">N/A</span></td><td class='small-text'>—</td><td class='small-text'>—</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24778</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>14</td><td class='mono'><span style='padding-left:20px'>netwrixsrvcmon</span></td><td>Netwrix_ServicesMonitor</td><td><span class="tag tag-svc">&#9881; Service Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-13</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24381</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>15</td><td class='mono'><span style='padding-left:20px'>fctg_icoebtg</span></td><td>FCTG_ICOEBTG</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-18</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24825</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>16</td><td class='mono'><span style='padding-left:20px'>globaladmin1</span></td><td>GlobalAdmin1</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-16</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24807</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>17</td><td class='mono'><span style='padding-left:20px'>globaladmin2</span></td><td>GlobalAdmin2</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-15</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24808</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>18</td><td class='mono'><span style='padding-left:20px'>globaladmin3</span></td><td>GlobalAdmin3</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-17</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24848</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>19</td><td class='mono'><span style='padding-left:0px'>Administrator</span></td><td>—</td><td><span class="tag tag-local">&#127968; Local Account</span></td><td><span class="badge badge-na">N/A</span></td><td class='small-text'>—</td><td class='small-text'>—</td><td class='sid-cell'></td><td class='path-cell' title='BUILTIN\Administrators'>BUILTIN\Administrators</td></tr></tbody></table></div></div>
+  </div>
+</div><div class="gpo-accordion" id="gpo_2">
+  <div class="gpo-acc-header" onclick="toggleAccordion('gpo_2')">
+    <div class="gpo-acc-left">
+      <span class="acc-arrow" id="arrow_gpo_2">&#9654;</span>
+      <div>
+        <div class="gpo-acc-title">DelegatedAdmin - SIFP</div>
+        <div class="gpo-acc-sub">{187b15ca-a6fb-4352-a6dd-be68af1efb9d} &nbsp;|&nbsp; Domain: System.Xml.XmlElement &nbsp;|&nbsp; Modified: 2023-12-15T17:06:22</div>
+      </div>
+    </div>
+    <div class="gpo-acc-badges">
+      <span class="acc-badge acc-badge-blue">1 restricted groups</span>
+      <span class="acc-badge acc-badge-green">17 accounts</span>
+      
+    </div>
+  </div>
+  <div class="gpo-acc-body" id="body_gpo_2" style="display:none;">
+
+    <div class="scope-section">
+      <div class="scope-label">&#128205; GPO Scope (OU Links)</div>
+      <div class="link-pills"><span class='link-pill link-pill-on'>&#9679; Servers<br><small>FCTG.NET/Seaboard/Servers</small></span> <span class='link-pill link-pill-off'>&#9675; Workstations<br><small>FCTG.NET/Seaboard/Workstations</small></span> <span class='link-pill link-pill-on'>&#9679; Test<br><small>FCTG.NET/Seaboard/Workstations/Test</small></span> <span class='link-pill link-pill-on'>&#9679; Admin Workstations<br><small>FCTG.NET/Seaboard/Workstations/Admin Workstations</small></span> </div>
+    </div>
+
+    <div class='rg-block'><div class='rg-header'><span class='rg-icon'>&#128273;</span><div><div class='rg-name'>BUILTIN\Administrators</div><div class='rg-sid'>SID: S-1-5-32-544</div></div><span class='rg-badge'>19 entries &bull; 17 leaf accounts</span></div><div style="overflow-x:auto;"><table class="members-table"><thead><tr><th>#</th><th>sAMAccountName</th><th>Display Name</th><th>Type</th><th>Status</th><th>Email</th><th>Last Logon</th><th>SID</th><th>Resolution Path</th></tr></thead><tbody><tr><td class='num-col'>1</td><td class='mono'><span style='padding-left:0px'>veeam.sifp</span></td><td>—</td><td><span class="tag tag-svc">&#9881; Service Account</span></td><td><span class="badge badge-na">N/A</span></td><td class='small-text'>—</td><td class='small-text'>—</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-20730</td><td class='path-cell' title='BUILTIN\Administrators'>BUILTIN\Administrators</td></tr><tr class="row-group"><td class='num-col'>2</td><td class='mono'><span class='nested-group' style='padding-left:0px'>&#9654; r_Seaboard_Site_Admin</span></td><td>—</td><td><span class="tag tag-group">&#127991; Domain Group</span></td><td><span class="badge badge-na">N/A</span></td><td class='small-text'>—</td><td class='small-text'>—</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-20121</td><td class='path-cell' title='BUILTIN\Administrators'>BUILTIN\Administrators</td></tr><tr><td class='num-col'>3</td><td class='mono'><span style='padding-left:20px'>sifpadmin2</span></td><td>SIFPAdmin2</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-19</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24348</td><td class='path-cell' title='BUILTIN\Administrators → r_Seaboard_Site_Admin'>BUILTIN\Administrators → r_Seaboard_Site_Admin</td></tr><tr><td class='num-col'>4</td><td class='mono'><span style='padding-left:20px'>sifpadmin1</span></td><td>SIFPAdmin1</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-18</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24347</td><td class='path-cell' title='BUILTIN\Administrators → r_Seaboard_Site_Admin'>BUILTIN\Administrators → r_Seaboard_Site_Admin</td></tr><tr><td class='num-col'>5</td><td class='mono'><span style='padding-left:0px'>order00</span></td><td>—</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-na">N/A</span></td><td class='small-text'>—</td><td class='small-text'>—</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-3603</td><td class='path-cell' title='BUILTIN\Administrators'>BUILTIN\Administrators</td></tr><tr class="row-group"><td class='num-col'>6</td><td class='mono'><span class='nested-group' style='padding-left:0px'>&#9654; Domain Admins</span></td><td>—</td><td><span class="tag tag-group">&#127991; Domain Group</span></td><td><span class="badge badge-na">N/A</span></td><td class='small-text'>—</td><td class='small-text'>—</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-512</td><td class='path-cell' title='BUILTIN\Administrators'>BUILTIN\Administrators</td></tr><tr><td class='num-col'>7</td><td class='mono'><span style='padding-left:20px'>Administrator</span></td><td>Administrator</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>Administrator1@fctg.com</td><td class='small-text'>2026-04-11</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-500</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>8</td><td class='mono'><span style='padding-left:20px'>adsync.delinea</span></td><td>ADSync_Delinea</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-15</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24118</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>9</td><td class='mono'><span style='padding-left:20px'>Delinea.RPC</span></td><td>RPC_Delinea</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-18</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24119</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>10</td><td class='mono'><span style='padding-left:20px'>Delinea.Discovery</span></td><td>Discovery_Delinea</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-17</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24120</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>11</td><td class='mono'><span style='padding-left:20px'>netwrix.auditor</span></td><td>Netwrix_Auditor</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-13</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24667</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>12</td><td class='mono'><span style='padding-left:20px'>fctg_eptcntsvc</span></td><td>FCTG_EndpointCentral_Svc</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-20</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24751</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>13</td><td class='mono'><span style='padding-left:20px'>nagmsa$</span></td><td>—</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-na">N/A</span></td><td class='small-text'>—</td><td class='small-text'>—</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24778</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>14</td><td class='mono'><span style='padding-left:20px'>netwrixsrvcmon</span></td><td>Netwrix_ServicesMonitor</td><td><span class="tag tag-svc">&#9881; Service Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-13</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24381</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>15</td><td class='mono'><span style='padding-left:20px'>fctg_icoebtg</span></td><td>FCTG_ICOEBTG</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-18</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24825</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>16</td><td class='mono'><span style='padding-left:20px'>globaladmin1</span></td><td>GlobalAdmin1</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-16</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24807</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>17</td><td class='mono'><span style='padding-left:20px'>globaladmin2</span></td><td>GlobalAdmin2</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-15</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24808</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>18</td><td class='mono'><span style='padding-left:20px'>globaladmin3</span></td><td>GlobalAdmin3</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-17</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24848</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>19</td><td class='mono'><span style='padding-left:0px'>Administrator</span></td><td>—</td><td><span class="tag tag-local">&#127968; Local Account</span></td><td><span class="badge badge-na">N/A</span></td><td class='small-text'>—</td><td class='small-text'>—</td><td class='sid-cell'></td><td class='path-cell' title='BUILTIN\Administrators'>BUILTIN\Administrators</td></tr></tbody></table></div></div>
+  </div>
+</div><div class="gpo-accordion" id="gpo_3">
+  <div class="gpo-acc-header" onclick="toggleAccordion('gpo_3')">
+    <div class="gpo-acc-left">
+      <span class="acc-arrow" id="arrow_gpo_3">&#9654;</span>
+      <div>
+        <div class="gpo-acc-title">DelegatedAdmin - TIFP</div>
+        <div class="gpo-acc-sub">{e8a17927-5e59-4e70-bacd-dea74c6733cd} &nbsp;|&nbsp; Domain: System.Xml.XmlElement &nbsp;|&nbsp; Modified: 2023-12-15T17:06:24</div>
+      </div>
+    </div>
+    <div class="gpo-acc-badges">
+      <span class="acc-badge acc-badge-blue">2 restricted groups</span>
+      <span class="acc-badge acc-badge-green">17 accounts</span>
+      
+    </div>
+  </div>
+  <div class="gpo-acc-body" id="body_gpo_3" style="display:none;">
+
+    <div class="scope-section">
+      <div class="scope-label">&#128205; GPO Scope (OU Links)</div>
+      <div class="link-pills"><span class='link-pill link-pill-off'>&#9675; Workstations<br><small>FCTG.NET/Tampa/Workstations</small></span> <span class='link-pill link-pill-off'>&#9675; Servers<br><small>FCTG.NET/Tampa/Servers</small></span> </div>
+    </div>
+
+    <div class='rg-block'><div class='rg-header'><span class='rg-icon'>&#128273;</span><div><div class='rg-name'>BUILTIN\Administrators</div><div class='rg-sid'>SID: S-1-5-32-544</div></div><span class='rg-badge'>19 entries &bull; 17 leaf accounts</span></div><div style="overflow-x:auto;"><table class="members-table"><thead><tr><th>#</th><th>sAMAccountName</th><th>Display Name</th><th>Type</th><th>Status</th><th>Email</th><th>Last Logon</th><th>SID</th><th>Resolution Path</th></tr></thead><tbody><tr class="row-group"><td class='num-col'>1</td><td class='mono'><span class='nested-group' style='padding-left:0px'>&#9654; r_Tampa_Site_Admin</span></td><td>—</td><td><span class="tag tag-group">&#127991; Domain Group</span></td><td><span class="badge badge-na">N/A</span></td><td class='small-text'>—</td><td class='small-text'>—</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-20476</td><td class='path-cell' title='BUILTIN\Administrators'>BUILTIN\Administrators</td></tr><tr><td class='num-col'>2</td><td class='mono'><span style='padding-left:20px'>TIFPBackup</span></td><td>TIFPBackup</td><td><span class="tag tag-svc">&#9881; Service Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-18</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24830</td><td class='path-cell' title='BUILTIN\Administrators → r_Tampa_Site_Admin'>BUILTIN\Administrators → r_Tampa_Site_Admin</td></tr><tr><td class='num-col'>3</td><td class='mono'><span style='padding-left:20px'>tifpadmin2</span></td><td>TIFPAdmin2</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-16</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24350</td><td class='path-cell' title='BUILTIN\Administrators → r_Tampa_Site_Admin'>BUILTIN\Administrators → r_Tampa_Site_Admin</td></tr><tr><td class='num-col'>4</td><td class='mono'><span style='padding-left:20px'>tifpadmin1</span></td><td>TIFPAdmin1</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-12</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24349</td><td class='path-cell' title='BUILTIN\Administrators → r_Tampa_Site_Admin'>BUILTIN\Administrators → r_Tampa_Site_Admin</td></tr><tr><td class='num-col'>5</td><td class='mono'><span style='padding-left:0px'>order00</span></td><td>—</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-na">N/A</span></td><td class='small-text'>—</td><td class='small-text'>—</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-3603</td><td class='path-cell' title='BUILTIN\Administrators'>BUILTIN\Administrators</td></tr><tr class="row-group"><td class='num-col'>6</td><td class='mono'><span class='nested-group' style='padding-left:0px'>&#9654; Domain Admins</span></td><td>—</td><td><span class="tag tag-group">&#127991; Domain Group</span></td><td><span class="badge badge-na">N/A</span></td><td class='small-text'>—</td><td class='small-text'>—</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-512</td><td class='path-cell' title='BUILTIN\Administrators'>BUILTIN\Administrators</td></tr><tr><td class='num-col'>7</td><td class='mono'><span style='padding-left:20px'>Administrator</span></td><td>Administrator</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>Administrator1@fctg.com</td><td class='small-text'>2026-04-11</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-500</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>8</td><td class='mono'><span style='padding-left:20px'>adsync.delinea</span></td><td>ADSync_Delinea</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-15</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24118</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>9</td><td class='mono'><span style='padding-left:20px'>Delinea.RPC</span></td><td>RPC_Delinea</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-18</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24119</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>10</td><td class='mono'><span style='padding-left:20px'>Delinea.Discovery</span></td><td>Discovery_Delinea</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-17</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24120</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>11</td><td class='mono'><span style='padding-left:20px'>netwrix.auditor</span></td><td>Netwrix_Auditor</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-13</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24667</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>12</td><td class='mono'><span style='padding-left:20px'>fctg_eptcntsvc</span></td><td>FCTG_EndpointCentral_Svc</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-20</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24751</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>13</td><td class='mono'><span style='padding-left:20px'>nagmsa$</span></td><td>—</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-na">N/A</span></td><td class='small-text'>—</td><td class='small-text'>—</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24778</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>14</td><td class='mono'><span style='padding-left:20px'>netwrixsrvcmon</span></td><td>Netwrix_ServicesMonitor</td><td><span class="tag tag-svc">&#9881; Service Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-13</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24381</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>15</td><td class='mono'><span style='padding-left:20px'>fctg_icoebtg</span></td><td>FCTG_ICOEBTG</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-18</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24825</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>16</td><td class='mono'><span style='padding-left:20px'>globaladmin1</span></td><td>GlobalAdmin1</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-16</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24807</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>17</td><td class='mono'><span style='padding-left:20px'>globaladmin2</span></td><td>GlobalAdmin2</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-15</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24808</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>18</td><td class='mono'><span style='padding-left:20px'>globaladmin3</span></td><td>GlobalAdmin3</td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td><td class='small-text'>2026-04-17</td><td class='sid-cell'>S-1-5-21-1177238915-362288127-1801674531-24848</td><td class='path-cell' title='BUILTIN\Administrators → Domain Admins'>BUILTIN\Administrators → Domain Admins</td></tr><tr><td class='num-col'>19</td><td class='mono'><span style='padding-left:0px'>Administrator</span></td><td>—</td><td><span class="tag tag-local">&#127968; Local Account</span></td><td><span class="badge badge-na">N/A</span></td><td class='small-text'>—</td><td class='small-text'>—</td><td class='sid-cell'></td><td class='path-cell' title='BUILTIN\Administrators'>BUILTIN\Administrators</td></tr></tbody></table></div></div><div class='rg-block'><div class='rg-header'><span class='rg-icon'>&#128273;</span><div><div class='rg-name'>LocalAdms</div><div class='rg-sid'>SID: </div></div><span class='rg-badge'>0 entries &bull; 0 leaf accounts</span></div><div style="overflow-x:auto;"><table class="members-table"><thead><tr><th>#</th><th>sAMAccountName</th><th>Display Name</th><th>Type</th><th>Status</th><th>Email</th><th>Last Logon</th><th>SID</th><th>Resolution Path</th></tr></thead><tbody></tbody></table></div></div>
+  </div>
+</div>
+  </div>
+</div>
+
+<!-- TAB: Analysis -->
+<div id="tab-analysis" class="tab-panel">
+
+  <div class="section-title">Cross-GPO Account Overlap</div>
+  <div class="analysis-card warn"><div class="analysis-title">&#9888;&#65039; Accounts Present in Multiple GPOs</div><div style="overflow-x:auto;"><table class="members-table"><thead><tr><th>sAMAccountName</th><th>GPOs</th><th>Type</th><th>Status</th><th>Email</th></tr></thead><tbody><tr><td class='mono'>Administrator</td><td><span class='gpo-chip'>DelegatedAdmin - RIFP</span> <span class='gpo-chip'>DelegatedAdmin - SIFP</span> <span class='gpo-chip'>DelegatedAdmin - TIFP</span></td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>Administrator1@fctg.com</td></tr><tr><td class='mono'>adsync.delinea</td><td><span class='gpo-chip'>DelegatedAdmin - RIFP</span> <span class='gpo-chip'>DelegatedAdmin - SIFP</span> <span class='gpo-chip'>DelegatedAdmin - TIFP</span></td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td></tr><tr><td class='mono'>Delinea.Discovery</td><td><span class='gpo-chip'>DelegatedAdmin - RIFP</span> <span class='gpo-chip'>DelegatedAdmin - SIFP</span> <span class='gpo-chip'>DelegatedAdmin - TIFP</span></td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td></tr><tr><td class='mono'>Delinea.RPC</td><td><span class='gpo-chip'>DelegatedAdmin - RIFP</span> <span class='gpo-chip'>DelegatedAdmin - SIFP</span> <span class='gpo-chip'>DelegatedAdmin - TIFP</span></td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td></tr><tr><td class='mono'>fctg_eptcntsvc</td><td><span class='gpo-chip'>DelegatedAdmin - RIFP</span> <span class='gpo-chip'>DelegatedAdmin - SIFP</span> <span class='gpo-chip'>DelegatedAdmin - TIFP</span></td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td></tr><tr><td class='mono'>fctg_icoebtg</td><td><span class='gpo-chip'>DelegatedAdmin - RIFP</span> <span class='gpo-chip'>DelegatedAdmin - SIFP</span> <span class='gpo-chip'>DelegatedAdmin - TIFP</span></td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td></tr><tr><td class='mono'>globaladmin1</td><td><span class='gpo-chip'>DelegatedAdmin - RIFP</span> <span class='gpo-chip'>DelegatedAdmin - SIFP</span> <span class='gpo-chip'>DelegatedAdmin - TIFP</span></td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td></tr><tr><td class='mono'>globaladmin2</td><td><span class='gpo-chip'>DelegatedAdmin - RIFP</span> <span class='gpo-chip'>DelegatedAdmin - SIFP</span> <span class='gpo-chip'>DelegatedAdmin - TIFP</span></td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td></tr><tr><td class='mono'>globaladmin3</td><td><span class='gpo-chip'>DelegatedAdmin - RIFP</span> <span class='gpo-chip'>DelegatedAdmin - SIFP</span> <span class='gpo-chip'>DelegatedAdmin - TIFP</span></td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td></tr><tr><td class='mono'>nagmsa$</td><td><span class='gpo-chip'>DelegatedAdmin - RIFP</span> <span class='gpo-chip'>DelegatedAdmin - SIFP</span> <span class='gpo-chip'>DelegatedAdmin - TIFP</span></td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-na">N/A</span></td><td class='small-text'>—</td></tr><tr><td class='mono'>netwrix.auditor</td><td><span class='gpo-chip'>DelegatedAdmin - RIFP</span> <span class='gpo-chip'>DelegatedAdmin - SIFP</span> <span class='gpo-chip'>DelegatedAdmin - TIFP</span></td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td></tr><tr><td class='mono'>netwrixsrvcmon</td><td><span class='gpo-chip'>DelegatedAdmin - RIFP</span> <span class='gpo-chip'>DelegatedAdmin - SIFP</span> <span class='gpo-chip'>DelegatedAdmin - TIFP</span></td><td><span class="tag tag-svc">&#9881; Service Account</span></td><td><span class="badge badge-on">&#10003; Enabled</span></td><td class='small-text'>—</td></tr><tr><td class='mono'>order00</td><td><span class='gpo-chip'>DelegatedAdmin - RIFP</span> <span class='gpo-chip'>DelegatedAdmin - SIFP</span> <span class='gpo-chip'>DelegatedAdmin - TIFP</span></td><td><span class="tag tag-user">&#128100; User Account</span></td><td><span class="badge badge-na">N/A</span></td><td class='small-text'>—</td></tr></tbody></table></div></div>
+
+  <div class="section-title">Disabled Accounts</div>
+  <div class="analysis-card ok"><div class="analysis-title">&#10003; No disabled accounts found with local admin access</div></div>
+
+  <div class="section-title">Service Accounts</div>
+  <div class="analysis-card info"><div class="analysis-title">&#9881; Service Accounts with Local Admin Access</div><div style="overflow-x:auto;"><table class="members-table"><thead><tr><th>sAMAccountName</th><th>GPO(s)</th><th>Restricted Group</th><th>Status</th></tr></thead><tbody><tr><td class='mono'>netwrixsrvcmon</td><td><span class='gpo-chip'>DelegatedAdmin - RIFP</span> <span class='gpo-chip'>DelegatedAdmin - SIFP</span> <span class='gpo-chip'>DelegatedAdmin - TIFP</span></td><td class='mono'>BUILTIN\Administrators</td><td><span class="badge badge-on">&#10003; Enabled</span></td></tr><tr><td class='mono'>TIFPBackup</td><td><span class='gpo-chip'>DelegatedAdmin - TIFP</span></td><td class='mono'>BUILTIN\Administrators</td><td><span class="badge badge-on">&#10003; Enabled</span></td></tr><tr><td class='mono'>veeam.sifp</td><td><span class='gpo-chip'>DelegatedAdmin - SIFP</span></td><td class='mono'>BUILTIN\Administrators</td><td><span class="badge badge-na">N/A</span></td></tr><tr><td class='mono'>Veeambr28</td><td><span class='gpo-chip'>DelegatedAdmin - RIFP</span></td><td class='mono'>BUILTIN\Administrators</td><td><span class="badge badge-na">N/A</span></td></tr></tbody></table></div></div>
+
+</div>
+
+<div class="footer">
+  Restricted Groups Audit &nbsp;|&nbsp; Domain: FCTG.NET &nbsp;|&nbsp; 3 GPO(s) &nbsp;|&nbsp; Generated: 2026-04-20 16:15
+</div>
+
+<script>
+// Tab switching
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// Accordion toggle
+function toggleAccordion(id) {
+  const body  = document.getElementById('body_'  + id);
+  const arrow = document.getElementById('arrow_' + id);
+  const open  = body.style.display !== 'none';
+  body.style.display  = open ? 'none' : 'block';
+  arrow.classList.toggle('open', !open);
+}
+
+// Global filter — expands matching accordions
+function filterAll() {
+  const q = document.getElementById('searchBox').value.toLowerCase().trim();
+  document.querySelectorAll('.gpo-accordion').forEach(acc => {
+    const body   = acc.querySelector('[id^="body_"]');
+    const arrow  = acc.querySelector('.acc-arrow');
+    const rows   = acc.querySelectorAll('.members-table tbody tr');
+    let anyMatch = false;
+    rows.forEach(row => {
+      const match = !q || row.textContent.toLowerCase().includes(q);
+      row.style.display = match ? '' : 'none';
+      if (match) anyMatch = true;
+    });
+    if (q) {
+      body.style.display = anyMatch ? 'block' : 'none';
+      if (anyMatch) arrow.classList.add('open'); else arrow.classList.remove('open');
+      acc.style.display = anyMatch ? '' : 'none';
+    } else {
+      acc.style.display = '';
+      body.style.display = 'none';
+      arrow.classList.remove('open');
+    }
+  });
+}
+</script>
+</body>
+</html>
