@@ -43,6 +43,11 @@
     With file-based sources it shows after scanning, before any AD queries run.
     Hold Ctrl or Shift to select multiple rows. Click OK to proceed.
 
+.PARAMETER SaveXmlFolder
+    When using -AutoDiscover, save each fetched GPO XML report to this folder.
+    Files are named <GPODisplayName>_<GUID>.xml (display name is sanitized for the
+    filesystem). The folder is created if it does not already exist.
+
 .PARAMETER OutputPath
     Full path for the HTML report.
     Default: <script dir>\RestrictedGroups_Report_<timestamp>.html
@@ -58,6 +63,14 @@
 .EXAMPLE
     # Auto-discover all DelegatedAdmin GPOs (no picker)
     .\Expand-RestrictedGroups.ps1 -AutoDiscover
+
+.EXAMPLE
+    # Auto-discover and save the raw XML files for later reuse
+    .\Expand-RestrictedGroups.ps1 -AutoDiscover -SaveXmlFolder "C:\GPOExports"
+
+.EXAMPLE
+    # Auto-discover, pick interactively, and save selected XML files
+    .\Expand-RestrictedGroups.ps1 -AutoDiscover -PickGPOs -SaveXmlFolder "C:\GPOExports"
 
 .EXAMPLE
     # Supply specific files
@@ -80,8 +93,9 @@ param(
 
     [switch]$PickGPOs,
 
-    [string[]]$XmlPaths  = @(),
-    [string]$XmlFolder   = '',
+    [string[]]$XmlPaths    = @(),
+    [string]$XmlFolder     = '',
+    [string]$SaveXmlFolder = '',
 
     [string]$OutputPath  = (Join-Path $PSScriptRoot (
         "RestrictedGroups_Report_{0}.html" -f (Get-Date -Format 'yyyyMMdd_HHmm')
@@ -275,10 +289,25 @@ if ($AutoDiscover) {
             }
         }
 
+        # Prepare save folder once, before the fetch loop
+        if ($SaveXmlFolder) {
+            if (-not (Test-Path $SaveXmlFolder)) {
+                New-Item -ItemType Directory -Path $SaveXmlFolder -Force | Out-Null
+                Write-Host "  Created XML save folder: $SaveXmlFolder" -ForegroundColor Gray
+            }
+        }
+
         foreach ($gpo in $matchedGPOs) {
             Write-Host "    Fetching XML: $($gpo.DisplayName) {$($gpo.Id)}" -ForegroundColor DarkGray
             $reportXml = Get-GPOReport -Guid $gpo.Id -ReportType Xml -Domain $Domain
             $xmlSources.Add(@{ Label = $gpo.DisplayName; Xml = [xml]$reportXml })
+
+            if ($SaveXmlFolder) {
+                $safeName  = $gpo.DisplayName -replace '[\\/:*?"<>|]', '_'
+                $xmlFile   = Join-Path $SaveXmlFolder ("{0}_{1}.xml" -f $safeName, $gpo.Id)
+                $reportXml | Out-File -FilePath $xmlFile -Encoding Unicode -NoNewline
+                Write-Host "      Saved: $xmlFile" -ForegroundColor DarkGray
+            }
         }
     }
 }
@@ -632,6 +661,87 @@ if ($svcRows.Count -gt 0) {
     $svcHtml += '</tbody></table></div></div>'
 }
 
+# ── By-OU view ──
+# Build a map: OUPath → list of {Gpo, Link} entries
+$ouMap = @{}
+foreach ($gpo in $allGpos) {
+    foreach ($lk in $gpo.Links) {
+        $key = $lk.OUPath
+        if (-not $ouMap.ContainsKey($key)) {
+            $ouMap[$key] = [System.Collections.Generic.List[PSCustomObject]]::new()
+        }
+        $ouMap[$key].Add([PSCustomObject]@{ Gpo = $gpo; Link = $lk })
+    }
+}
+
+$ouSections = ''
+$ouIndex = 0
+foreach ($ouPath in ($ouMap.Keys | Sort-Object)) {
+    $ouIndex++
+    $ouId      = "ou_$ouIndex"
+    $entries   = $ouMap[$ouPath]
+    $ouName    = $entries[0].Link.OUName
+
+    $linkedGpoNames = @($entries | ForEach-Object { $_.Gpo.GpoName })
+    $ouRows     = @($masterList | Where-Object { $linkedGpoNames -contains $_.GpoName })
+    $ouLeafs    = @($ouRows | Where-Object IsLeaf).Count
+    $ouDisabled = @($ouRows | Where-Object { $_.Enabled -eq $false }).Count
+
+    # GPO pills for this OU
+    $ouGpoPills = ''
+    foreach ($entry in $entries) {
+        $lk   = $entry.Link
+        $cls  = if ($lk.Enabled) { 'link-pill-on' } else { 'link-pill-off' }
+        $dot  = if ($lk.Enabled) { '&#9679;' } else { '&#9675;' }
+        $noov = if ($lk.NoOverride) { ' <span class="tag-enforced">Enforced</span>' } else { '' }
+        $ouGpoPills += "<span class='link-pill $cls'>$dot $(Escape-Html $entry.Gpo.GpoName)$noov</span> "
+    }
+
+    # Per restricted-group subsections within this OU
+    $ouRgSections = ''
+    foreach ($entry in $entries) {
+        $gpo = $entry.Gpo
+        foreach ($rg in $gpo.RestrictedGroups) {
+            $rgRows = @($ouRows | Where-Object { $_.GpoName -eq $gpo.GpoName -and $_.RestrictedGroup -eq $rg.GroupName })
+            if ($rgRows.Count -eq 0) { continue }
+            $rgLeafs = @($rgRows | Where-Object IsLeaf).Count
+            $ouRgSections += "<div class='rg-block'>"
+            $ouRgSections += "<div class='rg-header'><span class='rg-icon'>&#128273;</span>"
+            $ouRgSections += "<div><div class='rg-name'>$(Escape-Html $rg.GroupName)</div>"
+            $ouRgSections += "<div class='rg-sid'><span class='gpo-chip'>$(Escape-Html $gpo.GpoName)</span> &nbsp; SID: $(Escape-Html $rg.GroupSID)</div></div>"
+            $ouRgSections += "<span class='rg-badge'>$($rgRows.Count) entries &bull; $rgLeafs leaf accounts</span></div>"
+            $ouRgSections += (Build-MembersTable ([System.Collections.Generic.List[PSCustomObject]]($rgRows)))
+            $ouRgSections += "</div>"
+        }
+    }
+
+    $ouSections += @"
+<div class="gpo-accordion" id="$ouId">
+  <div class="gpo-acc-header" onclick="toggleAccordion('$ouId')">
+    <div class="gpo-acc-left">
+      <span class="acc-arrow" id="arrow_$ouId">&#9654;</span>
+      <div>
+        <div class="gpo-acc-title">$(Escape-Html $ouName)</div>
+        <div class="gpo-acc-sub">$(Escape-Html $ouPath)</div>
+      </div>
+    </div>
+    <div class="gpo-acc-badges">
+      <span class="acc-badge acc-badge-blue">$($entries.Count) GPO(s)</span>
+      <span class="acc-badge acc-badge-green">$ouLeafs accounts</span>
+      $(if ($ouDisabled -gt 0) { "<span class='acc-badge acc-badge-red'>$ouDisabled disabled</span>" })
+    </div>
+  </div>
+  <div class="gpo-acc-body" id="body_$ouId" style="display:none;">
+    <div class="scope-section">
+      <div class="scope-label">&#128230; GPOs Linked to This OU</div>
+      <div class="link-pills">$ouGpoPills</div>
+    </div>
+    $ouRgSections
+  </div>
+</div>
+"@
+}
+
 # ══════════════════════════════════════════════════════
 #  Final HTML assembly
 # ══════════════════════════════════════════════════════
@@ -787,6 +897,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 <div class="tab-nav">
   <button class="tab-btn active" onclick="switchTab('tab-gpos',this)">&#128230; GPO Memberships</button>
   <button class="tab-btn" onclick="switchTab('tab-analysis',this)">&#128202; Analysis</button>
+  <button class="tab-btn" onclick="switchTab('tab-ou',this)">&#128205; By OU</button>
 </div>
 
 <!-- TAB: GPO Memberships -->
@@ -816,6 +927,20 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   <div class="section-title">Service Accounts</div>
   $svcHtml
 
+</div>
+
+<!-- TAB: By OU -->
+<div id="tab-ou" class="tab-panel">
+  <div class="legend">
+    <span class="tag tag-group">&#127991; Domain Group</span>
+    <span class="tag tag-user">&#128100; User Account</span>
+    <span class="tag tag-svc">&#9881; Service Account</span>
+    <span class="tag tag-local">&#127968; Local Account</span>
+    <span class="tag tag-comp">&#128187; Computer</span>
+  </div>
+  <div id="ou-list">
+    $ouSections
+  </div>
 </div>
 
 <div class="footer">
