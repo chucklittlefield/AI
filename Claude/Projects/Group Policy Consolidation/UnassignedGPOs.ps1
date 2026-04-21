@@ -140,19 +140,29 @@ $unlinked = @($allGpos | Where-Object {
 
 Write-Host "  Unlinked GPOs found: $($unlinked.Count)" -ForegroundColor Yellow
 
+# Safe property helper — returns $null without throwing under Set-StrictMode
+function Get-GpoProp ([object]$Gpo, [string]$Name) {
+    $p = $Gpo.PSObject.Properties[$Name]
+    if ($p) { return $p.Value } else { return $null }
+}
+
 # Build enriched result objects
 $results = foreach ($gpo in $unlinked) {
-    $wmiFilter = if ($gpo.WmiFilter) { $gpo.WmiFilter.Name } else { '' }
+    $createTime = Get-GpoProp $gpo 'CreationTime'
+    $modTime    = Get-GpoProp $gpo 'ModificationTime'
+    $wmiObj     = Get-GpoProp $gpo 'WmiFilter'
+    $wmiFilter  = if ($wmiObj) { "$((Get-GpoProp $wmiObj 'Name') ?? '')" } else { '' }
+
     [PSCustomObject]@{
-        Name           = $gpo.DisplayName
-        GUID           = "{$($gpo.Id)}"
-        Status         = $gpo.GpoStatus.ToString()
-        Created        = $gpo.CreationTime.ToString('yyyy-MM-dd HH:mm')
-        Modified       = $gpo.ModificationTime.ToString('yyyy-MM-dd HH:mm')
-        Owner          = $gpo.Owner
-        WmiFilter      = $wmiFilter
-        Description    = $gpo.Description
-        DaysSinceEdit  = [int]((Get-Date) - $gpo.ModificationTime).TotalDays
+        Name          = "$((Get-GpoProp $gpo 'DisplayName') ?? '')"
+        GUID          = "{$($gpo.Id)}"
+        Status        = "$((Get-GpoProp $gpo 'GpoStatus') ?? 'Unknown')"
+        Created       = if ($createTime) { $createTime.ToString('yyyy-MM-dd HH:mm') } else { 'N/A' }
+        Modified      = if ($modTime)    { $modTime.ToString('yyyy-MM-dd HH:mm') }    else { 'N/A' }
+        Owner         = "$((Get-GpoProp $gpo 'Owner') ?? '')"
+        WmiFilter     = $wmiFilter
+        Description   = "$((Get-GpoProp $gpo 'Description') ?? '')"
+        DaysSinceEdit = if ($modTime) { [int]((Get-Date) - $modTime).TotalDays } else { -1 }
     }
 }
 

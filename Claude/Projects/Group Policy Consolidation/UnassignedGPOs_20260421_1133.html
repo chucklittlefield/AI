@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unlinked GPO Audit – FCTG.NET</title>
+<style>
+:root {
+  --bg:#0f1117; --surface:#1a1d27; --surface2:#22263a; --border:#2e3350;
+  --accent:#4f6ef7; --accent2:#7c3aed; --green:#22c55e; --red:#ef4444;
+  --yellow:#f59e0b; --orange:#fb923c; --text:#e2e8f0; --muted:#8892a4;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;padding:2rem;line-height:1.5;}
+
+/* Header */
+.header{background:linear-gradient(135deg,#1a1d27,#22263a);border:1px solid var(--border);border-radius:12px;padding:2rem 2.5rem;margin-bottom:2rem;position:relative;overflow:hidden;}
+.header::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));}
+.header-title{font-size:1.7rem;font-weight:700;background:linear-gradient(135deg,#e2e8f0,#94a3b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.header-sub{color:var(--muted);font-size:.9rem;margin-top:.3rem;}
+.meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);}
+.meta-item label{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:.2rem;}
+.meta-item value{font-size:.88rem;font-weight:500;font-family:'Consolas',monospace;}
+
+/* Stats */
+.summary-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:2rem;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.2rem 1.5rem;text-align:center;}
+.stat-card .num{font-size:2.2rem;font-weight:800;line-height:1;margin-bottom:.25rem;}
+.stat-card .lbl{color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;}
+.c-blue{color:var(--accent)} .c-purple{color:#a78bfa} .c-green{color:var(--green)}
+.c-orange{color:var(--orange)} .c-red{color:var(--red)} .c-yellow{color:var(--yellow)}
+
+/* Search */
+.search-bar{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem .7rem 2.5rem;color:var(--text);font-size:.9rem;margin-bottom:1.25rem;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238892a4' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:.8rem center;}
+.search-bar:focus{border-color:var(--accent);}
+
+/* Filter pills */
+.filter-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.25rem;align-items:center;}
+.filter-lbl{font-size:.75rem;color:var(--muted);margin-right:.25rem;}
+.filter-pill{padding:.35rem .85rem;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;font-size:.75rem;font-weight:600;transition:all .15s;}
+.filter-pill:hover{border-color:var(--accent);color:var(--text);}
+.filter-pill.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+/* Table */
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;}
+th{padding:.7rem 1rem;text-align:left;font-size:.67rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
+th:hover{color:var(--text);}
+th .sort-arrow{margin-left:.3rem;opacity:.4;font-size:.6rem;}
+th.sorted .sort-arrow{opacity:1;color:var(--accent);}
+td{padding:.85rem 1rem;border-bottom:1px solid rgba(46,51,80,.4);vertical-align:middle;font-size:.85rem;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(79,110,247,.05);}
+tr.row-disabled td{background:rgba(239,68,68,.04);}
+tr.row-disabled:hover td{background:rgba(239,68,68,.08);}
+tr.row-partial td{background:rgba(245,158,11,.04);}
+tr.row-partial:hover td{background:rgba(245,158,11,.08);}
+.name-col{font-weight:500;min-width:220px;}
+.guid-col{font-size:.72rem;color:var(--muted);min-width:280px;word-break:break-all;}
+.date-col{white-space:nowrap;font-size:.8rem;color:var(--muted);}
+.days-col{text-align:right;font-family:'Consolas',monospace;font-size:.8rem;min-width:60px;}
+.owner-col{font-size:.8rem;color:var(--muted);}
+.desc-col{font-size:.78rem;color:var(--muted);max-width:260px;}
+.mono{font-family:'Consolas',monospace;}
+.na{color:rgba(136,146,164,.4);}
+
+/* Badges */
+.badge{display:inline-block;padding:.18rem .55rem;border-radius:4px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
+.badge-on{background:rgba(34,197,94,.15);color:var(--green);}
+.badge-off{background:rgba(239,68,68,.15);color:var(--red);}
+.badge-warn{background:rgba(245,158,11,.15);color:var(--yellow);}
+.badge-na{background:rgba(139,146,164,.1);color:var(--muted);}
+
+/* Chips */
+.wmi-chip{display:inline-block;background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.3);color:#c4b5fd;padding:.1rem .45rem;border-radius:4px;font-size:.72rem;}
+.stale-flag{display:inline-block;background:rgba(251,146,60,.15);border:1px solid rgba(251,146,60,.3);color:var(--orange);padding:.08rem .4rem;border-radius:3px;font-size:.65rem;font-weight:700;text-transform:uppercase;margin-left:.4rem;vertical-align:middle;}
+
+/* Row count */
+.row-count{font-size:.78rem;color:var(--muted);margin-bottom:.6rem;}
+.row-count span{color:var(--text);font-weight:600;}
+
+.footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border);text-align:center;color:var(--muted);font-size:.75rem;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-title">&#128230; Unlinked GPO Audit</div>
+  <div class="header-sub">Group Policy Objects with no OU, site, or domain-root links &mdash; FCTG.NET</div>
+  <div class="meta-grid">
+    <div class="meta-item"><label>Domain</label><value>FCTG.NET</value></div>
+    <div class="meta-item"><label>Total GPOs</label><value>314</value></div>
+    <div class="meta-item"><label>Unlinked GPOs</label><value>63</value></div>
+    <div class="meta-item"><label>Report Generated</label><value>2026-04-21 11:40</value></div>
+  </div>
+</div>
+
+<!-- SUMMARY STATS -->
+<div class="summary-row">
+  <div class="stat-card"><div class="num c-blue">314</div><div class="lbl">Total GPOs</div></div>
+  <div class="stat-card"><div class="num c-purple">63</div><div class="lbl">Unlinked</div></div>
+  <div class="stat-card"><div class="num c-green">44</div><div class="lbl">Enabled (Unlinked)</div></div>
+  <div class="stat-card"><div class="num c-yellow">14</div><div class="lbl">Partially Disabled</div></div>
+  <div class="stat-card"><div class="num c-red">5</div><div class="lbl">Fully Disabled</div></div>
+  <div class="stat-card"><div class="num c-orange">55</div><div class="lbl">Stale (&gt;365d)</div></div>
+</div>
+
+<!-- FILTER + SEARCH -->
+<div class="filter-row">
+  <span class="filter-lbl">Filter:</span>
+  <button class="filter-pill active" onclick="setFilter('all',this)">All (63)</button>
+  <button class="filter-pill" onclick="setFilter('AllSettingsEnabled',this)">Enabled (44)</button>
+  <button class="filter-pill" onclick="setFilter('partial',this)">Partial (14)</button>
+  <button class="filter-pill" onclick="setFilter('AllSettingsDisabled',this)">Disabled (5)</button>
+  <button class="filter-pill" onclick="setFilter('stale',this)">Stale &gt;365d (55)</button>
+</div>
+<input class="search-bar" type="text" id="searchBox" placeholder="Filter by name, GUID, owner, description..." oninput="applyFilters()">
+
+<div class="row-count">Showing <span id="visibleCount">63</span> of 63 GPOs</div>
+
+<!-- TABLE -->
+<div class="table-wrap">
+  <table id="gpoTable">
+    <thead>
+      <tr>
+        <th onclick="sortTable(0)">GPO Name <span class="sort-arrow">&#9650;</span></th>
+        <th onclick="sortTable(1)">GUID <span class="sort-arrow">&#9650;</span></th>
+        <th onclick="sortTable(2)">Status <span class="sort-arrow">&#9650;</span></th>
+        <th onclick="sortTable(3)">Last Modified <span class="sort-arrow">&#9650;</span></th>
+        <th onclick="sortTable(4)">Days Since Edit <span class="sort-arrow">&#9650;</span></th>
+        <th onclick="sortTable(5)">Owner <span class="sort-arrow">&#9650;</span></th>
+        <th>WMI Filter</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      <tr><td class='name-col'>MDIR-1.22-LeastPriv-T0 <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{549de14f-7cac-411a-b245-f80f5d723e6f}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr class="row-partial"><td class='name-col'>EnableWMI-4-GetLocalAdm <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{7ab6e526-e5c0-4f26-8caf-8f31b426b1e4}</td><td><span class="badge badge-warn">User Disabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>PFP - Printers - Print Station - Left <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{d2f94f7e-d825-4378-98cc-1afe1f2a92a8}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'><span class="na">—</span></td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>Event Log Size <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{1518bef2-2a37-4f19-bee9-4cd26b837d59}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>PFP - Printers - Controller Group <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{ee5f82d1-deab-4736-be52-96a1ba11c27c}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'><span class="na">—</span></td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>PFP - Misc - Empty <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{9e799e3c-e41f-45ef-aee5-73d9edd6aa7f}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'><span class="na">—</span></td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>FCTG-LAPS-TEST <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{40fd9581-fce0-438c-a367-f86933961b00}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>FCTG-Loopback Processing <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{4c3e471f-a32b-4929-b8cb-48b1e17e4c1b}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>Foxit <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{c2113ba0-0bd9-48da-8449-4f042a0e5b64}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>Laptop Power Setting - Plugged in <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{a00e6d5f-2e1b-4e42-b206-1753054fd066}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr class="row-partial"><td class='name-col'>PFP - App - Update IBM AS400 to 1.1.9.1 <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{ada02f74-f8a2-48c7-b734-ab3197f8cfe3}</td><td><span class="badge badge-warn">Computer Disabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'><span class="na">—</span></td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>MDIR-1.22-LeastPriv-T1 <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{2b71eaaf-b5e0-4729-a4be-87395dbc96bd}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>Microsoft Edge <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{b0612169-e346-468b-8adf-dc5a2f8933ba}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>OI_Lock_Screen <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{49c09670-0031-4b92-9e5b-0171c9fcd24d}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>Password Policy Standard User <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{5cbaf997-2c68-4f12-94a9-9c4b97304e20}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr class="row-disabled"><td class='name-col'>PFP - App - Deploy Amazon Corretto <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{8cf67bd3-05ff-490b-b7b8-af4c1d09bb68}</td><td><span class="badge badge-off">All Disabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'><span class="na">—</span></td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>PFP - Printers - Print Station - Right <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{d1eefd0c-2fcb-4920-8ddd-9b9c1b103bc3}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'><span class="na">—</span></td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr class="row-disabled"><td class='name-col'>PFP - App - Deploy Chrome <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{ba4d093e-8567-4ab2-971f-53a1b84c5d45}</td><td><span class="badge badge-off">All Disabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'><span class="na">—</span></td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr class="row-disabled"><td class='name-col'>ECagent auto install script <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{a60b1347-2edf-43c8-ab63-7851b897144a}</td><td><span class="badge badge-off">All Disabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>PFP - Printers - Server Room - Center <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{0b8e3e0e-d672-4355-bf5a-2304c425ee06}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'><span class="na">—</span></td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>SIFP - Disable IE <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{bb4ea8c5-7721-4e82-b8ea-b189c65e27de}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr class="row-partial"><td class='name-col'>SIFP - Default Workstation Policy <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{00fc608b-fa5d-4fb4-9dc0-2ee350d31019}</td><td><span class="badge badge-warn">User Disabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>DelegatedAdmin - BIFP - RightFax <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{3e4f168c-20e4-476c-aa35-c219e2848eac}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>DelegatedAdmin - FCTGAnn <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{cb5bdfc3-0fd5-448a-af82-fca1a8f6dcfb}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr class="row-partial"><td class='name-col'>SIFP - Board Workstation <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{844a7106-dc20-4e19-b8cf-2da857c0f868}</td><td><span class="badge badge-warn">User Disabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>DelegatedAdmin - FCTGBrian <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{23bbe310-44a1-484b-a536-26841d6d9500}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>DelegatedAdmin - FCTGChrisM <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{5bdc7303-4318-4f96-a1e0-c38b4963db96}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>DesktopCentral Agent <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{0f9d684d-a49b-43e1-a605-61a677248a51}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>DelegatedAdmin - FCTGCrystal <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{ef0cbcf9-73e9-4582-bc4e-61fd1e46509d}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr class="row-disabled"><td class='name-col'>Screen Lock <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{fe0013aa-7db0-4af6-b15d-f36b16cf1d0d}</td><td><span class="badge badge-off">All Disabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Enterprise Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>Remote Update Firewall Ports <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{77ee4c13-737e-4672-96e9-256e13f3a636}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>DelegatedAdmin - FCTGKerry <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{8b669abf-2b7f-445e-a245-b840a0a78520}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>PFP - Workstations-TV-PCs <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{f70f3aa9-a59f-43ad-8f10-603b76664c70}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'><span class="na">—</span></td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr class="row-disabled"><td class='name-col'>PFP - Security - User Accounts - Disable Administrator Account and Guest User Access <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{06a534f5-ace5-4f22-bfaf-cd05379d48a7}</td><td><span class="badge badge-off">All Disabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'><span class="na">—</span></td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>PFP - Printers - Server Room - Right - Check Printer <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{07a67481-0e5f-47ee-986c-e8b7cc34d33d}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'><span class="na">—</span></td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>PFP - Printers - Server Room - Left <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{c9326d56-7024-41de-b0d8-e853d6c40217}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'><span class="na">—</span></td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>DelegatedAdmin - FCTGDave <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{3b974df6-a3b4-402b-a1a1-b2b22377f18f}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr class="row-partial"><td class='name-col'>PFP - App - Install and Configure FortiClient VPN <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{3d64e621-a51e-46e4-b425-625b4b28a090}</td><td><span class="badge badge-warn">User Disabled</span></td><td class='date-col'>2023-12-15 13:06</td><td class='days-col'>858d</td><td class='owner-col'><span class="na">—</span></td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr class="row-partial"><td class='name-col'>OI-Computer-Inactivity Timeout 2hr-deny <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{e649f02d-bf1d-4917-adfb-a8e15d360a34}</td><td><span class="badge badge-warn">User Disabled</span></td><td class='date-col'>2024-03-19 13:42</td><td class='days-col'>763d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>EnableViewInFileExplorer <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{789f8650-ba34-4257-97d2-400fd282e217}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2024-04-17 17:06</td><td class='days-col'>734d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr class="row-partial"><td class='name-col'>AIFP-Computer-Inactivity Timeout 4hr <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{87d1bc9b-d4b9-4bd7-9dc0-54b73b190617}</td><td><span class="badge badge-warn">User Disabled</span></td><td class='date-col'>2024-05-06 10:35</td><td class='days-col'>715d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr class="row-partial"><td class='name-col'>DelegatedAdmin - FCTGNathan <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{33792827-832b-4ec5-8be7-cd04704c9466}</td><td><span class="badge badge-warn">User Disabled</span></td><td class='date-col'>2024-05-20 08:49</td><td class='days-col'>701d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>PFP - Misc - Enable WinRM <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{f5ff6a0b-4211-4fd5-80cd-d9fe54a67839}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2024-05-31 00:05</td><td class='days-col'>690d</td><td class='owner-col'>pfpadmin1</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>DelegatedAdmin - FCTGGeoffrey <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{312c2004-bfce-4cee-a514-1fedc5ed2fee}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2024-06-10 08:24</td><td class='days-col'>680d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>DelegatedAdmin - FCTGLaura <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{8580eeb3-a59c-4b48-9dd5-735da7619445}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2024-06-26 13:42</td><td class='days-col'>664d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>PFP - App - Install and Configure Forticlient <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{d4d5d106-d518-44f5-92c0-cb1ec54d9df0}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2024-08-22 14:51</td><td class='days-col'>607d</td><td class='owner-col'>pfpadmin1</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>Audit Process Tracking <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{a366c531-94bb-4a5d-a587-6231ae898f22}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2024-09-11 16:53</td><td class='days-col'>587d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>Enabe VSS - TEST <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{b9edb617-0d1b-4fc7-8a33-a653e2ebd679}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2024-09-13 12:43</td><td class='days-col'>585d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>DelegatedAdmin - FCTGRyan <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{38365fd8-cc07-4ed4-a826-caeed398d961}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2024-10-02 15:01</td><td class='days-col'>566d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>DelegatedAdmin - FCTGJohn <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{4557f722-6470-4e06-98b2-9d585df72088}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2024-10-02 15:04</td><td class='days-col'>566d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>DelegatedAdmin - FCTGBobby <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{868f91ac-85ac-4141-aa82-3cdbadba3a0e}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2025-03-10 15:00</td><td class='days-col'>407d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr class="row-partial"><td class='name-col'>FCTG CIS L1 User <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{9c4e52d9-3ba2-4b15-bbaf-b09b3f4ad346}</td><td><span class="badge badge-warn">Computer Disabled</span></td><td class='date-col'>2025-04-10 08:23</td><td class='days-col'>376d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr class="row-partial"><td class='name-col'>FCTG CIS L1 Computer <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{09a3b6ea-db96-4591-a716-7b1f38d887ed}</td><td><span class="badge badge-warn">User Disabled</span></td><td class='date-col'>2025-04-14 14:15</td><td class='days-col'>372d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>DelegatedAdmin - FCTGSADEV_T2 <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{476ec861-362a-4e9d-99ad-2655c8520b15}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2025-04-16 09:12</td><td class='days-col'>370d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr class="row-partial"><td class='name-col'>Delegated Admin - FCTGServers <span class="stale-flag">Stale</span></td><td class='mono guid-col'>{2c72e967-305d-4c76-b795-3a818a41f293}</td><td><span class="badge badge-warn">User Disabled</span></td><td class='date-col'>2025-04-16 10:31</td><td class='days-col'>370d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>DelegatedAdmin - PFP - Server</td><td class='mono guid-col'>{1d5a01bd-5e6d-48f8-aa05-1dfbfd9910e4}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2025-05-01 11:18</td><td class='days-col'>355d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>Wi-Fi network password hide</td><td class='mono guid-col'>{d90d024b-7585-4035-9280-973950dbfbb0}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2025-06-04 18:21</td><td class='days-col'>321d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr class="row-partial"><td class='name-col'>SIFP - Misc Hardening</td><td class='mono guid-col'>{33f94e2c-1b18-41f5-b333-82ceb23820c8}</td><td><span class="badge badge-warn">User Disabled</span></td><td class='date-col'>2025-11-12 11:36</td><td class='days-col'>160d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>VFP Allow GuestLoginSMB</td><td class='mono guid-col'>{df7246fe-b270-4a80-9b7a-bb3f45c4cb9f}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2025-12-11 17:16</td><td class='days-col'>131d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr class="row-partial"><td class='name-col'>Enterprise Allow RDP Drive Redirection</td><td class='mono guid-col'>{91b5dd8d-b250-48cf-9549-24919926f68c}</td><td><span class="badge badge-warn">User Disabled</span></td><td class='date-col'>2025-12-17 12:49</td><td class='days-col'>125d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>SIFP - BitLocker</td><td class='mono guid-col'>{cb0a4b0c-310f-4945-91c7-be73e3c9648a}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2026-03-11 08:37</td><td class='days-col'>41d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr class="row-partial"><td class='name-col'>SIFP - Misc User</td><td class='mono guid-col'>{8101f922-2c83-443f-9ede-82e4043dde54}</td><td><span class="badge badge-warn">Computer Disabled</span></td><td class='date-col'>2026-03-31 10:42</td><td class='days-col'>21d</td><td class='owner-col'>Domain Admins</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr><tr><td class='name-col'>PFP - Security - Audit Services and Disable</td><td class='mono guid-col'>{0bf9234c-06b2-489e-a481-22da5d709f0f}</td><td><span class="badge badge-on">All Enabled</span></td><td class='date-col'>2026-04-17 13:16</td><td class='days-col'>4d</td><td class='owner-col'>pfpadmin1</td><td><span class="na">—</span></td><td class='desc-col'><span class="na">—</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="footer">
+  Unlinked GPO Audit &nbsp;|&nbsp; Domain: FCTG.NET &nbsp;|&nbsp; 63 of 314 GPOs unlinked &nbsp;|&nbsp; Generated: 2026-04-21 11:40
+</div>
+
+<script>
+let activeFilter = 'all';
+
+function setFilter(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function applyFilters() {
+  const q    = document.getElementById('searchBox').value.toLowerCase().trim();
+  const rows = document.querySelectorAll('#tableBody tr');
+  let visible = 0;
+
+  rows.forEach(row => {
+    const statusCell = row.cells[2] ? row.cells[2].textContent.trim() : '';
+    const daysCell   = row.cells[4] ? parseInt(row.cells[4].textContent) : 0;
+    const text       = row.textContent.toLowerCase();
+
+    let filterMatch = true;
+    if (activeFilter === 'AllSettingsEnabled')   filterMatch = statusCell.includes('All Enabled');
+    if (activeFilter === 'AllSettingsDisabled')  filterMatch = statusCell.includes('All Disabled');
+    if (activeFilter === 'partial')              filterMatch = statusCell.includes('Disabled') && !statusCell.includes('All Disabled');
+    if (activeFilter === 'stale')                filterMatch = daysCell > 365;
+
+    const searchMatch = !q || text.includes(q);
+    const show = filterMatch && searchMatch;
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+
+  document.getElementById('visibleCount').textContent = visible;
+}
+
+// Sortable columns
+let sortCol = -1, sortAsc = true;
+function sortTable(col) {
+  const tbody = document.getElementById('tableBody');
+  const rows  = Array.from(tbody.querySelectorAll('tr'));
+  if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = true; }
+
+  rows.sort((a, b) => {
+    const av = a.cells[col] ? a.cells[col].textContent.trim() : '';
+    const bv = b.cells[col] ? b.cells[col].textContent.trim() : '';
+    const an = parseFloat(av), bn = parseFloat(bv);
+    const cmp = (!isNaN(an) && !isNaN(bn)) ? an - bn : av.localeCompare(bv);
+    return sortAsc ? cmp : -cmp;
+  });
+
+  rows.forEach(r => tbody.appendChild(r));
+
+  document.querySelectorAll('th').forEach((th, i) => {
+    th.classList.toggle('sorted', i === col);
+    const arr = th.querySelector('.sort-arrow');
+    if (arr) arr.textContent = (i === col) ? (sortAsc ? '▲' : '▼') : '▲';
+  });
+}
+</script>
+</body>
+</html>

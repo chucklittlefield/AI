@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Empty OU Report — FCTG.NET</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body   { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f2f5; color: #1a1a2e; }
+
+  header { background: #1a237e; color: #fff; padding: 28px 40px 24px; }
+  header h1 { font-size: 1.6rem; font-weight: 600; }
+  header p  { font-size: 0.85rem; opacity: .75; margin-top: 4px; }
+
+  .summary-bar {
+    display: flex; gap: 20px; flex-wrap: wrap;
+    background: #fff; border-bottom: 1px solid #e0e0e0;
+    padding: 16px 40px;
+  }
+  .stat { display: flex; flex-direction: column; }
+  .stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .06em; color: #666; }
+  .stat-value { font-size: 1.4rem; font-weight: 700; color: #1a237e; }
+
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
+  .badge-warn { background: #fff3e0; color: #e65100; border: 1px solid #ffb74d; }
+  .badge-ok   { background: #e8f5e9; color: #2e7d32; border: 1px solid #81c784; }
+
+  main { padding: 30px 40px; }
+
+  .card {
+    background: #fff; border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.10);
+    overflow: hidden;
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid #e0e0e0;
+  }
+  .card-header h2 { font-size: 1rem; font-weight: 600; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  thead th {
+    background: #e8eaf6; color: #283593;
+    text-align: left; padding: 10px 14px;
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: .05em;
+    white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid #f0f0f0; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #f5f7ff; }
+  td { padding: 10px 14px; vertical-align: top; }
+  .mono { font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 0.78rem; color: #555; word-break: break-all; }
+  .none { text-align: center; padding: 40px; color: #666; font-style: italic; }
+
+  .tip {
+    margin-top: 22px; padding: 14px 18px;
+    background: #fffde7; border-left: 4px solid #f9a825;
+    border-radius: 6px; font-size: 0.82rem; color: #555;
+  }
+  .tip code { font-family: monospace; background: #fff8e1; padding: 1px 5px; border-radius: 3px; }
+
+  footer { text-align: center; padding: 24px; font-size: 0.75rem; color: #999; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>&#128193; Empty OU Report</h1>
+  <p>Domain: <strong>FCTG.NET</strong> &nbsp;|&nbsp; Search Base: DC=FCTG,DC=NET</p>
+</header>
+
+<div class="summary-bar">
+  <div class="stat">
+    <span class="stat-label">Total OUs Scanned</span>
+    <span class="stat-value">320</span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">Empty OUs Found</span>
+    <span class="stat-value">36</span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">Run Time</span>
+    <span class="stat-value" style="font-size:1rem; padding-top:6px">2026-04-21 11:48</span>
+  </div>
+  <div class="stat" style="justify-content:flex-end; flex:1; align-items:flex-end">
+    <span class="badge badge-warn">36 Empty OUs</span>
+  </div>
+</div>
+
+<main>
+  <div class="card">
+    <div class="card-header">
+      <h2>Empty Organizational Units</h2>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>OU Name</th>
+          <th>Distinguished Name</th>
+          <th>Description</th>
+          <th>Created</th>
+          <th>Last Modified</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+            <td><strong>Admin Workstations</strong></td>
+            <td class='mono'>OU=Admin Workstations,OU=Workstations-ALL,OU=Plateau,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2025-08-05 15:02</td>
+            <td>2025-08-05 15:14</td>
+        </tr>
+<tr>
+            <td><strong>Admin Workstations</strong></td>
+            <td class='mono'>OU=Admin Workstations,OU=Workstations,OU=Affiliated,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2025-08-12 10:24</td>
+            <td>2025-12-03 10:30</td>
+        </tr>
+<tr>
+            <td><strong>BIFP test software deployment</strong></td>
+            <td class='mono'>OU=BIFP test software deployment,OU=Workstations,OU=Birmingham,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2022-03-01 14:07</td>
+            <td>2024-07-02 15:40</td>
+        </tr>
+<tr>
+            <td><strong>Connections</strong></td>
+            <td class='mono'>OU=Connections,OU=Configuration,OU=ADC Objects,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2005-08-04 17:50</td>
+            <td>2022-06-02 18:03</td>
+        </tr>
+<tr>
+            <td><strong>Contacts</strong></td>
+            <td class='mono'>OU=Contacts,OU=FCTGHQ,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2024-08-08 17:47</td>
+            <td>2024-08-08 17:50</td>
+        </tr>
+<tr>
+            <td><strong>Decomissioned</strong></td>
+            <td class='mono'>OU=Decomissioned,OU=SecurityGroups,OU=Olympic,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2022-04-19 17:14</td>
+            <td>2022-06-02 18:04</td>
+        </tr>
+<tr>
+            <td><strong>Decomissioned</strong></td>
+            <td class='mono'>OU=Decomissioned,OU=Servers,OU=Olympic,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2022-05-30 13:36</td>
+            <td>2022-06-02 18:04</td>
+        </tr>
+<tr>
+            <td><strong>Delinea</strong></td>
+            <td class='mono'>OU=Delinea,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2022-11-16 13:13</td>
+            <td>2022-11-16 16:09</td>
+        </tr>
+<tr>
+            <td><strong>GPO Test</strong></td>
+            <td class='mono'>OU=GPO Test,OU=Users,OU=AzureAIFP,OU=American,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2023-04-07 13:21</td>
+            <td>2024-10-14 17:22</td>
+        </tr>
+<tr>
+            <td><strong>HSO</strong></td>
+            <td class='mono'>OU=HSO,OU=Workstations,OU=Vendors,OU=FCTGHQ,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2025-09-10 14:00</td>
+            <td>2025-09-10 14:01</td>
+        </tr>
+<tr>
+            <td><strong>OpCo SQL Access</strong></td>
+            <td class='mono'>OU=OpCo SQL Access,OU=Users,OU=Admin,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2023-10-05 12:57</td>
+            <td>2023-10-05 14:03</td>
+        </tr>
+<tr>
+            <td><strong>Patch Test Workstations</strong></td>
+            <td class='mono'>OU=Patch Test Workstations,OU=Workstations-ALL,OU=Plateau,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2022-09-09 13:43</td>
+            <td>2023-01-25 13:04</td>
+        </tr>
+<tr>
+            <td><strong>Patch Test Workstations</strong></td>
+            <td class='mono'>OU=Patch Test Workstations,OU=Workstations,OU=American,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2022-09-09 13:14</td>
+            <td>2024-06-19 09:29</td>
+        </tr>
+<tr>
+            <td><strong>Patch Test Workstations</strong></td>
+            <td class='mono'>OU=Patch Test Workstations,OU=Workstations,OU=Birmingham,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2022-09-09 13:14</td>
+            <td>2023-12-18 13:44</td>
+        </tr>
+<tr>
+            <td><strong>Patch Testing Workstations</strong></td>
+            <td class='mono'>OU=Patch Testing Workstations,OU=Workstations,OU=Buckeye,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2022-09-20 13:41</td>
+            <td>2022-09-20 14:14</td>
+        </tr>
+<tr>
+            <td><strong>Pending deletion</strong></td>
+            <td class='mono'>OU=Pending deletion,OU=Southern,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2021-12-03 07:53</td>
+            <td>2022-06-02 18:04</td>
+        </tr>
+<tr>
+            <td><strong>pendingdelete</strong></td>
+            <td class='mono'>OU=pendingdelete,OU=Users,OU=AzureSMT,OU=Southern,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2021-12-16 08:13</td>
+            <td>2023-10-09 14:49</td>
+        </tr>
+<tr>
+            <td><strong>RDP Duo Test</strong></td>
+            <td class='mono'>OU=RDP Duo Test,OU=Domain Controllers,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2021-12-15 10:35</td>
+            <td>2022-06-02 18:04</td>
+        </tr>
+<tr>
+            <td><strong>RDP Duo Test</strong></td>
+            <td class='mono'>OU=RDP Duo Test,OU=Workstations,OU=FCTGHQ,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2021-12-15 10:22</td>
+            <td>2025-04-24 09:24</td>
+        </tr>
+<tr>
+            <td><strong>Recipients</strong></td>
+            <td class='mono'>OU=Recipients,OU=ADC Objects,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2004-12-09 12:34</td>
+            <td>2022-06-02 18:03</td>
+        </tr>
+<tr>
+            <td><strong>Rfax</strong></td>
+            <td class='mono'>OU=Rfax,OU=Richmond,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2022-02-17 17:46</td>
+            <td>2022-06-02 18:04</td>
+        </tr>
+<tr>
+            <td><strong>Server - TFSBUILD</strong></td>
+            <td class='mono'>OU=Server - TFSBUILD,OU=FCTGHQ,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2022-05-17 16:07</td>
+            <td>2026-04-02 08:30</td>
+        </tr>
+<tr>
+            <td><strong>Servers</strong></td>
+            <td class='mono'>OU=Servers,OU=PrincetonConsulting,OU=FCTGHQ,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2024-10-04 16:01</td>
+            <td>2024-10-04 17:15</td>
+        </tr>
+<tr>
+            <td><strong>Service Accounts</strong></td>
+            <td class='mono'>OU=Service Accounts,OU=Affiliated,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2021-09-23 12:02</td>
+            <td>2023-10-25 13:42</td>
+        </tr>
+<tr>
+            <td><strong>Service Accounts</strong></td>
+            <td class='mono'>OU=Service Accounts,OU=AzurePFP,OU=Plateau,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2021-08-09 13:22</td>
+            <td>2022-06-02 18:03</td>
+        </tr>
+<tr>
+            <td><strong>Service Accounts</strong></td>
+            <td class='mono'>OU=Service Accounts,OU=Olympic,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2022-06-24 16:08</td>
+            <td>2022-06-24 17:12</td>
+        </tr>
+<tr>
+            <td><strong>T0</strong></td>
+            <td class='mono'>OU=T0,OU=Users,OU=Admin,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2022-02-02 09:28</td>
+            <td>2022-06-02 18:04</td>
+        </tr>
+<tr>
+            <td><strong>T1</strong></td>
+            <td class='mono'>OU=T1,OU=Users,OU=Admin,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2022-02-02 09:28</td>
+            <td>2022-06-16 17:12</td>
+        </tr>
+<tr>
+            <td><strong>Tag Board</strong></td>
+            <td class='mono'>OU=Tag Board,OU=Workstations,OU=Affiliated,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2024-07-11 13:27</td>
+            <td>2024-07-11 13:40</td>
+        </tr>
+<tr>
+            <td><strong>Tag Boards</strong></td>
+            <td class='mono'>OU=Tag Boards,OU=Workstations,OU=Birmingham,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2024-05-03 13:46</td>
+            <td>2024-05-03 13:58</td>
+        </tr>
+<tr>
+            <td><strong>Tagboard-User</strong></td>
+            <td class='mono'>OU=Tagboard-User,OU=Birmingham,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2024-03-27 12:13</td>
+            <td>2024-03-27 12:21</td>
+        </tr>
+<tr>
+            <td><strong>Test</strong></td>
+            <td class='mono'>OU=Test,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2026-02-26 16:29</td>
+            <td>2026-04-02 17:45</td>
+        </tr>
+<tr>
+            <td><strong>Workstation - CaseyC</strong></td>
+            <td class='mono'>OU=Workstation - CaseyC,OU=Dev-Workstations,OU=Workstations,OU=FCTGHQ,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2022-03-10 11:35</td>
+            <td>2025-09-04 14:28</td>
+        </tr>
+<tr>
+            <td><strong>Workstation - HannahBallard</strong></td>
+            <td class='mono'>OU=Workstation - HannahBallard,OU=Workstations,OU=PrincetonConsulting,OU=FCTGHQ,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2024-10-04 16:06</td>
+            <td>2024-10-04 17:45</td>
+        </tr>
+<tr>
+            <td><strong>Workstation - JumpboxUsers</strong></td>
+            <td class='mono'>OU=Workstation - JumpboxUsers,OU=Workstations,OU=PrincetonConsulting,OU=FCTGHQ,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2024-10-04 16:07</td>
+            <td>2024-10-04 17:45</td>
+        </tr>
+<tr>
+            <td><strong>Workstation - MikeSilva</strong></td>
+            <td class='mono'>OU=Workstation - MikeSilva,OU=Workstations,OU=PrincetonConsulting,OU=FCTGHQ,DC=FCTG,DC=NET</td>
+            <td>—</td>
+            <td>2024-10-04 16:05</td>
+            <td>2024-10-04 18:00</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tip">
+    <strong>Tip:</strong> To delete an empty OU via PowerShell, first clear the accidental-deletion protection:<br>
+    <code>Set-ADOrganizationalUnit -Identity "OU=Name,DC=domain,DC=com" -ProtectedFromAccidentalDeletion $false</code><br>
+    Then remove it: <code>Remove-ADOrganizationalUnit -Identity "OU=Name,DC=domain,DC=com" -Recursive -Confirm:$false</code>
+  </div>
+</main>
+
+<footer>Generated by Get-EmptyOUs.ps1 &mdash; Tuesday, April 21, 2026 at 11:48 AM</footer>
+
+</body>
+</html>

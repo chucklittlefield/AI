@@ -198,13 +198,18 @@ function Parse-GpoXml ([xml]$xml, [string]$SourceLabel) {
     $gpoGuid      = $xml.GPO.Identifier.Identifier.'#text'
 
     # --- Links (OU scope) ---
+    # Use PowerShell's XML adapter ($xml.GPO.LinksTo) rather than SelectNodes() so
+    # that the default namespace on the GPO element is handled transparently.
+    # SelectNodes('//GPO/LinksTo') without a namespace manager silently matches nothing
+    # when the document uses a default namespace (xmlns="...").
     $links = @()
-    foreach ($lt in @($xml.SelectNodes('//GPO/LinksTo'))) {
+    foreach ($lt in @($xml.GPO.LinksTo)) {
+        if ($null -eq $lt) { continue }
         $links += [PSCustomObject]@{
-            OUName    = $lt.SOMName
-            OUPath    = $lt.SOMPath
-            Enabled   = ($lt.Enabled -eq 'true')
-            NoOverride= ($lt.NoOverride -eq 'true')
+            OUName    = [string]$lt.SOMName
+            OUPath    = [string]$lt.SOMPath
+            Enabled   = ([string]$lt.Enabled -eq 'true')
+            NoOverride= ([string]$lt.NoOverride -eq 'true')
         }
     }
 
@@ -940,6 +945,9 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   </div>
   <div id="ou-list">
     $ouSections
+    $(if (-not $ouSections) {
+      '<div class="analysis-card ok" style="margin-top:1rem;"><div class="analysis-title">&#128205; No OU links found in the processed GPOs. GPOs must be linked to at least one OU for this view to populate.</div></div>'
+    })
   </div>
 </div>
 
