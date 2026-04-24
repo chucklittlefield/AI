@@ -1,13 +1,13 @@
 # Company & Org Context
 
 ## Chuck's Position
-Chuck Littlefield is the IT Systems Administrator for SIFP, embedded with FCTG (the MSP).
+Chuck Littlefield is the IT Systems Administrator for SIFP, embedded with FCTG (The parent company).
 He wears two hats:
-1. **SIFP IT** — sole IT contact for Seaboard International Forest Products staff
+1. **SIFP IT** — IT contact for Seaboard International Forest Products staff along with Janice Clark
 2. **FCTG IT** — collaborates with FCTG team on shared infrastructure, security, and projects
 
 ## The FCTG Family of Companies
-FCTG manages IT for a group of forest products and related companies. Chuck is the rep for SIFP.
+FCTG manages IT for a group of forest products and related companies. Chuck is the IT Network Administrator for SIFP.
 
 | Company | Domain | IT Rep / Contact |
 |---------|--------|-----------------|
@@ -19,7 +19,8 @@ FCTG manages IT for a group of forest products and related companies. Chuck is t
 | Viking Forest | vikingforest.com | Lula, GarrettM, bens@ |
 | Olympic Industries (OI) | olympicind.com | Chris Irwin |
 | lumber.com | lumber.com | Kevin Curtis, Thomson |
-| SMT | smtmiss.com | Sean Scoggins |
+| SMT | smtmiss.com | Sean Scoggins | Jordan Staples |
+| BP | buckeyepacific.com |
 
 All companies share the **FCTGNET** Active Directory domain and the FCTG-managed infrastructure.
 
@@ -50,15 +51,8 @@ All companies share the **FCTGNET** Active Directory domain and the FCTG-managed
 |--------|--------------|---------|
 | CyberMaxx | SOC / security monitoring | ddehaven@cybermaxx.com |
 | CyberSafe Solutions | Manages SentinelOne | sa@cybersafesolutions.com |
-| Newfathom | IT support vendor | Harrison Womack (harrison@newfathom.com) |
-| Park Place Technologies | VMware vendor | bwhitney@parkplacetech.com |
+| Newfathom | IT support vendor for PFP| Harrison Womack (harrison@newfathom.com) |
+| Park Place Technologies | HArdware support vendor | bwhitney@parkplacetech.com |
 | Mimecast | Email security | support@mimecastsupport.zendesk.com |
 
-## Active Directory OUs Chuck Works With
-- FCTG Workstation OU
-- SIFP Workstations OU
-- FCTG IT Workstations OU
-- Netwrix OU
-- Rightfax-test OU
-- TFSbuild OU
-- SalesAssist-DEV OU
+
