@@ -152,23 +152,27 @@ function Get-DangerousInfo {
     $objType    = $ace.ObjectType.ToString().ToLower()
     $rightsName = $rights.ToString()
 
-    # GenericAll — highest risk
-    if ($rights -band [System.DirectoryServices.ActiveDirectoryRights]::GenericAll) {
+    # GenericAll (0xF01FF) is a multi-bit composite — must test all bits present,
+    # not just -band (which is truthy for any partial overlap like CreateChild/DeleteChild).
+    $gaFlag = [System.DirectoryServices.ActiveDirectoryRights]::GenericAll
+    if (($rights -band $gaFlag) -eq $gaFlag) {
         return @{ Level='Critical'; Reason='GenericAll'; Desc='Full control of the OU and all objects within it. Can read/write all attributes, change permissions, and take ownership.' }
     }
 
-    # WriteDACL
+    # WriteDACL — single bit (0x40000), plain -band is fine
     if ($rights -band [System.DirectoryServices.ActiveDirectoryRights]::WriteDacl) {
         return @{ Level='Critical'; Reason='WriteDACL'; Desc='Can modify the access control list, allowing the trustee to grant themselves any additional right including GenericAll.' }
     }
 
-    # WriteOwner
+    # WriteOwner — single bit (0x80000), plain -band is fine
     if ($rights -band [System.DirectoryServices.ActiveDirectoryRights]::WriteOwner) {
         return @{ Level='Critical'; Reason='WriteOwner'; Desc='Can take ownership of the OU. Owners can grant themselves full control regardless of the DACL.' }
     }
 
-    # GenericWrite
-    if ($rights -band [System.DirectoryServices.ActiveDirectoryRights]::GenericWrite) {
+    # GenericWrite (0x20028 = ReadControl|WriteProperty|Self) is also multi-bit —
+    # WriteProperty alone would satisfy a plain -band check.
+    $gwFlag = [System.DirectoryServices.ActiveDirectoryRights]::GenericWrite
+    if (($rights -band $gwFlag) -eq $gwFlag) {
         return @{ Level='High'; Reason='GenericWrite'; Desc='Write access to all non-protected attributes. Can modify logon scripts, SPNs, group memberships, and more.' }
     }
 
@@ -300,60 +304,76 @@ Write-Host "Done. $($allAces.Count) ACEs collected, $($dangerousAces.Count) flag
 #region ── Build HTML ────────────────────────────────────────────────────────
 Add-Type -AssemblyName System.Web
 
-function ConvertTo-HtmlRow {
-    param([PSObject]$e, [bool]$includeDanger = $false)
-
-    $ouName   = [System.Web.HttpUtility]::HtmlEncode($e.OUName)
-    $ouDN     = [System.Web.HttpUtility]::HtmlEncode($e.OUDN)
-    $identity = [System.Web.HttpUtility]::HtmlEncode($e.Identity)
-    $rights   = [System.Web.HttpUtility]::HtmlEncode($e.Rights)
-    $objType  = [System.Web.HttpUtility]::HtmlEncode($e.ObjectType)
-    $inhType  = [System.Web.HttpUtility]::HtmlEncode($e.InheritedObjType)
-    $inhFlag  = if ($e.Inherited) { '<span class="badge inh-yes">Yes</span>' } else { '<span class="badge inh-no">No</span>' }
-    $accType  = if ($e.AccessType -eq 'Allow') { '<span class="badge acc-allow">Allow</span>' } else { '<span class="badge acc-deny">Deny</span>' }
-
-    if ($includeDanger) {
-        $lvlClass = switch ($e.DangerLevel) { 'Critical'{'lvl-crit'} 'High'{'lvl-high'} default{'lvl-med'} }
-        $reason = [System.Web.HttpUtility]::HtmlEncode($e.DangerReason)
-        $desc   = [System.Web.HttpUtility]::HtmlEncode($e.DangerDesc)
-        return "
-        <tr data-level='$($e.DangerLevel)'>
-          <td><span class='ou-name'>$ouName</span><span class='dn-text'>$ouDN</span></td>
-          <td class='id-cell'>$identity</td>
-          <td class='rights-cell'>$rights</td>
-          <td><span class='badge $lvlClass'>$($e.DangerLevel)</span></td>
-          <td><strong>$reason</strong><br><span class='desc-text'>$desc</span></td>
-          <td>$accType</td>
-          <td>$objType</td>
-          <td>$inhFlag</td>
-        </tr>"
-    } else {
-        return "
-        <tr data-access='$($e.AccessType)' data-dangerous='$($e.IsDangerous.ToString().ToLower())'>
-          <td><span class='ou-name'>$ouName</span><span class='dn-text'>$ouDN</span></td>
-          <td class='id-cell'>$identity</td>
-          <td class='rights-cell'>$rights</td>
-          <td>$accType</td>
-          <td>$inhFlag</td>
-          <td>$($e.InheritanceType)</td>
-          <td>$objType</td>
-          <td>$inhType</td>
-        </tr>"
+# Build compact data objects for JS — HTML-encode strings here so innerHTML is safe
+function New-AllDataRow {
+    param([PSObject]$e)
+    [ordered]@{
+        n   = [System.Web.HttpUtility]::HtmlEncode($e.OUName)
+        dn  = [System.Web.HttpUtility]::HtmlEncode($e.OUDN)
+        id  = [System.Web.HttpUtility]::HtmlEncode($e.Identity)
+        r   = [System.Web.HttpUtility]::HtmlEncode($e.Rights)
+        a   = $e.AccessType
+        inh = [bool]$e.Inherited
+        it  = $e.InheritanceType
+        ot  = [System.Web.HttpUtility]::HtmlEncode($e.ObjectType)
+        iot = [System.Web.HttpUtility]::HtmlEncode($e.InheritedObjType)
+        d   = [bool]$e.IsDangerous
+        k   = $e.OUDN.ToLower()
     }
 }
 
-$allRows  = if ($allAces.Count -eq 0) {
-    '<tr><td colspan="8" class="none">No ACEs found with the current filters.</td></tr>'
-} else {
-    ($allAces | ForEach-Object { ConvertTo-HtmlRow $_ $false }) -join ""
+function New-DangDataRow {
+    param([PSObject]$e)
+    [ordered]@{
+        n   = [System.Web.HttpUtility]::HtmlEncode($e.OUName)
+        dn  = [System.Web.HttpUtility]::HtmlEncode($e.OUDN)
+        id  = [System.Web.HttpUtility]::HtmlEncode($e.Identity)
+        r   = [System.Web.HttpUtility]::HtmlEncode($e.Rights)
+        lv  = $e.DangerLevel
+        rs  = [System.Web.HttpUtility]::HtmlEncode($e.DangerReason)
+        ds  = [System.Web.HttpUtility]::HtmlEncode($e.DangerDesc)
+        a   = $e.AccessType
+        inh = [bool]$e.Inherited
+        ot  = [System.Web.HttpUtility]::HtmlEncode($e.ObjectType)
+        k   = $e.OUDN.ToLower()
+    }
 }
 
-$dangRows = if ($dangerousAces.Count -eq 0) {
-    '<tr><td colspan="8" class="none">No dangerous permissions detected.</td></tr>'
-} else {
-    ($dangerousAces | Sort-Object { switch($_.DangerLevel){'Critical'{0}'High'{1}default{2}} }, OUDN |
-     ForEach-Object { ConvertTo-HtmlRow $_ $true }) -join ""
+# PS5-safe JSON array serialisation — ConvertTo-Json drops the array wrapper for single items
+function ConvertTo-SafeJsonArray {
+    param([array]$Items)
+    if (-not $Items -or $Items.Count -eq 0) { return '[]' }
+    $parts = $Items | ForEach-Object { ConvertTo-Json -InputObject $_ -Compress -Depth 3 }
+    return '[' + ($parts -join ',') + ']'
 }
+
+$allDataRows  = @($allAces | ForEach-Object { New-AllDataRow $_ })
+$dangDataRows = @($dangerousAces |
+    Sort-Object { switch($_.DangerLevel){'Critical'{0}'High'{1}default{2}} }, OUDN |
+    ForEach-Object { New-DangDataRow $_ })
+
+$jsonAll  = ConvertTo-SafeJsonArray $allDataRows
+$jsonDang = ConvertTo-SafeJsonArray $dangDataRows
+# Prevent </script> injection (belt-and-suspenders; data is already HTML-encoded)
+$jsonAll  = $jsonAll  -replace '</script>', '<\/script>'
+$jsonDang = $jsonDang -replace '</script>', '<\/script>'
+
+# Build OU list for tree view — one entry per OU with pre-computed ACE counts
+$aceByOU  = @{}
+$dangByOU = @{}
+foreach ($ace in $allAces)       { $k = $ace.OUDN.ToLower(); $aceByOU[$k]  = ($aceByOU[$k]  -as [int]) + 1 }
+foreach ($ace in $dangerousAces) { $k = $ace.OUDN.ToLower(); $dangByOU[$k] = ($dangByOU[$k] -as [int]) + 1 }
+$ouListItems = @($allOUs | Sort-Object DistinguishedName | ForEach-Object {
+    $k = $_.DistinguishedName.ToLower()
+    [ordered]@{
+        n  = [System.Web.HttpUtility]::HtmlEncode($_.Name)
+        dn = $k
+        ac = if ($aceByOU.ContainsKey($k))  { $aceByOU[$k]  } else { 0 }
+        dc = if ($dangByOU.ContainsKey($k)) { $dangByOU[$k] } else { 0 }
+    }
+})
+$jsonOuList = ConvertTo-SafeJsonArray $ouListItems
+$jsonOuList = $jsonOuList -replace '</script>', '<\/script>'
 
 $inhNote = if ($IncludeInherited) { "Inherited ACEs: <strong>included</strong>" } else { "Inherited ACEs: <strong>excluded</strong> (use -IncludeInherited to show)" }
 $defNote = if ($ExcludeDefaultPrincipals) { "Default trustees: <strong>hidden</strong>" } else { "" }
@@ -497,7 +517,6 @@ $html = @"
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: #f5f7ff; }
   .danger-table tbody tr:hover { background: #fff5f5; }
-  tbody tr.hidden { display: none; }
   td { padding: 8px 12px; vertical-align: top; }
 
   .ou-name   { display: block; font-weight: 600; }
@@ -524,6 +543,21 @@ $html = @"
   .dot-high { background: #e65100; }
   .dot-med  { background: #f57f17; }
 
+  /* ── Pager ── */
+  .pager {
+    display: flex; align-items: center; gap: 10px; padding: 10px 18px;
+    border-top: 1px solid #e0e0e0; background: #fafafa; min-height: 44px;
+  }
+  .pg-btn {
+    cursor: pointer; border: 1.5px solid #9fa8da; background: #fff;
+    border-radius: 6px; padding: 4px 14px; font-size: 0.80rem;
+    color: #283593; font-weight: 600; transition: all .15s;
+  }
+  .pg-btn:hover:not(:disabled) { background: #283593; color: #fff; border-color: #283593; }
+  .pg-btn:disabled { opacity: 0.4; cursor: default; }
+  .pg-info { font-size: 0.80rem; color: #666; }
+  .pg-jump { width: 52px; padding: 3px 6px; border: 1.5px solid #9fa8da; border-radius: 6px; font-size: 0.80rem; text-align: center; }
+
   /* ── Tip ── */
   .tip {
     margin-top: 20px; padding: 13px 17px;
@@ -531,6 +565,80 @@ $html = @"
     border-radius: 6px; font-size: 0.80rem; color: #555; line-height: 1.7;
   }
   .tip code { font-family: monospace; background: #fff8e1; padding: 1px 5px; border-radius: 3px; }
+
+  /* ── OU Tree layout ── */
+  .tree-layout {
+    display: flex; height: calc(100vh - 210px); min-height: 480px; overflow: hidden;
+  }
+  .tree-pane {
+    width: 380px; min-width: 220px; overflow-y: auto; overflow-x: hidden;
+    border-right: 2px solid #c5cae9; background: #f8f9ff;
+    padding: 8px 0; flex-shrink: 0; resize: horizontal;
+  }
+  .tree-node { user-select: none; }
+  .tree-row {
+    display: flex; align-items: center; gap: 3px; cursor: pointer;
+    padding: 4px 8px 4px 0; border-radius: 4px; margin: 1px 4px;
+    font-size: 0.83rem; white-space: nowrap;
+  }
+  .tree-row:hover { background: #e8eaf6; }
+  .tree-row.selected { background: #283593; color: #fff; }
+  .tree-row.selected .tree-ace  { background: rgba(255,255,255,.18); color: #fff; border-color: transparent; }
+  .tree-row.selected .tree-dang { background: rgba(255,255,255,.18); color: #ffe082; border-color: transparent; }
+  .tree-toggle {
+    width: 18px; min-width: 18px; background: none; border: none; cursor: pointer;
+    font-size: 0.58rem; color: inherit; padding: 0; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tree-toggle-leaf { width: 18px; min-width: 18px; display: inline-block; flex-shrink: 0; }
+  .tree-folder { font-size: 0.9rem; flex-shrink: 0; }
+  .tree-label  { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+  .tree-ace  {
+    font-size: 0.65rem; font-weight: 700; padding: 1px 5px; border-radius: 999px;
+    background: #e8eaf6; color: #283593; border: 1px solid #9fa8da; white-space: nowrap; flex-shrink: 0;
+  }
+  .tree-ace-zero { opacity: 0.35; }
+  .tree-dang {
+    font-size: 0.65rem; font-weight: 700; padding: 1px 5px; border-radius: 999px;
+    background: #ffcdd2; color: #b71c1c; border: 1px solid #ef9a9a; white-space: nowrap; flex-shrink: 0;
+  }
+  .tree-empty { padding: 28px; text-align: center; color: #999; font-style: italic; font-size: 0.85rem; }
+
+  /* ── Tree detail pane ── */
+  .detail-pane { flex: 1; overflow-y: auto; background: #fff; display: flex; flex-direction: column; }
+  .detail-placeholder {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    color: #bbb; font-size: 0.95rem; font-style: italic; padding: 40px;
+  }
+  .detail-header {
+    background: #e8eaf6; padding: 14px 20px 10px; border-bottom: 1px solid #c5cae9;
+    position: sticky; top: 0; z-index: 1;
+  }
+  .detail-ou-name { font-size: 1.05rem; font-weight: 700; color: #1a237e; }
+  .detail-ou-dn   { font-size: 0.70rem; color: #777; font-family: 'Consolas',monospace; margin-top: 3px; word-break: break-all; }
+  .detail-badges  { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .stat-chip {
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
+    font-size: 0.72rem; font-weight: 700; background: #c5cae9; color: #1a237e; border: 1px solid #9fa8da;
+  }
+  .chip-dang { background: #ffcdd2; color: #b71c1c; border-color: #ef9a9a; }
+  .detail-pane-body { padding: 14px 18px; }
+  .detail-none { padding: 28px 20px; color: #999; font-style: italic; font-size: 0.85rem; }
+  .detail-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .detail-table thead th {
+    background: #e8eaf6; color: #283593; text-align: left; padding: 8px 11px;
+    font-size: 0.70rem; text-transform: uppercase; letter-spacing: .05em;
+    white-space: nowrap; position: sticky; top: 0; z-index: 1;
+  }
+  .detail-table tbody tr { border-bottom: 1px solid #f3f3f3; }
+  .detail-table tbody tr:hover { background: #f5f7ff; }
+  .detail-table tbody tr.dang-row { background: #fff5f5; }
+  .detail-table tbody tr.dang-row:hover { background: #ffe8e8; }
+  .detail-table td { padding: 7px 11px; vertical-align: top; }
+  .tree-dang-dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: #b71c1c; margin-right: 5px; vertical-align: middle; flex-shrink: 0;
+  }
 
   footer { text-align: center; padding: 22px; font-size: 0.73rem; color: #aaa; }
 </style>
@@ -559,6 +667,9 @@ $html = @"
   <button class="tab-btn" onclick="switchTab('danger', this)">
     &#9888; Dangerous <span class="tab-count danger-count">$($dangerousAces.Count)</span>
   </button>
+  <button class="tab-btn" onclick="switchTab('tree', this)">
+    &#127968; OU Tree <span class="tab-count">$totalOUs</span>
+  </button>
 </div>
 
 <!-- ═══════════════════════════ TAB 1: ALL ════════════════════════════════ -->
@@ -573,37 +684,36 @@ $html = @"
     <button class="f-btn active" onclick="allFilter('dangerous','all',this)">All</button>
     <button class="f-btn" onclick="allFilter('dangerous','true',this)">&#9888; Dangerous Only</button>
     <button class="f-btn" onclick="allFilter('dangerous','false',this)">Clean Only</button>
-    <input class="search-input" type="search" placeholder="&#128269; Search OU, identity, rights…" oninput="allSearch(this.value)">
+    <input class="search-input" type="search" placeholder="&#128269; Search OU, identity, rights&#8230;" oninput="allSearch(this.value)">
   </div>
   <main>
     <div class="card">
       <div class="card-header">
         <h2>All OU Permissions</h2>
-        <span id="all-count" class="row-counter">Showing all $($allAces.Count) ACE(s)</span>
+        <span id="all-count" class="row-counter">Loading&#8230;</span>
       </div>
       <div class="tbl-wrap">
         <table id="allTable">
           <thead>
             <tr>
-              <th onclick="sortTbl('allTable',0,this)">OU / Distinguished Name</th>
-              <th onclick="sortTbl('allTable',1,this)">Identity (Trustee)</th>
-              <th onclick="sortTbl('allTable',2,this)">Rights</th>
-              <th onclick="sortTbl('allTable',3,this)">Type</th>
-              <th onclick="sortTbl('allTable',4,this)">Inherited</th>
-              <th onclick="sortTbl('allTable',5,this)">Inheritance Scope</th>
-              <th onclick="sortTbl('allTable',6,this)">Object Type</th>
-              <th onclick="sortTbl('allTable',7,this)">Inherits To</th>
+              <th onclick="sortTbl('all',0,this)">OU / Distinguished Name</th>
+              <th onclick="sortTbl('all',1,this)">Identity (Trustee)</th>
+              <th onclick="sortTbl('all',2,this)">Rights</th>
+              <th onclick="sortTbl('all',3,this)">Type</th>
+              <th onclick="sortTbl('all',4,this)">Inherited</th>
+              <th onclick="sortTbl('all',5,this)">Inheritance Scope</th>
+              <th onclick="sortTbl('all',6,this)">Object Type</th>
+              <th onclick="sortTbl('all',7,this)">Inherits To</th>
             </tr>
           </thead>
-          <tbody>
-$allRows
-          </tbody>
+          <tbody id="allBody"></tbody>
         </table>
       </div>
+      <div id="all-pager" class="pager"></div>
     </div>
     <div class="callout callout-info" style="margin-top:18px">
       <span class="callout-icon">&#8505;&#65039;</span>
-      <span>Rows highlighted in the <strong>Dangerous</strong> tab are also present here.
+      <span>Rows in the <strong>Dangerous</strong> tab are also present here.
       Use the <em>Dangerous Only</em> filter above to cross-reference.
       <em>Object Type = All</em> means the right applies to all object types / attributes.</span>
     </div>
@@ -618,7 +728,7 @@ $allRows
     <button class="df-btn" onclick="dangFilter('Critical',this)"><span class="danger-dot dot-crit"></span>Critical</button>
     <button class="df-btn" onclick="dangFilter('High',this)"><span class="danger-dot dot-high"></span>High</button>
     <button class="df-btn" onclick="dangFilter('Medium',this)"><span class="danger-dot dot-med"></span>Medium</button>
-    <input class="d-search" type="search" placeholder="&#128269; Search OU, identity, reason…" oninput="dangSearch(this.value)">
+    <input class="d-search" type="search" placeholder="&#128269; Search OU, identity, reason&#8230;" oninput="dangSearch(this.value)">
   </div>
   <main>
     <div class="callout callout-warn">
@@ -631,27 +741,26 @@ $allRows
     <div class="card">
       <div class="card-header">
         <h2>&#9888; Dangerous Permissions</h2>
-        <span id="dang-count" class="row-counter">Showing all $($dangerousAces.Count) finding(s)</span>
+        <span id="dang-count" class="row-counter">Loading&#8230;</span>
       </div>
       <div class="tbl-wrap">
         <table id="dangTable" class="danger-table">
           <thead>
             <tr>
-              <th onclick="sortTbl('dangTable',0,this)">OU / Distinguished Name</th>
-              <th onclick="sortTbl('dangTable',1,this)">Identity (Trustee)</th>
-              <th onclick="sortTbl('dangTable',2,this)">Rights</th>
-              <th onclick="sortTbl('dangTable',3,this)">Risk Level</th>
-              <th onclick="sortTbl('dangTable',4,this)">Reason &amp; Description</th>
-              <th onclick="sortTbl('dangTable',5,this)">Type</th>
-              <th onclick="sortTbl('dangTable',6,this)">Object Type</th>
-              <th onclick="sortTbl('dangTable',7,this)">Inherited</th>
+              <th onclick="sortTbl('dang',0,this)">OU / Distinguished Name</th>
+              <th onclick="sortTbl('dang',1,this)">Identity (Trustee)</th>
+              <th onclick="sortTbl('dang',2,this)">Rights</th>
+              <th onclick="sortTbl('dang',3,this)">Risk Level</th>
+              <th onclick="sortTbl('dang',4,this)">Reason &amp; Description</th>
+              <th onclick="sortTbl('dang',5,this)">Type</th>
+              <th onclick="sortTbl('dang',6,this)">Object Type</th>
+              <th onclick="sortTbl('dang',7,this)">Inherited</th>
             </tr>
           </thead>
-          <tbody>
-$dangRows
-          </tbody>
+          <tbody id="dangBody"></tbody>
         </table>
       </div>
+      <div id="dang-pager" class="pager"></div>
     </div>
     <div class="tip">
       <strong>Remediation — remove an ACE via PowerShell:</strong><br>
@@ -664,23 +773,124 @@ $dangRows
   </main>
 </div>
 
+<!-- ═══════════════════════════ TAB 3: TREE ═══════════════════════════════ -->
+<div id="tab-tree" class="tab-content">
+  <div class="tree-layout">
+    <div class="tree-pane" id="treePane">
+      <p class="tree-empty">Select this tab to build the tree&#8230;</p>
+    </div>
+    <div class="detail-pane" id="detailPane">
+      <div class="detail-placeholder">&#128193;&nbsp; Select an OU from the tree to view its permissions.</div>
+    </div>
+  </div>
+</div>
+
 <footer>Generated by Get-OUPermissions.ps1 &mdash; $($runTime.ToString("dddd, MMMM d, yyyy 'at' h:mm tt")) &mdash; $domainName</footer>
 
 <script>
+var PAGE_SIZE = 250;
+
+// ── Source data embedded by PowerShell ──
+var allData  = $jsonAll;
+var dangData = $jsonDang;
+var ouList   = $jsonOuList;
+
+// ── Per-tab state ──
+var allState  = { src: allData,  filtered: allData.slice(),  page: 0, access: 'all', dangerous: 'all', term: '' };
+var dangState = { src: dangData, filtered: dangData.slice(), page: 0, level: 'all',  term: '' };
+
+// ── Row builders (strings are already HTML-encoded by PowerShell) ──
+function bdg(cls, txt) { return '<span class="badge ' + cls + '">' + txt + '</span>'; }
+
+function buildAllRow(row) {
+  var acc = row.a === 'Allow' ? bdg('acc-allow','Allow') : bdg('acc-deny','Deny');
+  var inh = row.inh ? bdg('inh-yes','Yes') : bdg('inh-no','No');
+  return '<tr>' +
+    '<td><span class="ou-name">' + row.n + '</span><span class="dn-text">' + row.dn + '</span></td>' +
+    '<td class="id-cell">'     + row.id  + '</td>' +
+    '<td class="rights-cell">' + row.r   + '</td>' +
+    '<td>' + acc + '</td>' +
+    '<td>' + inh + '</td>' +
+    '<td>' + row.it  + '</td>' +
+    '<td>' + row.ot  + '</td>' +
+    '<td>' + row.iot + '</td>' +
+    '</tr>';
+}
+
+function buildDangRow(row) {
+  var lvlCls = row.lv === 'Critical' ? 'lvl-crit' : (row.lv === 'High' ? 'lvl-high' : 'lvl-med');
+  var acc    = row.a === 'Allow' ? bdg('acc-allow','Allow') : bdg('acc-deny','Deny');
+  var inh    = row.inh ? bdg('inh-yes','Yes') : bdg('inh-no','No');
+  return '<tr>' +
+    '<td><span class="ou-name">' + row.n + '</span><span class="dn-text">' + row.dn + '</span></td>' +
+    '<td class="id-cell">'     + row.id + '</td>' +
+    '<td class="rights-cell">' + row.r  + '</td>' +
+    '<td>' + bdg(lvlCls, row.lv) + '</td>' +
+    '<td><strong>' + row.rs + '</strong><br><span class="desc-text">' + row.ds + '</span></td>' +
+    '<td>' + acc + '</td>' +
+    '<td>' + row.ot + '</td>' +
+    '<td>' + inh + '</td>' +
+    '</tr>';
+}
+
+// ── Render current page ──
+function render(st, bodyId, countId, pagerId, builder) {
+  var total = st.filtered.length;
+  var start = st.page * PAGE_SIZE;
+  if (start >= total && total > 0) { st.page = 0; start = 0; }
+  var end = Math.min(start + PAGE_SIZE, total);
+  var html = '';
+  if (total === 0) {
+    html = '<tr><td colspan="8" class="none">No results match the current filters.</td></tr>';
+  } else {
+    for (var i = start; i < end; i++) { html += builder(st.filtered[i]); }
+  }
+  document.getElementById(bodyId).innerHTML = html;
+  var countEl = document.getElementById(countId);
+  if (countEl) {
+    countEl.textContent = total === 0 ? 'No results' :
+      'Showing ' + (start + 1) + '–' + end + ' of ' + total;
+  }
+  renderPager(st, pagerId, total);
+}
+
+function renderAll()  { render(allState,  'allBody',  'all-count',  'all-pager',  buildAllRow);  }
+function renderDang() { render(dangState, 'dangBody', 'dang-count', 'dang-pager', buildDangRow); }
+
+// ── Pager ──
+function renderPager(st, pagerId, total) {
+  var pager = document.getElementById(pagerId);
+  if (!pager) return;
+  var pages = Math.ceil(total / PAGE_SIZE);
+  if (pages <= 1) { pager.innerHTML = ''; return; }
+  var pg = st.page;
+  pager.innerHTML =
+    '<button class="pg-btn" onclick="goPage(\'' + pagerId + '\',' + (pg - 1) + ')"' + (pg === 0 ? ' disabled' : '') + '>&#8592; Prev</button>' +
+    '<span class="pg-info">Page ' + (pg + 1) + ' of ' + pages + '</span>' +
+    '<input class="pg-jump" type="number" min="1" max="' + pages + '" value="' + (pg + 1) + '" onchange="goPage(\'' + pagerId + '\',(+this.value-1))" title="Go to page">' +
+    '<button class="pg-btn" onclick="goPage(\'' + pagerId + '\',' + (pg + 1) + ')"' + (pg >= pages - 1 ? ' disabled' : '') + '>Next &#8594;</button>';
+}
+
+function goPage(pagerId, page) {
+  var st = (pagerId === 'all-pager') ? allState : dangState;
+  var pages = Math.ceil(st.filtered.length / PAGE_SIZE);
+  st.page = Math.max(0, Math.min(page, pages - 1));
+  if (pagerId === 'all-pager') renderAll(); else renderDang();
+}
+
 // ── Tab switching ──
+var treeInited = false;
 function switchTab(name, btn) {
   document.querySelectorAll('.tab-content').forEach(function(t){ t.classList.remove('active'); });
   document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
+  if (name === 'tree' && !treeInited) { treeInited = true; initTree(); }
 }
 
 // ── All-tab filters ──
-var allFilters = { access: 'all', dangerous: 'all' };
-var allTerm = '';
-
 function allFilter(type, val, btn) {
-  allFilters[type] = val;
+  if (type === 'access') allState.access = val; else allState.dangerous = val;
   var grpBtns = Array.from(document.querySelectorAll('#tab-all .f-btn')).filter(function(b){
     return b.getAttribute('onclick') && b.getAttribute('onclick').indexOf("'" + type + "'") !== -1;
   });
@@ -689,74 +899,212 @@ function allFilter(type, val, btn) {
   applyAllFilters();
 }
 
-function allSearch(val) { allTerm = val.toLowerCase(); applyAllFilters(); }
+function allSearch(val) { allState.term = val.toLowerCase(); applyAllFilters(); }
 
 function applyAllFilters() {
-  var rows = document.querySelectorAll('#allTable tbody tr');
-  var visible = 0;
-  rows.forEach(function(row) {
-    var access = row.getAttribute('data-access') || '';
-    var dang   = row.getAttribute('data-dangerous') || '';
-    var text   = row.innerText.toLowerCase();
-    var show =
-      (allFilters.access    === 'all' || access === allFilters.access) &&
-      (allFilters.dangerous === 'all' || dang   === allFilters.dangerous) &&
-      (allTerm === '' || text.indexOf(allTerm) !== -1);
-    row.classList.toggle('hidden', !show);
-    if (show) visible++;
+  var acc  = allState.access;
+  var dng  = allState.dangerous;
+  var term = allState.term;
+  allState.filtered = allState.src.filter(function(row) {
+    var mAcc  = acc  === 'all' || row.a === acc;
+    var mDng  = dng  === 'all' || String(row.d) === dng;
+    var mTerm = !term || (row.n + ' ' + row.dn + ' ' + row.id + ' ' + row.r + ' ' + row.ot).toLowerCase().indexOf(term) !== -1;
+    return mAcc && mDng && mTerm;
   });
-  document.getElementById('all-count').textContent = 'Showing ' + visible + ' of ' + rows.length + ' ACE(s)';
+  allState.page = 0;
+  renderAll();
 }
 
 // ── Danger-tab filters ──
-var dangLevel = 'all';
-var dangTerm  = '';
-
 function dangFilter(level, btn) {
-  dangLevel = level;
+  dangState.level = level;
   document.querySelectorAll('#tab-danger .df-btn').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
   applyDangFilters();
 }
 
-function dangSearch(val) { dangTerm = val.toLowerCase(); applyDangFilters(); }
+function dangSearch(val) { dangState.term = val.toLowerCase(); applyDangFilters(); }
 
 function applyDangFilters() {
-  var rows = document.querySelectorAll('#dangTable tbody tr');
-  var visible = 0;
-  rows.forEach(function(row) {
-    var lvl  = row.getAttribute('data-level') || '';
-    var text = row.innerText.toLowerCase();
-    var show =
-      (dangLevel === 'all' || lvl === dangLevel) &&
-      (dangTerm === '' || text.indexOf(dangTerm) !== -1);
-    row.classList.toggle('hidden', !show);
-    if (show) visible++;
+  var lv   = dangState.level;
+  var term = dangState.term;
+  dangState.filtered = dangState.src.filter(function(row) {
+    var mLv   = lv   === 'all' || row.lv === lv;
+    var mTerm = !term || (row.n + ' ' + row.dn + ' ' + row.id + ' ' + row.rs + ' ' + row.ds).toLowerCase().indexOf(term) !== -1;
+    return mLv && mTerm;
   });
-  document.getElementById('dang-count').textContent = 'Showing ' + visible + ' of ' + rows.length + ' finding(s)';
+  dangState.page = 0;
+  renderDang();
 }
 
 // ── Sortable columns ──
-var sortState = {};
-function sortTbl(tableId, col, th) {
-  var key = tableId + '_' + col;
-  var dir = (sortState[key] === 1) ? -1 : 1;
-  sortState[key] = dir;
+var lvlOrder = { Critical: 0, High: 1, Medium: 2 };
+var sortDirs = {};
+var allFields  = ['n','id','r','a','inh','it','ot','iot'];
+var dangFields = ['n','id','r','lv','rs','a','ot','inh'];
 
-  var table = document.getElementById(tableId);
-  var ths   = table.querySelectorAll('thead th');
-  ths.forEach(function(t){ t.classList.remove('asc','desc'); });
+function sortTbl(tab, col, th) {
+  var key = tab + '_' + col;
+  var dir = (sortDirs[key] === 1) ? -1 : 1;
+  sortDirs[key] = dir;
+  var isAll  = (tab === 'all');
+  var st     = isAll ? allState : dangState;
+  var fields = isAll ? allFields : dangFields;
+  var field  = fields[col];
+  var tbl    = document.getElementById(isAll ? 'allTable' : 'dangTable');
+  tbl.querySelectorAll('thead th').forEach(function(t){ t.classList.remove('asc','desc'); });
   th.classList.add(dir === 1 ? 'asc' : 'desc');
-
-  var tbody = table.tBodies[0];
-  var rows  = Array.from(tbody.querySelectorAll('tr:not(.hidden), tr.hidden'));
-  rows.sort(function(a, b) {
-    var ta = a.cells[col] ? a.cells[col].innerText.trim() : '';
-    var tb = b.cells[col] ? b.cells[col].innerText.trim() : '';
-    return ta.localeCompare(tb, undefined, { numeric: true }) * dir;
+  st.filtered.sort(function(a, b) {
+    if (field === 'lv') {
+      var va = lvlOrder[a.lv] !== undefined ? lvlOrder[a.lv] : 9;
+      var vb = lvlOrder[b.lv] !== undefined ? lvlOrder[b.lv] : 9;
+      return (va - vb) * dir;
+    }
+    var sa = String(a[field] || '');
+    var sb = String(b[field] || '');
+    return sa.localeCompare(sb, undefined, { numeric: true }) * dir;
   });
-  rows.forEach(function(r){ tbody.appendChild(r); });
+  st.page = 0;
+  if (isAll) renderAll(); else renderDang();
 }
+
+// ── OU Tree (Tab 3) ──
+function getParentDN(dn) {
+  var i = dn.indexOf(',');
+  return i === -1 ? null : dn.substring(i + 1);
+}
+
+// Build tree structure from flat ouList
+var ouTree = (function() {
+  var nodes = [];
+  var byDN  = {};
+  ouList.forEach(function(ou, i) {
+    var node = { n: ou.n, dn: ou.dn, ac: ou.ac, dc: ou.dc, id: i, children: [], open: false };
+    nodes.push(node);
+    byDN[ou.dn] = node;
+  });
+  var roots = [];
+  nodes.forEach(function(node) {
+    var pdn = getParentDN(node.dn);
+    if (pdn && byDN[pdn]) { byDN[pdn].children.push(node); }
+    else { roots.push(node); }
+  });
+  function sortNode(n) {
+    n.children.sort(function(a, b) { return a.n.localeCompare(b.n); });
+    n.children.forEach(sortNode);
+  }
+  roots.forEach(sortNode);
+  return { nodes: nodes, roots: roots, byDN: byDN };
+})();
+
+function renderTreeNode(node, depth) {
+  var hasKids  = node.children.length > 0;
+  var tgl      = hasKids
+    ? '<button class="tree-toggle" data-tid="' + node.id + '">&#9658;</button>'
+    : '<span class="tree-toggle tree-toggle-leaf"></span>';
+  var folder   = hasKids ? '&#128193;' : '&#128196;';
+  var aceBadge = '<span class="tree-ace' + (node.ac === 0 ? ' tree-ace-zero' : '') + '">' + node.ac + '</span>';
+  var dngBadge = node.dc > 0 ? ' <span class="tree-dang">&#9888;&nbsp;' + node.dc + '</span>' : '';
+  var pad      = (8 + depth * 18) + 'px';
+  var kids     = '';
+  if (hasKids) {
+    kids = '<div class="tree-children" id="tc_' + node.id + '" style="display:none">' +
+      node.children.map(function(c) { return renderTreeNode(c, depth + 1); }).join('') +
+      '</div>';
+  }
+  return '<div class="tree-node" id="tn_' + node.id + '">' +
+    '<div class="tree-row" data-nid="' + node.id + '" style="padding-left:' + pad + '">' +
+      tgl +
+      '<span class="tree-folder">' + folder + '</span>&nbsp;' +
+      '<span class="tree-label">'  + node.n  + '</span>' +
+      '&nbsp;' + aceBadge + dngBadge +
+    '</div>' + kids +
+    '</div>';
+}
+
+function initTree() {
+  var pane = document.getElementById('treePane');
+  if (!pane) return;
+  if (ouTree.roots.length === 0) {
+    pane.innerHTML = '<p class="tree-empty">No OUs found.</p>';
+    return;
+  }
+  pane.innerHTML = ouTree.roots.map(function(r) { return renderTreeNode(r, 0); }).join('');
+
+  // Auto-expand top-level nodes
+  ouTree.roots.forEach(function(r) {
+    if (r.children.length > 0) {
+      var c = document.getElementById('tc_' + r.id);
+      var b = pane.querySelector('[data-tid="' + r.id + '"]');
+      if (c) c.style.display = 'block';
+      if (b) b.innerHTML = '&#9660;';
+      r.open = true;
+    }
+  });
+
+  // Event delegation — toggle and select
+  pane.addEventListener('click', function(e) {
+    var tglBtn = e.target.closest('[data-tid]');
+    if (tglBtn) {
+      e.stopPropagation();
+      var nid  = parseInt(tglBtn.getAttribute('data-tid'), 10);
+      var node = ouTree.nodes[nid];
+      var c    = document.getElementById('tc_' + nid);
+      if (!node || !c) return;
+      node.open          = !node.open;
+      c.style.display    = node.open ? 'block' : 'none';
+      tglBtn.innerHTML   = node.open ? '&#9660;' : '&#9658;';
+      return;
+    }
+    var row = e.target.closest('.tree-row');
+    if (!row) return;
+    var nid  = parseInt(row.getAttribute('data-nid'), 10);
+    var node = ouTree.nodes[nid];
+    if (!node) return;
+    pane.querySelectorAll('.tree-row.selected').forEach(function(r){ r.classList.remove('selected'); });
+    row.classList.add('selected');
+    renderDetailPane(node);
+  });
+}
+
+function renderDetailPane(node) {
+  var pane  = document.getElementById('detailPane');
+  var aces  = allData.filter(function(r) { return r.k === node.dn; });
+  var daces = dangData.filter(function(r) { return r.k === node.dn; });
+  var safedn = node.dn.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  var html  = '<div class="detail-header">' +
+    '<div class="detail-ou-name">&#128193;&nbsp;' + node.n + '</div>' +
+    '<div class="detail-ou-dn">'  + safedn + '</div>' +
+    '<div class="detail-badges">' +
+      '<span class="stat-chip">'  + aces.length  + '&nbsp;ACE(s)</span>' +
+      (daces.length > 0 ? '<span class="stat-chip chip-dang">&#9888;&nbsp;' + daces.length + ' dangerous</span>' : '') +
+    '</div></div>';
+  if (aces.length === 0) {
+    html += '<p class="detail-none">No explicit ACEs found on this OU with the current run options (check -IncludeInherited or -ExcludeDefaultPrincipals).</p>';
+  } else {
+    var rows = aces.map(function(row) {
+      var acc = row.a === 'Allow' ? bdg('acc-allow','Allow') : bdg('acc-deny','Deny');
+      var inh = row.inh ? bdg('inh-yes','Yes') : bdg('inh-no','No');
+      var dot = row.d ? '<span class="tree-dang-dot"></span>' : '';
+      return '<tr' + (row.d ? ' class="dang-row"' : '') + '>' +
+        '<td class="id-cell">'     + dot + row.id + '</td>' +
+        '<td class="rights-cell">' + row.r  + '</td>' +
+        '<td>' + acc + '</td>' +
+        '<td>' + inh + '</td>' +
+        '<td>' + row.ot + '</td>' +
+        '</tr>';
+    }).join('');
+    html += '<div class="detail-pane-body"><div class="tbl-wrap">' +
+      '<table class="detail-table"><thead><tr>' +
+        '<th>Identity (Trustee)</th><th>Rights</th><th>Type</th><th>Inherited</th><th>Object Type</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+  }
+  pane.innerHTML = html;
+}
+
+// ── Init ──
+renderAll();
+renderDang();
 </script>
 </body>
 </html>

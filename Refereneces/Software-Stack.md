@@ -1,0 +1,9 @@
+- Microsoft Window
+- Microsoft Office 365
+- VS Code
+- Obsidian
+- Python
+- Powershell
+- Veeam
+- Delinea Secret Server 
+- SentinelOne
