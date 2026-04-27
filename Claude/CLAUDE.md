@@ -162,6 +162,7 @@ Admin account: `FCTGNET\charles.t1.littlefie`
 - No sycophantic openers or closing fluff
 - Keep solutions simple and direct
 - User instructions always override this file
+- Never use em-dash characters (--) in any output, code, or files -- use double hyphens or rephrase instead
 - Preferred formats: `.md` (Obsidian style), `.docx` for formal docs, `.html` for dashboards, `.pptx` for presentations
 - For security content: include CVE numbers, CVSS scores, affected products
 - Prioritize actionable recommendations — what should the team actually *do*?
